@@ -9,6 +9,7 @@ public final class AbsenceMessage {
 
     private AbsenceMessage(String content, boolean active) {
         Objects.requireNonNull(content, "Le contenu du message d'absence ne peut pas être null");
+        // TODO : trim le contenu ou pas ?
         if (content.isBlank()) {
             throw new IllegalArgumentException("Le contenu du message d'absence ne doit pas être vide");
         }
