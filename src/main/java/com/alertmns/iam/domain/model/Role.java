@@ -1,4 +1,4 @@
-package com.mns.alertmns.iam.domain.model;
+package com.alertmns.iam.domain.model;
 
 public enum Role {
     USER,
