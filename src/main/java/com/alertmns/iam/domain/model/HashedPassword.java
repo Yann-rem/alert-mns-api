@@ -10,9 +10,9 @@ public final class HashedPassword {
     private final String value;
 
     private HashedPassword(String value) {
-        Objects.requireNonNull(value, "Hashed password cannot be null");
+        Objects.requireNonNull(value, "Le mot de passe haché ne peut pas être null");
         if (value.isBlank()) {
-            throw new IllegalArgumentException("Hashed password cannot be blank");
+            throw new IllegalArgumentException("Le mot de passe haché ne peut pas être vide");
         }
         this.value = value;
     }
