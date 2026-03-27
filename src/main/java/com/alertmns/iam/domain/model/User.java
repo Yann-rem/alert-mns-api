@@ -1,0 +1,171 @@
+package com.alertmns.iam.domain.model;
+
+import com.alertmns.iam.domain.event.UserActivated;
+import com.alertmns.iam.domain.event.UserDisabled;
+import com.alertmns.iam.domain.event.UserRegistered;
+import com.alertmns.shared.DomainEvent;
+
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
+/**
+ * Agrégat racine du BC IAM.
+ * Représente un utilisateur avec son cycle de vie et ses règles métiers.
+ */
+public final class User {
+
+    private final UserId id;
+    private final Email email;
+    private final HashedPassword hashedPassword;
+    private final Profile profile;
+    private final Role role;
+    private UserStatus status;
+    private final Instant createdAt;
+    private final List<DomainEvent> domainEvents = new ArrayList<>();
+
+    private User(
+            UserId id,
+            Email email,
+            HashedPassword hashedPassword,
+            Profile profile,
+            Role role,
+            UserStatus status,
+            Instant createdAt
+    ) {
+        this.id = Objects.requireNonNull(id, "L'identifiant ne peut pas être null");
+        this.email = Objects.requireNonNull(email, "L'email ne peut pas être null");
+        this.hashedPassword = Objects.requireNonNull(hashedPassword, "Le mot de passe haché ne peut pas être null");
+        this.profile = Objects.requireNonNull(profile, "Le profile ne peut pas être null");
+        this.role = Objects.requireNonNull(role, "Le role ne peut pas être null");
+        this.status = Objects.requireNonNull(status, "Le statut ne peut pas être null");
+        this.createdAt = Objects.requireNonNull(createdAt, "La date de création ne peut pas être null");
+    }
+
+    public static User register(
+            Email email,
+            HashedPassword hashedPassword,
+            Profile profile
+    ) {
+        User user = new User(
+                UserId.generate(),
+                email,
+                hashedPassword,
+                profile,
+                Role.USER,
+                UserStatus.PENDING,
+                Instant.now()
+        );
+
+        user.domainEvents.add(new UserRegistered(user.id, user.email, user.role));
+        return user;
+    }
+
+    public static User reconstitute(
+            UserId id,
+            Email email,
+            HashedPassword hashedPassword,
+            Profile profile,
+            Role role,
+            UserStatus status,
+            Instant createdAt
+    ) {
+        return new User(
+                id,
+                email,
+                hashedPassword,
+                profile,
+                role,
+                status,
+                createdAt
+        );
+    }
+
+    public List<DomainEvent> pullDomainEvents() {
+        List<DomainEvent> events = List.copyOf(domainEvents);
+        domainEvents.clear();
+        return events;
+    }
+
+    // TODO : ajouter la personne responsable de l'activation.
+    public void activate() {
+        if (status != UserStatus.PENDING) {
+            throw new IllegalStateException(
+                    "Impossible d'activer un compte qui n'est pas en attente. Statut actuel : " + this.status
+            );
+        }
+        status = UserStatus.ACTIVE;
+        this.domainEvents.add(new UserActivated(this.id));
+    }
+
+    public void reactivate() {
+        if (status != UserStatus.DISABLED) {
+            throw new IllegalStateException(
+                    "Impossible de réactiver un compte qui n'est pas désactivé. Statut actuel : " + this.status
+            );
+        }
+        status = UserStatus.ACTIVE;
+        domainEvents.add(new UserActivated(this.id));
+    }
+
+    public void disable() {
+        if (status != UserStatus.ACTIVE) {
+            throw new IllegalStateException(
+                    "Impossible de désactiver un compte qui n'est pas activé. Statut actuel : " + this.status
+            );
+        }
+        status = UserStatus.DISABLED;
+        this.domainEvents.add(new UserDisabled(this.id));
+    }
+
+    public UserId id() {
+        return id;
+    }
+
+    public Email email() {
+        return email;
+    }
+
+    public HashedPassword hashedPassword() {
+        return hashedPassword;
+    }
+
+    public Profile profile() {
+        return profile;
+    }
+
+    public Role role() {
+        return role;
+    }
+
+    public UserStatus status() {
+        return status;
+    }
+
+    public Instant createdAt() {
+        return createdAt;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        User user = (User) o;
+        return Objects.equals(id, user.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "id=" + id +
+                ", email=" + email +
+                ", role=" + role +
+                ", status=" + status +
+                '}';
+    }
+}
