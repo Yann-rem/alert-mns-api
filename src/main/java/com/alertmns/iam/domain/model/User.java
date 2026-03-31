@@ -1,5 +1,7 @@
 package com.alertmns.iam.domain.model;
 
+import com.alertmns.iam.domain.event.AbsenceMessageUpdated;
+import com.alertmns.iam.domain.event.ProfileUpdated;
 import com.alertmns.iam.domain.event.UserActivated;
 import com.alertmns.iam.domain.event.UserDisabled;
 import com.alertmns.iam.domain.event.UserRegistered;
@@ -19,7 +21,7 @@ public final class User {
     private final UserId id;
     private final Email email;
     private final HashedPassword hashedPassword;
-    private final Profile profile;
+    private Profile profile;
     private final Role role;
     private UserStatus status;
     private final Instant createdAt;
@@ -82,10 +84,15 @@ public final class User {
         );
     }
 
-    public List<DomainEvent> pullDomainEvents() {
-        List<DomainEvent> events = List.copyOf(domainEvents);
-        domainEvents.clear();
-        return events;
+    public void updateProfile(FirstName firstName, LastName lastName, String avatar) {
+        profile = Profile.of(firstName, lastName).withAvatar(avatar);
+        domainEvents.add(new ProfileUpdated(id));
+    }
+
+    public void updateAbsenceMessage(AbsenceMessage absenceMessage) {
+        Objects.requireNonNull(absenceMessage, "Le message d'absence ne peut pas être null");
+        profile = profile.withAbsenceMessage(absenceMessage);
+        domainEvents.add(new AbsenceMessageUpdated(id));
     }
 
     // TODO : ajouter la personne responsable de l'activation.
@@ -96,7 +103,7 @@ public final class User {
             );
         }
         status = UserStatus.ACTIVE;
-        this.domainEvents.add(new UserActivated(this.id));
+        domainEvents.add(new UserActivated(this.id));
     }
 
     public void reactivate() {
@@ -116,7 +123,7 @@ public final class User {
             );
         }
         status = UserStatus.DISABLED;
-        this.domainEvents.add(new UserDisabled(this.id));
+        domainEvents.add(new UserDisabled(this.id));
     }
 
     public UserId id() {
@@ -145,6 +152,12 @@ public final class User {
 
     public Instant createdAt() {
         return createdAt;
+    }
+
+    public List<DomainEvent> pullDomainEvents() {
+        List<DomainEvent> events = List.copyOf(domainEvents);
+        domainEvents.clear();
+        return events;
     }
 
     @Override

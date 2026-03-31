@@ -1,5 +1,7 @@
 package com.alertmns.iam.domain.model;
 
+import com.alertmns.iam.domain.event.AbsenceMessageUpdated;
+import com.alertmns.iam.domain.event.ProfileUpdated;
 import com.alertmns.iam.domain.event.UserActivated;
 import com.alertmns.iam.domain.event.UserDisabled;
 import com.alertmns.iam.domain.event.UserRegistered;
@@ -108,6 +110,31 @@ class UserTest {
         }
 
         @Test
+        @DisplayName("updateProfile should update the user profile")
+        void updateProfileShouldUpdateTheUserProfile() {
+            FirstName newFirstName = FirstName.of("Jane");
+            LastName newLastName = LastName.of("Smith");
+            String newAvatar = "https://cdn.example.com/avatar.jpg";
+            user.updateProfile(newFirstName, newLastName, newAvatar);
+            assertEquals(newFirstName, user.profile().firstName());
+            assertEquals(newLastName, user.profile().lastName());
+            assertTrue(user.profile().avatar().isPresent());
+            assertEquals(newAvatar, user.profile().avatar().orElseThrow());
+        }
+
+        @Test
+        @DisplayName("updateAbsenceMessage should update the absence message")
+        void updateAbsenceMessageShouldUpdateTheAbsenceMessage() {
+            AbsenceMessage absenceMessage = AbsenceMessage.of(
+                    "Je ne suis pas disponible pour le moment", true
+            );
+
+            user.updateAbsenceMessage(absenceMessage);
+            assertTrue(user.profile().absenceMessage().isPresent());
+            assertEquals(absenceMessage, user.profile().absenceMessage().orElseThrow());
+        }
+
+        @Test
         @DisplayName("activate should transition PENDING to ACTIVE")
         void activateShouldTransitionPENDINGToACTIVE() {
             user.activate();
@@ -170,11 +197,43 @@ class UserTest {
         void registerShouldEmitUserRegistered() {
             List<DomainEvent> events = user.pullDomainEvents();
             assertEquals(1, events.size());
-            assertInstanceOf(UserRegistered.class, events.getFirst());
-            UserRegistered event = (UserRegistered) events.getFirst();
+            UserRegistered event = assertInstanceOf(UserRegistered.class, events.getFirst());
             assertEquals(user.id(), event.userId());
             assertEquals(user.email(), event.email());
             assertEquals(Role.USER, event.role());
+        }
+
+        @Test
+        @DisplayName("updateProfile should emit ProfileUpdated")
+        void updateProfileShouldEmitUpdateProfile() {
+            user.pullDomainEvents();
+
+            user.updateProfile(
+                    FirstName.of("Jane"),
+                    LastName.of("Doe"),
+                    "https://cdn.example.com/avatar.jpg"
+            );
+
+            List<DomainEvent> events = user.pullDomainEvents();
+            assertEquals(1, events.size());
+            ProfileUpdated event = assertInstanceOf(ProfileUpdated.class, events.getFirst());
+            assertEquals(user.id(), event.userId());
+        }
+
+        @Test
+        @DisplayName("updateAbsenceMessage should emit AbsenceMessageUpdated")
+        void updateAbsenceMessageShouldEmitUpdateAbsenceMessage() {
+            user.pullDomainEvents();
+
+            user.updateAbsenceMessage(AbsenceMessage.of(
+                    "je ne suis pas disponible pour le moment",
+                    true
+            ));
+
+            List<DomainEvent> events = user.pullDomainEvents();
+            assertEquals(1, events.size());
+            AbsenceMessageUpdated event = assertInstanceOf(AbsenceMessageUpdated.class, events.getFirst());
+            assertEquals(user.id(), event.userId());
         }
 
         @Test
@@ -184,8 +243,7 @@ class UserTest {
             user.activate();
             List<DomainEvent> events = user.pullDomainEvents();
             assertEquals(1, events.size());
-            assertInstanceOf(UserActivated.class, events.getFirst());
-            UserActivated event = (UserActivated) events.getFirst();
+            UserActivated event = assertInstanceOf(UserActivated.class, events.getFirst());
             assertEquals(user.id(), event.userId());
         }
 
@@ -198,8 +256,7 @@ class UserTest {
             user.disable();
             List<DomainEvent> events = user.pullDomainEvents();
             assertEquals(1, events.size());
-            assertInstanceOf(UserDisabled.class, events.getFirst());
-            UserDisabled event = (UserDisabled) events.getFirst();
+            UserDisabled event = assertInstanceOf(UserDisabled.class, events.getFirst());
             assertEquals(user.id(), event.userId());
         }
 
