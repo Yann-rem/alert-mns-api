@@ -17,7 +17,8 @@ import java.util.Objects;
 
 /**
  * Service applicatif pour l'inscription des utilisateurs.
- * Orchestre le processus d'inscription : validation, logique métier, persistance et publication d'événements.
+ * Orchestre le processus d'inscription : validation, logique métier,
+ * persistance et publication des événements du domaine.
  */
 public class RegisterUserService implements RegisterUserUseCase {
 
