@@ -30,9 +30,17 @@ public class RegisterUserService implements RegisterUserUseCase {
             AuthenticationPort authenticationPort,
             EventPublisher eventPublisher
     ) {
-        this.userRepository = Objects.requireNonNull(userRepository, "UserRepository ne peut pas être null");
-        this.authenticationPort = Objects.requireNonNull(authenticationPort, "AuthenticationPort ne peut pas être null");
-        this.eventPublisher = Objects.requireNonNull(eventPublisher, "EventPublisher ne peut pas être null");
+        this.userRepository = Objects.requireNonNull(
+                userRepository, "UserRepository ne peut pas être null"
+        );
+
+        this.authenticationPort = Objects.requireNonNull(
+                authenticationPort, "AuthenticationPort ne peut pas être null"
+        );
+
+        this.eventPublisher = Objects.requireNonNull(
+                eventPublisher, "EventPublisher ne peut pas être null"
+        );
     }
 
     @Override
