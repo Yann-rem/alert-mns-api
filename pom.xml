@@ -46,6 +46,13 @@
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
 
+        <!-- Lombok — uniquement pour la couche infrastructure -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
         <!-- PostgreSQL driver -->
         <dependency>
             <groupId>org.postgresql</groupId>
