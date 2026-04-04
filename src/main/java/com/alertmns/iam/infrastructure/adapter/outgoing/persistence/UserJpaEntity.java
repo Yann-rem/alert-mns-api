@@ -32,14 +32,6 @@ public class UserJpaEntity {
     @Column(nullable = false, length = 60)
     private String hashedPassword;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 10)
-    private Role role;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 10)
-    private UserStatus status;
-
     @Column(nullable = false, length = 100)
     private String firstName;
 
@@ -54,6 +46,14 @@ public class UserJpaEntity {
 
     @Column
     private Boolean absenceActive;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 10)
+    private Role role;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 10)
+    private UserStatus status;
 
     @Column(nullable = false)
     private Instant createdAt;
