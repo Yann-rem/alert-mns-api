@@ -22,11 +22,11 @@ final public class DisableUserService implements DisableUserUseCase {
 
     public DisableUserService(UserRepository repository, EventPublisher publisher) {
         this.repository = Objects.requireNonNull(
-                repository, "UserRepository ne peut pas être null"
+                repository, "repository must not be null"
         );
 
         this.publisher = Objects.requireNonNull(
-                publisher, "EventPublisher ne peut pas être null"
+                publisher, "publisher must not be null"
         );
     }
 

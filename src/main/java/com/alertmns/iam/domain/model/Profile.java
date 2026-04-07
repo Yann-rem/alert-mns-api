@@ -26,8 +26,8 @@ public final class Profile {
     }
 
     public static Profile of(FirstName firstName, LastName lastName) {
-        Objects.requireNonNull(firstName, "Le prénom ne peut pas être null");
-        Objects.requireNonNull(lastName, "le nom ne peut pas être null");
+        Objects.requireNonNull(firstName, "firstName must not be null");
+        Objects.requireNonNull(lastName, "lastName must not be null");
         return new Profile(firstName, lastName, null, Optional.empty());
     }
 
@@ -36,7 +36,7 @@ public final class Profile {
     }
 
     public Profile withAbsenceMessage(AbsenceMessage absenceMessage) {
-        Objects.requireNonNull(absenceMessage, "Le message d'absence ne peut pas être null");
+        Objects.requireNonNull(absenceMessage, "absenceMessage must not be null");
         return new Profile(firstName, lastName, avatar, Optional.of(absenceMessage));
     }
 

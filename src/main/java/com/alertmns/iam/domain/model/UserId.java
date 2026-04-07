@@ -11,7 +11,7 @@ public final class UserId {
     private final UUID value;
 
     private UserId(UUID value) {
-        Objects.requireNonNull(value, "L'identifiant ne peut pas être null");
+        Objects.requireNonNull(value, "id must not be null");
         this.value = value;
     }
 

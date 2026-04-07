@@ -12,13 +12,13 @@ public final class FirstName {
     private final String value;
 
     private FirstName(String value) {
-        Objects.requireNonNull(value, "Le prénom ne peut pas être null");
+        Objects.requireNonNull(value, "firstName must not be null");
         String normalized = value.trim();
         if (normalized.isEmpty()) {
-            throw new IllegalArgumentException("Le prénom ne peut pas être vide");
+            throw new IllegalArgumentException("firstName must not be blank");
         }
         if (normalized.length() > MAX_LENGTH) {
-            throw new IllegalArgumentException("Le prénom ne doit pas contenir plus de " + MAX_LENGTH + " caractères");
+            throw new IllegalArgumentException("firstName must not exceed " + MAX_LENGTH + " characters");
         }
         this.value = normalized;
     }

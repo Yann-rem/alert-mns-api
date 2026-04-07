@@ -4,6 +4,6 @@ import com.alertmns.iam.domain.model.UserId;
 
 public class UserNotFoundException extends RuntimeException {
     public UserNotFoundException(UserId id) {
-        super("Utilisateur introuvable :" + id.value());
+        super("User not found: " + id.value());
     }
 }

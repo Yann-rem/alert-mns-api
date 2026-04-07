@@ -8,10 +8,10 @@ public final class AbsenceMessage {
     private final boolean active;
 
     private AbsenceMessage(String content, boolean active) {
-        Objects.requireNonNull(content, "Le contenu du message d'absence ne peut pas être null");
+        Objects.requireNonNull(content, "content must not be null");
         // TODO : trim le contenu ou pas ?
         if (content.isBlank()) {
-            throw new IllegalArgumentException("Le contenu du message d'absence ne doit pas être vide");
+            throw new IllegalArgumentException("content must not be blank");
         }
         this.content = content;
         this.active = active;

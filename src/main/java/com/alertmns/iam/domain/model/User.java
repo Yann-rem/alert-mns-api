@@ -35,13 +35,13 @@ public final class User extends AggregateRoot {
             UserStatus status,
             Instant createdAt
     ) {
-        this.id = Objects.requireNonNull(id, "L'identifiant ne peut pas être null");
-        this.email = Objects.requireNonNull(email, "L'email ne peut pas être null");
-        this.hashedPassword = Objects.requireNonNull(hashedPassword, "Le mot de passe haché ne peut pas être null");
-        this.profile = Objects.requireNonNull(profile, "Le profile ne peut pas être null");
-        this.role = Objects.requireNonNull(role, "Le role ne peut pas être null");
-        this.status = Objects.requireNonNull(status, "Le statut ne peut pas être null");
-        this.createdAt = Objects.requireNonNull(createdAt, "La date de création ne peut pas être null");
+        this.id = Objects.requireNonNull(id, "id must not be null");
+        this.email = Objects.requireNonNull(email, "email must not be null");
+        this.hashedPassword = Objects.requireNonNull(hashedPassword, "hashedPassword must not be null");
+        this.profile = Objects.requireNonNull(profile, "profile must not be null");
+        this.role = Objects.requireNonNull(role, "role must not be null");
+        this.status = Objects.requireNonNull(status, "status must not be null");
+        this.createdAt = Objects.requireNonNull(createdAt, "createdAt must not be null");
     }
 
     /**
@@ -126,7 +126,7 @@ public final class User extends AggregateRoot {
      * @throws NullPointerException si absenceMessage est null
      */
     public void updateAbsenceMessage(AbsenceMessage absenceMessage) {
-        Objects.requireNonNull(absenceMessage, "Le message d'absence ne peut pas être null");
+        Objects.requireNonNull(absenceMessage, "absenceMessage must not be null");
         profile = profile.withAbsenceMessage(absenceMessage);
         registerEvent(new AbsenceMessageUpdated(id));
     }
@@ -143,7 +143,7 @@ public final class User extends AggregateRoot {
     public void activate() {
         if (status != UserStatus.PENDING) {
             throw new IllegalStateException(
-                    "Impossible d'activer un compte qui n'est pas en attente. Statut actuel : " + status
+                    "Cannot activate: user is not PENDING. Current status: " + status
             );
         }
         status = UserStatus.ACTIVE;
@@ -160,7 +160,7 @@ public final class User extends AggregateRoot {
     public void reactivate() {
         if (status != UserStatus.DISABLED) {
             throw new IllegalStateException(
-                    "Impossible de réactiver un compte qui n'est pas désactivé. Statut actuel : " + status
+                    "Cannot reactivate: user is not DISABLED. Current status: " + status
             );
         }
         status = UserStatus.ACTIVE;
@@ -177,7 +177,7 @@ public final class User extends AggregateRoot {
     public void disable() {
         if (status != UserStatus.ACTIVE) {
             throw new IllegalStateException(
-                    "Impossible de désactiver un compte qui n'est pas activé. Statut actuel : " + status
+                    "Cannot disable: user is not ACTIVE. Current status: " + status
             );
         }
         status = UserStatus.DISABLED;

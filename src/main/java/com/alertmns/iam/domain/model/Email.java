@@ -14,10 +14,10 @@ public final class Email {
     private final String value;
 
     private Email(String value) {
-        Objects.requireNonNull(value, "L'email ne peut pas être null");
+        Objects.requireNonNull(value, "email must not be null");
         String normalized = value.trim().toLowerCase();
         if (!EMAIL_PATTERN.matcher(normalized).matches()) {
-            throw new IllegalArgumentException("Format d'email invalide : " + normalized);
+            throw new IllegalArgumentException("email format is invalid: " + normalized);
         }
         this.value = normalized;
     }
