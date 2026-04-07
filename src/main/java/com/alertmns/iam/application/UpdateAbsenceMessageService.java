@@ -32,7 +32,7 @@ final public class UpdateAbsenceMessageService implements UpdateAbsenceMessageUs
     }
 
     @Override
-    public void updateAbsenceMessage(UpdateAbsenceMessageCommand command) {
+    public void update(UpdateAbsenceMessageCommand command) {
         UserId id = UserId.from(command.userId());
         User user = repository.findById(id).orElseThrow(() -> new UserNotFoundException(id));
         AbsenceMessage message = AbsenceMessage.of(command.content(), command.active());

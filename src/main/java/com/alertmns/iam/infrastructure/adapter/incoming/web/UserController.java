@@ -65,6 +65,6 @@ public class UserController {
             @PathVariable String userId,
             @RequestBody UpdateAbsenceMessageRequest request
     ) {
-        updateAbsenceMessageUseCase.updateAbsenceMessage(UserWebMapper.toCommand(userId, request));
+        updateAbsenceMessageUseCase.update(UserWebMapper.toCommand(userId, request));
     }
 }

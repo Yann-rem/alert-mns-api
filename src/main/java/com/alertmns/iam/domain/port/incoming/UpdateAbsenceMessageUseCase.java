@@ -8,5 +8,5 @@ import com.alertmns.iam.domain.port.incoming.command.UpdateAbsenceMessageCommand
  */
 public interface UpdateAbsenceMessageUseCase {
 
-    void updateAbsenceMessage(UpdateAbsenceMessageCommand command);
+    void update(UpdateAbsenceMessageCommand command);
 }

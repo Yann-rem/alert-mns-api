@@ -82,7 +82,7 @@ class UpdateAbsenceMessageServiceTest {
                     true
             );
 
-            service.updateAbsenceMessage(command);
+            service.update(command);
             verify(repository).save(any(User.class));
             verify(publisher).publish(anyList());
         }
@@ -99,7 +99,7 @@ class UpdateAbsenceMessageServiceTest {
             );
 
             assertThrows(UserNotFoundException.class,
-                    () -> service.updateAbsenceMessage(command));
+                    () -> service.update(command));
 
             verify(repository, never()).save(any());
             verify(publisher, never()).publish(anyList());
