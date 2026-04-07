@@ -46,8 +46,8 @@ class UpdateAbsenceMessageServiceTest {
     UpdateAbsenceMessageService service;
 
     @Nested
-    @DisplayName("Update")
-    class Update {
+    @DisplayName("AbsenceMessageUpdate")
+    class AbsenceMessageUpdate {
 
         UserId id;
         User user;
@@ -112,14 +112,14 @@ class UpdateAbsenceMessageServiceTest {
 
         @Test
         @DisplayName("should reject null repository")
-        void shouldRejectNullUserRepository() {
+        void shouldRejectNullRepository() {
             assertThrows(NullPointerException.class,
                     () -> new UpdateAbsenceMessageService(null, publisher));
         }
 
         @Test
         @DisplayName("should reject null publisher")
-        void shouldRejectNullEventPublisher() {
+        void shouldRejectNullPublisher() {
             assertThrows(NullPointerException.class,
                     () -> new UpdateAbsenceMessageService(repository, null));
         }

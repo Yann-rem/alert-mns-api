@@ -118,14 +118,14 @@ class ActivateUserServiceTest {
 
         @Test
         @DisplayName("should reject null repository")
-        void shouldRejectNullUserRepository() {
+        void shouldRejectNullRepository() {
             assertThrows(NullPointerException.class,
                     () -> new ActivateUserService(null, publisher));
         }
 
         @Test
         @DisplayName("should reject null publisher")
-        void shouldRejectNullEventPublisher() {
+        void shouldRejectNullPublisher() {
             assertThrows(NullPointerException.class,
                     () -> new ActivateUserService(repository, null));
         }

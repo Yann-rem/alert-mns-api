@@ -46,8 +46,8 @@ class UpdateProfileServiceTest {
     UpdateProfileService service;
 
     @Nested
-    @DisplayName("Update")
-    class Update {
+    @DisplayName("ProfileUpdate")
+    class ProfileUpdate {
 
         UserId id;
         User user;
@@ -114,14 +114,14 @@ class UpdateProfileServiceTest {
 
         @Test
         @DisplayName("should reject null repository")
-        void shouldRejectNullUserRepository() {
+        void shouldRejectNullRepository() {
             assertThrows(NullPointerException.class,
                     () -> new UpdateProfileService(null, publisher));
         }
 
         @Test
         @DisplayName("should reject null publisher")
-        void shouldRejectNullEventPublisher() {
+        void shouldRejectNullPublisher() {
             assertThrows(NullPointerException.class,
                     () -> new UpdateProfileService(repository, null));
         }

@@ -42,8 +42,8 @@ class RegisterUserServiceTest {
     class Registration {
 
         @Test
-        @DisplayName("should register a user successfully")
-        void shouldRegisterAUserSuccessfully() {
+        @DisplayName("should register a user")
+        void shouldRegisterAUser() {
             when(repository.existsByEmail(any())).thenReturn(false);
             when(authentication.hashPassword(any())).thenReturn(
                     "$2a$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012345"
@@ -85,21 +85,21 @@ class RegisterUserServiceTest {
 
         @Test
         @DisplayName("should reject null repository")
-        void shouldRejectNullUserRepository() {
+        void shouldRejectNullRepository() {
             assertThrows(NullPointerException.class,
                     () -> new RegisterUserService(null, authentication, publisher));
         }
 
         @Test
         @DisplayName("should reject null authentication")
-        void shouldRejectNullAuthenticationPort() {
+        void shouldRejectNullAuthentication() {
             assertThrows(NullPointerException.class,
                     () -> new RegisterUserService(repository, null, publisher));
         }
 
         @Test
         @DisplayName("should reject null publisher")
-        void shouldRejectNullEventPublisher() {
+        void shouldRejectNullPublisher() {
             assertThrows(NullPointerException.class,
                     () -> new RegisterUserService(repository, authentication, null));
         }

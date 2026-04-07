@@ -46,8 +46,8 @@ class DisableUserServiceTest {
     DisableUserService service;
 
     @Nested
-    @DisplayName("Disable")
-    class Disable {
+    @DisplayName("Disabling")
+    class Disabling {
 
         UserId id;
         User activeUser;
@@ -118,14 +118,14 @@ class DisableUserServiceTest {
 
         @Test
         @DisplayName("should reject null repository")
-        void shouldRejectNullUserRepository() {
+        void shouldRejectNullRepository() {
             assertThrows(NullPointerException.class,
                     () -> new DisableUserService(null, publisher));
         }
 
         @Test
         @DisplayName("should reject null publisher")
-        void shouldRejectNullEventPublisher() {
+        void shouldRejectNullPublisher() {
             assertThrows(NullPointerException.class,
                     () -> new DisableUserService(repository, null));
         }
