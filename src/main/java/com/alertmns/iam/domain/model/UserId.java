@@ -45,6 +45,6 @@ public final class UserId {
 
     @Override
     public String toString() {
-        return Objects.toString(value);
+        return value.toString();
     }
 }
