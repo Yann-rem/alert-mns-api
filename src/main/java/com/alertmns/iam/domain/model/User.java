@@ -5,18 +5,16 @@ import com.alertmns.iam.domain.event.ProfileUpdated;
 import com.alertmns.iam.domain.event.UserActivated;
 import com.alertmns.iam.domain.event.UserDisabled;
 import com.alertmns.iam.domain.event.UserRegistered;
-import com.alertmns.shared.DomainEvent;
+import com.alertmns.shared.AggregateRoot;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
 /**
  * Agrégat racine du BC IAM.
  * Représente un utilisateur avec son cycle de vie et ses règles métiers.
  */
-public final class User {
+public final class User extends AggregateRoot {
 
     private final UserId id;
     private final Email email;
@@ -25,7 +23,6 @@ public final class User {
     private final Role role;
     private UserStatus status;
     private final Instant createdAt;
-    private final List<DomainEvent> domainEvents = new ArrayList<>();
 
     private User(
             UserId id,
@@ -60,7 +57,7 @@ public final class User {
                 Instant.now()
         );
 
-        user.domainEvents.add(new UserRegistered(user.id, user.email, user.role));
+        user.registerEvent(new UserRegistered(user.id, user.email, user.role));
         return user;
     }
 
@@ -86,44 +83,44 @@ public final class User {
 
     public void updateProfile(FirstName firstName, LastName lastName, String avatar) {
         profile = Profile.of(firstName, lastName).withAvatar(avatar);
-        domainEvents.add(new ProfileUpdated(id));
+        registerEvent(new ProfileUpdated(id));
     }
 
     public void updateAbsenceMessage(AbsenceMessage absenceMessage) {
         Objects.requireNonNull(absenceMessage, "Le message d'absence ne peut pas être null");
         profile = profile.withAbsenceMessage(absenceMessage);
-        domainEvents.add(new AbsenceMessageUpdated(id));
+        registerEvent(new AbsenceMessageUpdated(id));
     }
 
     // TODO : ajouter la personne responsable de l'activation.
     public void activate() {
         if (status != UserStatus.PENDING) {
             throw new IllegalStateException(
-                    "Impossible d'activer un compte qui n'est pas en attente. Statut actuel : " + this.status
+                    "Impossible d'activer un compte qui n'est pas en attente. Statut actuel : " + status
             );
         }
         status = UserStatus.ACTIVE;
-        domainEvents.add(new UserActivated(this.id));
+        registerEvent(new UserActivated(id));
     }
 
     public void reactivate() {
         if (status != UserStatus.DISABLED) {
             throw new IllegalStateException(
-                    "Impossible de réactiver un compte qui n'est pas désactivé. Statut actuel : " + this.status
+                    "Impossible de réactiver un compte qui n'est pas désactivé. Statut actuel : " + status
             );
         }
         status = UserStatus.ACTIVE;
-        domainEvents.add(new UserActivated(this.id));
+        registerEvent(new UserActivated(id));
     }
 
     public void disable() {
         if (status != UserStatus.ACTIVE) {
             throw new IllegalStateException(
-                    "Impossible de désactiver un compte qui n'est pas activé. Statut actuel : " + this.status
+                    "Impossible de désactiver un compte qui n'est pas activé. Statut actuel : " + status
             );
         }
         status = UserStatus.DISABLED;
-        domainEvents.add(new UserDisabled(this.id));
+        registerEvent(new UserDisabled(id));
     }
 
     public UserId id() {
@@ -152,12 +149,6 @@ public final class User {
 
     public Instant createdAt() {
         return createdAt;
-    }
-
-    public List<DomainEvent> pullDomainEvents() {
-        List<DomainEvent> events = List.copyOf(domainEvents);
-        domainEvents.clear();
-        return events;
     }
 
     @Override
