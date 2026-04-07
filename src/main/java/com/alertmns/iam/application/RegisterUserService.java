@@ -22,25 +22,25 @@ import java.util.Objects;
  */
 public class RegisterUserService implements RegisterUserUseCase {
 
-    private final UserRepository userRepository;
-    private final AuthenticationPort authenticationPort;
-    private final EventPublisher eventPublisher;
+    private final UserRepository repository;
+    private final AuthenticationPort authentication;
+    private final EventPublisher publisher;
 
     public RegisterUserService(
-            UserRepository userRepository,
-            AuthenticationPort authenticationPort,
-            EventPublisher eventPublisher
+            UserRepository repository,
+            AuthenticationPort authentication,
+            EventPublisher publisher
     ) {
-        this.userRepository = Objects.requireNonNull(
-                userRepository, "UserRepository ne peut pas être null"
+        this.repository = Objects.requireNonNull(
+                repository, "UserRepository ne peut pas être null"
         );
 
-        this.authenticationPort = Objects.requireNonNull(
-                authenticationPort, "AuthenticationPort ne peut pas être null"
+        this.authentication = Objects.requireNonNull(
+                authentication, "AuthenticationPort ne peut pas être null"
         );
 
-        this.eventPublisher = Objects.requireNonNull(
-                eventPublisher, "EventPublisher ne peut pas être null"
+        this.publisher = Objects.requireNonNull(
+                publisher, "EventPublisher ne peut pas être null"
         );
     }
 
@@ -48,19 +48,19 @@ public class RegisterUserService implements RegisterUserUseCase {
     public void register(RegisterUserCommand command) {
         Email email = Email.of(command.email());
 
-        if (userRepository.existsByEmail(email)) {
+        if (repository.existsByEmail(email)) {
             throw new EmailAlreadyExistsException(email);
         }
 
         HashedPassword hashedPassword = HashedPassword.of(
-                authenticationPort.hashPassword(command.rawPassword())
+                authentication.hashPassword(command.rawPassword())
         );
 
         FirstName firstName = FirstName.of(command.firstName());
         LastName lastName = LastName.of(command.lastName());
         Profile profile = Profile.of(firstName, lastName);
         User user = User.register(email, hashedPassword, profile);
-        userRepository.save(user);
-        eventPublisher.publish(user.pullDomainEvents());
+        repository.save(user);
+        publisher.publish(user.pullDomainEvents());
     }
 }

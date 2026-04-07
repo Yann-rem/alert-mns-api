@@ -18,29 +18,26 @@ import java.util.Objects;
  */
 public class UpdateAbsenceMessageService implements UpdateAbsenceMessageUseCase {
 
-    private final UserRepository userRepository;
-    private final EventPublisher eventPublisher;
+    private final UserRepository repository;
+    private final EventPublisher publisher;
 
-    public UpdateAbsenceMessageService(UserRepository userRepository, EventPublisher eventPublisher) {
-        this.userRepository = Objects.requireNonNull(
-                userRepository, "UserRepository ne peut pas être null"
+    public UpdateAbsenceMessageService(UserRepository repository, EventPublisher publisher) {
+        this.repository = Objects.requireNonNull(
+                repository, "UserRepository ne peut pas être null"
         );
 
-        this.eventPublisher = Objects.requireNonNull(
-                eventPublisher, "EventPublisher ne peut pas être null"
+        this.publisher = Objects.requireNonNull(
+                publisher, "EventPublisher ne peut pas être null"
         );
     }
 
     @Override
     public void updateAbsenceMessage(UpdateAbsenceMessageCommand command) {
         UserId id = UserId.from(command.userId());
-
-        User foundUser = userRepository.findById(id)
-                .orElseThrow(() -> new UserNotFoundException(id));
-
+        User user = repository.findById(id).orElseThrow(() -> new UserNotFoundException(id));
         AbsenceMessage message = AbsenceMessage.of(command.content(), command.active());
-        foundUser.updateAbsenceMessage(message);
-        userRepository.save(foundUser);
-        eventPublisher.publish(foundUser.pullDomainEvents());
+        user.updateAbsenceMessage(message);
+        repository.save(user);
+        publisher.publish(user.pullDomainEvents());
     }
 }

@@ -19,30 +19,27 @@ import java.util.Objects;
  */
 public class UpdateProfileService implements UpdateProfileUseCase {
 
-    private final UserRepository userRepository;
-    private final EventPublisher eventPublisher;
+    private final UserRepository repository;
+    private final EventPublisher publisher;
 
-    public UpdateProfileService(UserRepository userRepository, EventPublisher eventPublisher) {
-        this.userRepository = Objects.requireNonNull(
-                userRepository, "UserRepository ne peut pas être null"
+    public UpdateProfileService(UserRepository repository, EventPublisher publisher) {
+        this.repository = Objects.requireNonNull(
+                repository, "UserRepository ne peut pas être null"
         );
 
-        this.eventPublisher = Objects.requireNonNull(
-                eventPublisher, "EventPublisher ne peut pas être null"
+        this.publisher = Objects.requireNonNull(
+                publisher, "EventPublisher ne peut pas être null"
         );
     }
 
     @Override
     public void update(UpdateProfileCommand command) {
         UserId id = UserId.from(command.userId());
-
-        User foundUser = userRepository.findById(id)
-                .orElseThrow(() -> new UserNotFoundException(id));
-
+        User user = repository.findById(id).orElseThrow(() -> new UserNotFoundException(id));
         FirstName firstName = FirstName.of(command.firstName());
         LastName lastName = LastName.of(command.lastName());
-        foundUser.updateProfile(firstName, lastName, command.avatar());
-        userRepository.save(foundUser);
-        eventPublisher.publish(foundUser.pullDomainEvents());
+        user.updateProfile(firstName, lastName, command.avatar());
+        repository.save(user);
+        publisher.publish(user.pullDomainEvents());
     }
 }
