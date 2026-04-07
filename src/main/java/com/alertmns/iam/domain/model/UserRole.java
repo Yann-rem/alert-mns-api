@@ -1,6 +1,6 @@
 package com.alertmns.iam.domain.model;
 
-public enum Role {
+public enum UserRole {
     USER,
     MANAGER,
     ADMIN

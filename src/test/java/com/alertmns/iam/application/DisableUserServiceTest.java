@@ -6,7 +6,7 @@ import com.alertmns.iam.domain.model.FirstName;
 import com.alertmns.iam.domain.model.HashedPassword;
 import com.alertmns.iam.domain.model.LastName;
 import com.alertmns.iam.domain.model.Profile;
-import com.alertmns.iam.domain.model.Role;
+import com.alertmns.iam.domain.model.UserRole;
 import com.alertmns.iam.domain.model.User;
 import com.alertmns.iam.domain.model.UserId;
 import com.alertmns.iam.domain.model.UserStatus;
@@ -65,7 +65,7 @@ class DisableUserServiceTest {
                     ),
 
                     Profile.of(FirstName.of("John"), LastName.of("Doe")),
-                    Role.USER,
+                    UserRole.USER,
                     UserStatus.ACTIVE,
                     Instant.now()
             );

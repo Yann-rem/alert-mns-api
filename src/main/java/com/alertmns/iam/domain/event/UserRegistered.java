@@ -1,7 +1,7 @@
 package com.alertmns.iam.domain.event;
 
 import com.alertmns.iam.domain.model.Email;
-import com.alertmns.iam.domain.model.Role;
+import com.alertmns.iam.domain.model.UserRole;
 import com.alertmns.iam.domain.model.UserId;
 import com.alertmns.shared.DomainEvent;
 
@@ -16,10 +16,10 @@ public final class UserRegistered implements DomainEvent {
 
     private final UserId userId;
     private final Email email;
-    private final Role role;
+    private final UserRole role;
     private final Instant occurredOn;
 
-    public UserRegistered(UserId userId, Email email, Role role) {
+    public UserRegistered(UserId userId, Email email, UserRole role) {
         this.userId = userId;
         this.email = email;
         this.role = role;
@@ -34,7 +34,7 @@ public final class UserRegistered implements DomainEvent {
         return email;
     }
 
-    public Role role() {
+    public UserRole role() {
         return role;
     }
 

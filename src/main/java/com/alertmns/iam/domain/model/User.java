@@ -20,7 +20,7 @@ public final class User extends AggregateRoot {
     private final Email email;
     private final HashedPassword hashedPassword;
     private Profile profile;
-    private final Role role;
+    private final UserRole role;
     private UserStatus status;
     private final Instant createdAt;
 
@@ -29,7 +29,7 @@ public final class User extends AggregateRoot {
             Email email,
             HashedPassword hashedPassword,
             Profile profile,
-            Role role,
+            UserRole role,
             UserStatus status,
             Instant createdAt
     ) {
@@ -52,7 +52,7 @@ public final class User extends AggregateRoot {
                 email,
                 hashedPassword,
                 profile,
-                Role.USER,
+                UserRole.USER,
                 UserStatus.PENDING,
                 Instant.now()
         );
@@ -66,7 +66,7 @@ public final class User extends AggregateRoot {
             Email email,
             HashedPassword hashedPassword,
             Profile profile,
-            Role role,
+            UserRole role,
             UserStatus status,
             Instant createdAt
     ) {
@@ -139,7 +139,7 @@ public final class User extends AggregateRoot {
         return profile;
     }
 
-    public Role role() {
+    public UserRole role() {
         return role;
     }
 

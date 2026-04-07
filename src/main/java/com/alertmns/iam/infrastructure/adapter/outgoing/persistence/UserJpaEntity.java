@@ -1,6 +1,6 @@
 package com.alertmns.iam.infrastructure.adapter.outgoing.persistence;
 
-import com.alertmns.iam.domain.model.Role;
+import com.alertmns.iam.domain.model.UserRole;
 import com.alertmns.iam.domain.model.UserStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -49,7 +49,7 @@ public class UserJpaEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 10)
-    private Role role;
+    private UserRole role;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 10)

@@ -34,7 +34,7 @@ class UserTest {
             Profile profile = Profile.of(FirstName.of("John"), LastName.of("Doe"));
             User user = User.register(email, hashedPassword, profile);
             assertEquals(UserStatus.PENDING, user.status());
-            assertEquals(Role.USER, user.role());
+            assertEquals(UserRole.USER, user.role());
             assertNotNull(user.id());
             assertNotNull(user.createdAt());
         }
@@ -50,14 +50,14 @@ class UserTest {
 
             User user = User.reconstitute(
                     id, email, hashedPassword, profile,
-                    Role.ADMIN, UserStatus.ACTIVE, createdAt
+                    UserRole.ADMIN, UserStatus.ACTIVE, createdAt
             );
 
             assertEquals(id, user.id());
             assertEquals(email, user.email());
             assertEquals(hashedPassword, user.hashedPassword());
             assertEquals(profile, user.profile());
-            assertEquals(Role.ADMIN, user.role());
+            assertEquals(UserRole.ADMIN, user.role());
             assertEquals(UserStatus.ACTIVE, user.status());
             assertEquals(createdAt, user.createdAt());
         }
@@ -200,7 +200,7 @@ class UserTest {
             UserRegistered event = assertInstanceOf(UserRegistered.class, events.getFirst());
             assertEquals(user.id(), event.userId());
             assertEquals(user.email(), event.email());
-            assertEquals(Role.USER, event.role());
+            assertEquals(UserRole.USER, event.role());
         }
 
         @Test
@@ -284,12 +284,12 @@ class UserTest {
 
             User user1 = User.reconstitute(
                     id, email, hashedPassword, profile,
-                    Role.ADMIN, UserStatus.ACTIVE, createdAt
+                    UserRole.ADMIN, UserStatus.ACTIVE, createdAt
             );
 
             User user2 = User.reconstitute(
                     id, email, hashedPassword, profile,
-                    Role.ADMIN, UserStatus.ACTIVE, createdAt
+                    UserRole.ADMIN, UserStatus.ACTIVE, createdAt
             );
 
             assertEquals(user1, user2);
