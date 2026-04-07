@@ -9,8 +9,8 @@ public final class AbsenceMessage {
 
     private AbsenceMessage(String content, boolean active) {
         Objects.requireNonNull(content, "content must not be null");
-        // TODO : trim le contenu ou pas ?
-        if (content.isBlank()) {
+        String normalized = content.trim();
+        if (normalized.isEmpty()) {
             throw new IllegalArgumentException("content must not be blank");
         }
         this.content = content;
