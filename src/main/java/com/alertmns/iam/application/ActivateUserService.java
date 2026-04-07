@@ -15,7 +15,7 @@ import java.util.Objects;
  * Orchestre le processus d'activation : chargement de l’agrégat, logique métier,
  * persistance et publication des événements du domaine.
  */
-public class ActivateUserService implements ActivateUserUseCase {
+final public class ActivateUserService implements ActivateUserUseCase {
 
     private final UserRepository repository;
     private final EventPublisher publisher;

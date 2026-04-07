@@ -20,7 +20,7 @@ import java.util.Objects;
  * Orchestre le processus d'inscription : validation, logique métier,
  * persistance et publication des événements du domaine.
  */
-public class RegisterUserService implements RegisterUserUseCase {
+final public class RegisterUserService implements RegisterUserUseCase {
 
     private final UserRepository repository;
     private final AuthenticationPort authentication;

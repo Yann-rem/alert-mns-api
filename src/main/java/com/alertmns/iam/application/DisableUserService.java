@@ -15,7 +15,7 @@ import java.util.Objects;
  * Orchestre le processus de désactivation : chargement de l’agrégat, logique métier,
  * persistance et publication des événements du domaine.
  */
-public class DisableUserService implements DisableUserUseCase {
+final public class DisableUserService implements DisableUserUseCase {
 
     private final UserRepository repository;
     private final EventPublisher publisher;

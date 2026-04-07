@@ -17,7 +17,7 @@ import java.util.Objects;
  * Orchestre le processus de mise à jour : chargement de l’agrégat, logique métier,
  * persistance et publication des événements du domaine.
  */
-public class UpdateProfileService implements UpdateProfileUseCase {
+final public class UpdateProfileService implements UpdateProfileUseCase {
 
     private final UserRepository repository;
     private final EventPublisher publisher;

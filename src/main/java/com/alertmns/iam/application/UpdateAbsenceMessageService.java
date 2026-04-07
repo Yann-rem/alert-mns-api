@@ -16,7 +16,7 @@ import java.util.Objects;
  * Orchestre le processus de mise à jour : chargement de l’agrégat, logique métier,
  * persistance et publication des événements du domaine.
  */
-public class UpdateAbsenceMessageService implements UpdateAbsenceMessageUseCase {
+final public class UpdateAbsenceMessageService implements UpdateAbsenceMessageUseCase {
 
     private final UserRepository repository;
     private final EventPublisher publisher;
