@@ -26,16 +26,16 @@ import static org.mockito.Mockito.when;
 class RegisterUserServiceTest {
 
     @Mock
-    UserRepository userRepository;
+    UserRepository repository;
 
     @Mock
-    AuthenticationPort authenticationPort;
+    AuthenticationPort authentication;
 
     @Mock
-    EventPublisher eventPublisher;
+    EventPublisher publisher;
 
     @InjectMocks
-    RegisterUserService registerUserService;
+    RegisterUserService service;
 
     @Nested
     @DisplayName("Registration")
@@ -44,8 +44,8 @@ class RegisterUserServiceTest {
         @Test
         @DisplayName("should register a user successfully")
         void shouldRegisterAUserSuccessfully() {
-            when(userRepository.existsByEmail(any())).thenReturn(false);
-            when(authenticationPort.hashPassword(any())).thenReturn(
+            when(repository.existsByEmail(any())).thenReturn(false);
+            when(authentication.hashPassword(any())).thenReturn(
                     "$2a$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012345"
             );
 
@@ -56,15 +56,15 @@ class RegisterUserServiceTest {
                     "Doe"
             );
 
-            registerUserService.register(command);
-            verify(userRepository).save(any(User.class));
-            verify(eventPublisher).publish(anyList());
+            service.register(command);
+            verify(repository).save(any(User.class));
+            verify(publisher).publish(anyList());
         }
 
         @Test
         @DisplayName("should throw EmailAlreadyExistsException when email already exists")
         void shouldThrowEmailAlreadyExistsExceptionWhenEmailAlreadyExists() {
-            when(userRepository.existsByEmail(any())).thenReturn(true);
+            when(repository.existsByEmail(any())).thenReturn(true);
 
             RegisterUserCommand command = new RegisterUserCommand(
                     "johndoe@example.com",
@@ -73,9 +73,9 @@ class RegisterUserServiceTest {
                     "Doe"
             );
 
-            assertThrows(EmailAlreadyExistsException.class, () -> registerUserService.register(command));
-            verify(userRepository, never()).save(any());
-            verify(eventPublisher, never()).publish(anyList());
+            assertThrows(EmailAlreadyExistsException.class, () -> service.register(command));
+            verify(repository, never()).save(any());
+            verify(publisher, never()).publish(anyList());
         }
     }
 
@@ -84,24 +84,24 @@ class RegisterUserServiceTest {
     class Invariants {
 
         @Test
-        @DisplayName("should reject null userRepository")
+        @DisplayName("should reject null repository")
         void shouldRejectNullUserRepository() {
             assertThrows(NullPointerException.class,
-                    () -> new RegisterUserService(null, authenticationPort, eventPublisher));
+                    () -> new RegisterUserService(null, authentication, publisher));
         }
 
         @Test
-        @DisplayName("should reject null authenticationPort")
+        @DisplayName("should reject null authentication")
         void shouldRejectNullAuthenticationPort() {
             assertThrows(NullPointerException.class,
-                    () -> new RegisterUserService(userRepository, null, eventPublisher));
+                    () -> new RegisterUserService(repository, null, publisher));
         }
 
         @Test
-        @DisplayName("should reject null eventPublisher")
+        @DisplayName("should reject null publisher")
         void shouldRejectNullEventPublisher() {
             assertThrows(NullPointerException.class,
-                    () -> new RegisterUserService(userRepository, authenticationPort, null));
+                    () -> new RegisterUserService(repository, authentication, null));
         }
     }
 }

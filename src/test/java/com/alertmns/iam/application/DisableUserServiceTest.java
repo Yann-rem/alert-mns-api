@@ -37,27 +37,27 @@ import static org.mockito.Mockito.when;
 class DisableUserServiceTest {
 
     @Mock
-    UserRepository userRepository;
+    UserRepository repository;
 
     @Mock
-    EventPublisher eventPublisher;
+    EventPublisher publisher;
 
     @InjectMocks
-    DisableUserService disableUserService;
+    DisableUserService service;
 
     @Nested
     @DisplayName("Disable")
     class Disable {
 
-        private UserId userId;
+        private UserId id;
         private User activeUser;
 
         @BeforeEach
         void setUp() {
-            userId = UserId.generate();
+            id = UserId.generate();
 
             activeUser = User.reconstitute(
-                    userId,
+                    id,
                     Email.of("johndoe@example.com"),
 
                     HashedPassword.of(
@@ -74,21 +74,21 @@ class DisableUserServiceTest {
         @Test
         @DisplayName("should disable a user")
         void shouldDisableAUser() {
-            when(userRepository.findById(any())).thenReturn(Optional.of(activeUser));
-            DisableUserCommand command = new DisableUserCommand(userId.value().toString());
-            disableUserService.disable(command);
-            verify(userRepository).save(any(User.class));
-            verify(eventPublisher).publish(anyList());
+            when(repository.findById(any())).thenReturn(Optional.of(activeUser));
+            DisableUserCommand command = new DisableUserCommand(id.value().toString());
+            service.disable(command);
+            verify(repository).save(any(User.class));
+            verify(publisher).publish(anyList());
         }
 
         @Test
         @DisplayName("should throw UserNotFoundException when user not found")
         void shouldThrowUserNotFoundExceptionWhenUserNotFound() {
-            when(userRepository.findById(any())).thenReturn(Optional.empty());
-            DisableUserCommand command = new DisableUserCommand(userId.value().toString());
-            assertThrows(UserNotFoundException.class, () -> disableUserService.disable(command));
-            verify(userRepository, never()).save(any());
-            verify(eventPublisher, never()).publish(anyList());
+            when(repository.findById(any())).thenReturn(Optional.empty());
+            DisableUserCommand command = new DisableUserCommand(id.value().toString());
+            assertThrows(UserNotFoundException.class, () -> service.disable(command));
+            verify(repository, never()).save(any());
+            verify(publisher, never()).publish(anyList());
         }
 
         @Test
@@ -104,11 +104,11 @@ class DisableUserServiceTest {
                     Instant.now()
             );
 
-            when(userRepository.findById(any())).thenReturn(Optional.of(pendingUser));
-            DisableUserCommand command = new DisableUserCommand(userId.value().toString());
-            assertThrows(IllegalStateException.class, () -> disableUserService.disable(command));
-            verify(userRepository, never()).save(any());
-            verify(eventPublisher, never()).publish(anyList());
+            when(repository.findById(any())).thenReturn(Optional.of(pendingUser));
+            DisableUserCommand command = new DisableUserCommand(id.value().toString());
+            assertThrows(IllegalStateException.class, () -> service.disable(command));
+            verify(repository, never()).save(any());
+            verify(publisher, never()).publish(anyList());
         }
     }
 
@@ -117,17 +117,17 @@ class DisableUserServiceTest {
     class Invariants {
 
         @Test
-        @DisplayName("should reject null userRepository")
+        @DisplayName("should reject null repository")
         void shouldRejectNullUserRepository() {
             assertThrows(NullPointerException.class,
-                    () -> new DisableUserService(null, eventPublisher));
+                    () -> new DisableUserService(null, publisher));
         }
 
         @Test
-        @DisplayName("should reject null eventPublisher")
+        @DisplayName("should reject null publisher")
         void shouldRejectNullEventPublisher() {
             assertThrows(NullPointerException.class,
-                    () -> new DisableUserService(userRepository, null));
+                    () -> new DisableUserService(repository, null));
         }
     }
 }

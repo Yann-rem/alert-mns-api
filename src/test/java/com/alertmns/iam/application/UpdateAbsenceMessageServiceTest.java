@@ -37,27 +37,27 @@ import static org.mockito.Mockito.when;
 class UpdateAbsenceMessageServiceTest {
 
     @Mock
-    UserRepository userRepository;
+    UserRepository repository;
 
     @Mock
-    EventPublisher eventPublisher;
+    EventPublisher publisher;
 
     @InjectMocks
-    UpdateAbsenceMessageService updateAbsenceMessageService;
+    UpdateAbsenceMessageService service;
 
     @Nested
     @DisplayName("Update")
     class Update {
 
-        private UserId userId;
+        private UserId id;
         private User user;
 
         @BeforeEach
         void setUp() {
-            userId = UserId.generate();
+            id = UserId.generate();
 
             user = User.reconstitute(
-                    userId,
+                    id,
                     Email.of("johndoe@example.com"),
 
                     HashedPassword.of(
@@ -74,7 +74,7 @@ class UpdateAbsenceMessageServiceTest {
         @Test
         @DisplayName("should update an absence message")
         void shouldUpdateAnAbsenceMessage() {
-            when(userRepository.findById(any())).thenReturn(Optional.of(user));
+            when(repository.findById(any())).thenReturn(Optional.of(user));
 
             UpdateAbsenceMessageCommand command = new UpdateAbsenceMessageCommand(
                     user.id().value().toString(),
@@ -82,15 +82,15 @@ class UpdateAbsenceMessageServiceTest {
                     true
             );
 
-            updateAbsenceMessageService.updateAbsenceMessage(command);
-            verify(userRepository).save(any(User.class));
-            verify(eventPublisher).publish(anyList());
+            service.updateAbsenceMessage(command);
+            verify(repository).save(any(User.class));
+            verify(publisher).publish(anyList());
         }
 
         @Test
         @DisplayName("should throw UserNotFoundException when user not found")
         void shouldThrowUserNotFoundExceptionWhenUserNotFound() {
-            when(userRepository.findById(any())).thenReturn(Optional.empty());
+            when(repository.findById(any())).thenReturn(Optional.empty());
 
             UpdateAbsenceMessageCommand command = new UpdateAbsenceMessageCommand(
                     user.id().value().toString(),
@@ -99,10 +99,10 @@ class UpdateAbsenceMessageServiceTest {
             );
 
             assertThrows(UserNotFoundException.class,
-                    () -> updateAbsenceMessageService.updateAbsenceMessage(command));
+                    () -> service.updateAbsenceMessage(command));
 
-            verify(userRepository, never()).save(any());
-            verify(eventPublisher, never()).publish(anyList());
+            verify(repository, never()).save(any());
+            verify(publisher, never()).publish(anyList());
         }
     }
 
@@ -111,17 +111,17 @@ class UpdateAbsenceMessageServiceTest {
     class Invariants {
 
         @Test
-        @DisplayName("should reject null userRepository")
+        @DisplayName("should reject null repository")
         void shouldRejectNullUserRepository() {
             assertThrows(NullPointerException.class,
-                    () -> new UpdateAbsenceMessageService(null, eventPublisher));
+                    () -> new UpdateAbsenceMessageService(null, publisher));
         }
 
         @Test
-        @DisplayName("should reject null eventPublisher")
+        @DisplayName("should reject null publisher")
         void shouldRejectNullEventPublisher() {
             assertThrows(NullPointerException.class,
-                    () -> new UpdateAbsenceMessageService(userRepository, null));
+                    () -> new UpdateAbsenceMessageService(repository, null));
         }
     }
 }

@@ -37,27 +37,27 @@ import static org.mockito.Mockito.when;
 class UpdateProfileServiceTest {
 
     @Mock
-    UserRepository userRepository;
+    UserRepository repository;
 
     @Mock
-    EventPublisher eventPublisher;
+    EventPublisher publisher;
 
     @InjectMocks
-    UpdateProfileService updateProfileService;
+    UpdateProfileService service;
 
     @Nested
     @DisplayName("Update")
     class Update {
 
-        private UserId userId;
+        private UserId id;
         private User user;
 
         @BeforeEach
         void setUp() {
-            userId = UserId.generate();
+            id = UserId.generate();
 
             user = User.reconstitute(
-                    userId,
+                    id,
                     Email.of("johndoe@example.com"),
 
                     HashedPassword.of(
@@ -74,7 +74,7 @@ class UpdateProfileServiceTest {
         @Test
         @DisplayName("should update a user profile")
         void shouldUpdateAUserProfile() {
-            when(userRepository.findById(any())).thenReturn(Optional.of(user));
+            when(repository.findById(any())).thenReturn(Optional.of(user));
 
             UpdateProfileCommand command = new UpdateProfileCommand(
                     user.id().value().toString(),
@@ -83,15 +83,15 @@ class UpdateProfileServiceTest {
                     "https://cdn.example.com/avatar.jpg"
             );
 
-            updateProfileService.update(command);
-            verify(userRepository).save(any(User.class));
-            verify(eventPublisher).publish(anyList());
+            service.update(command);
+            verify(repository).save(any(User.class));
+            verify(publisher).publish(anyList());
         }
 
         @Test
         @DisplayName("should throw UserNotFoundException when user not found")
         void shouldThrowUserNotFoundExceptionWhenUserNotFound() {
-            when(userRepository.findById(any())).thenReturn(Optional.empty());
+            when(repository.findById(any())).thenReturn(Optional.empty());
 
             UpdateProfileCommand command = new UpdateProfileCommand(
                     user.id().value().toString(),
@@ -101,10 +101,10 @@ class UpdateProfileServiceTest {
             );
 
             assertThrows(UserNotFoundException.class,
-                    () -> updateProfileService.update(command));
+                    () -> service.update(command));
 
-            verify(userRepository, never()).save(any());
-            verify(eventPublisher, never()).publish(anyList());
+            verify(repository, never()).save(any());
+            verify(publisher, never()).publish(anyList());
         }
     }
 
@@ -113,17 +113,17 @@ class UpdateProfileServiceTest {
     class Invariants {
 
         @Test
-        @DisplayName("should reject null userRepository")
+        @DisplayName("should reject null repository")
         void shouldRejectNullUserRepository() {
             assertThrows(NullPointerException.class,
-                    () -> new UpdateProfileService(null, eventPublisher));
+                    () -> new UpdateProfileService(null, publisher));
         }
 
         @Test
-        @DisplayName("should reject null eventPublisher")
+        @DisplayName("should reject null publisher")
         void shouldRejectNullEventPublisher() {
             assertThrows(NullPointerException.class,
-                    () -> new UpdateProfileService(userRepository, null));
+                    () -> new UpdateProfileService(repository, null));
         }
     }
 }
