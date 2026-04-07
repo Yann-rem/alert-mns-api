@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @DisplayName("User")
 class UserTest {
 
-    private static final String BCRYPT_HASH =
+    static final String BCRYPT_HASH =
             "$2a$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012345";
 
     @Nested
@@ -99,7 +99,7 @@ class UserTest {
     @DisplayName("Behaviour")
     class Behaviour {
 
-        private User user;
+        User user;
 
         @BeforeEach
         void setUp() {
@@ -182,7 +182,7 @@ class UserTest {
     @DisplayName("Domain Events")
     class DomainEvents {
 
-        private User user;
+        User user;
 
         @BeforeEach
         void setUp() {

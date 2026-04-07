@@ -49,8 +49,8 @@ class ActivateUserServiceTest {
     @DisplayName("Activation")
     class Activation {
 
-        private UserId id;
-        private User pendingUser;
+        UserId id;
+        User pendingUser;
 
         @BeforeEach
         void setUp() {

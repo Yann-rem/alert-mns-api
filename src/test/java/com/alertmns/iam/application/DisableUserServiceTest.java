@@ -49,8 +49,8 @@ class DisableUserServiceTest {
     @DisplayName("Disable")
     class Disable {
 
-        private UserId id;
-        private User activeUser;
+        UserId id;
+        User activeUser;
 
         @BeforeEach
         void setUp() {

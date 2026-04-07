@@ -9,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @DisplayName("HashedPassword")
 class HashedPasswordTest {
 
-    private static final String BCRYPT_HASH =
+    static final String BCRYPT_HASH =
             "$2a$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012345";
 
     @Nested

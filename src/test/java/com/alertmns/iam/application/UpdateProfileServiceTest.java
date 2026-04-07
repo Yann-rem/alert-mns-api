@@ -49,8 +49,8 @@ class UpdateProfileServiceTest {
     @DisplayName("Update")
     class Update {
 
-        private UserId id;
-        private User user;
+        UserId id;
+        User user;
 
         @BeforeEach
         void setUp() {
