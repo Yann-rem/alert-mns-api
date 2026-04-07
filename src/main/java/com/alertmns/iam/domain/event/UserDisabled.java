@@ -43,6 +43,9 @@ public final class UserDisabled implements DomainEvent {
 
     @Override
     public String toString() {
-        return userId + " " + occurredOn;
+        return "UserDisabled{" +
+                "userId=" + userId +
+                ", occurredOn=" + occurredOn +
+                '}';
     }
 }

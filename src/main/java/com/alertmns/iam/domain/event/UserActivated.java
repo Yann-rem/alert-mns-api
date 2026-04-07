@@ -43,6 +43,9 @@ public final class UserActivated implements DomainEvent {
 
     @Override
     public String toString() {
-        return userId + " " + occurredOn;
+        return "UserActivated{" +
+                "userId=" + userId +
+                ", occurredOn=" + occurredOn +
+                '}';
     }
 }

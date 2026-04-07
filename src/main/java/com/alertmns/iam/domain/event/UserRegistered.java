@@ -60,6 +60,11 @@ public final class UserRegistered implements DomainEvent {
 
     @Override
     public String toString() {
-        return userId + " " + email + " " + role + " " + occurredOn;
+        return "UserRegistered{" +
+                "userId=" + userId +
+                ", email=" + email +
+                ", role=" + role +
+                ", occurredOn=" + occurredOn +
+                '}';
     }
 }

@@ -92,6 +92,9 @@ public final class Profile {
 
     @Override
     public String toString() {
-        return firstName + " " + lastName;
+        return "Profile{" +
+                "firstName=" + firstName +
+                ", lastName=" + lastName +
+                '}';
     }
 }
