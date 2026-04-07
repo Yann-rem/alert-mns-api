@@ -26,16 +26,16 @@ import static org.mockito.Mockito.when;
 class RegisterUserServiceTest {
 
     @Mock
-    private UserRepository userRepository;
+    UserRepository userRepository;
 
     @Mock
-    private AuthenticationPort authenticationPort;
+    AuthenticationPort authenticationPort;
 
     @Mock
-    private EventPublisher eventPublisher;
+    EventPublisher eventPublisher;
 
     @InjectMocks
-    private RegisterUserService registerUserService;
+    RegisterUserService registerUserService;
 
     @Nested
     @DisplayName("Registration")

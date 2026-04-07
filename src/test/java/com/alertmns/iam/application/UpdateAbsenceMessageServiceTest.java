@@ -37,13 +37,13 @@ import static org.mockito.Mockito.when;
 class UpdateAbsenceMessageServiceTest {
 
     @Mock
-    private UserRepository userRepository;
+    UserRepository userRepository;
 
     @Mock
-    private EventPublisher eventPublisher;
+    EventPublisher eventPublisher;
 
     @InjectMocks
-    private UpdateAbsenceMessageService updateAbsenceMessageService;
+    UpdateAbsenceMessageService updateAbsenceMessageService;
 
     @Nested
     @DisplayName("Update")

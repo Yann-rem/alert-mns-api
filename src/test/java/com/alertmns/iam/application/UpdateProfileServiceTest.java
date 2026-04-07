@@ -37,13 +37,13 @@ import static org.mockito.Mockito.when;
 class UpdateProfileServiceTest {
 
     @Mock
-    private UserRepository userRepository;
+    UserRepository userRepository;
 
     @Mock
-    private EventPublisher eventPublisher;
+    EventPublisher eventPublisher;
 
     @InjectMocks
-    private UpdateProfileService updateProfileService;
+    UpdateProfileService updateProfileService;
 
     @Nested
     @DisplayName("Update")
