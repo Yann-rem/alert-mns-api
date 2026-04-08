@@ -64,10 +64,10 @@ public class UserController {
                     @ApiResponse(responseCode = "404", description = "Utilisateur introuvable")
             }
     )
-    @PostMapping("/{userId}/activate")
+    @PostMapping("/{id}/activate")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void activate(@Parameter(description = "Identifiant de l'utilisateur") @PathVariable String userId) {
-        activateUserUseCase.activate(new ActivateUserCommand(userId));
+    public void activate(@Parameter(description = "Identifiant de l'utilisateur") @PathVariable String id) {
+        activateUserUseCase.activate(new ActivateUserCommand(id));
     }
 
     @Operation(
@@ -78,10 +78,10 @@ public class UserController {
                     @ApiResponse(responseCode = "404", description = "Utilisateur introuvable")
             }
     )
-    @PostMapping("/{userId}/disable")
+    @PostMapping("/{id}/disable")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void disable(@Parameter(description = "Identifiant de l'utilisateur") @PathVariable String userId) {
-        disableUserUseCase.disable(new DisableUserCommand(userId));
+    public void disable(@Parameter(description = "Identifiant de l'utilisateur") @PathVariable String id) {
+        disableUserUseCase.disable(new DisableUserCommand(id));
     }
 
     @Operation(
@@ -93,13 +93,13 @@ public class UserController {
                     @ApiResponse(responseCode = "404", description = "Utilisateur introuvable")
             }
     )
-    @PutMapping("/{userId}/profile")
+    @PutMapping("/{id}/profile")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updateProfile(
-            @Parameter(description = "Identifiant de l'utilisateur") @PathVariable String userId,
+            @Parameter(description = "Identifiant de l'utilisateur") @PathVariable String id,
             @Valid @RequestBody UpdateProfileRequest request
     ) {
-        updateProfileUseCase.update(UserWebMapper.toCommand(userId, request));
+        updateProfileUseCase.update(UserWebMapper.toCommand(id, request));
     }
 
     @Operation(
@@ -111,12 +111,12 @@ public class UserController {
                     @ApiResponse(responseCode = "404", description = "Utilisateur introuvable")
             }
     )
-    @PutMapping("/{userId}/absence-message")
+    @PutMapping("/{id}/absence-message")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updateAbsenceMessage(
-            @Parameter(description = "Identifiant de l'utilisateur") @PathVariable String userId,
+            @Parameter(description = "Identifiant de l'utilisateur") @PathVariable String id,
             @Valid @RequestBody UpdateAbsenceMessageRequest request
     ) {
-        updateAbsenceMessageUseCase.update(UserWebMapper.toCommand(userId, request));
+        updateAbsenceMessageUseCase.update(UserWebMapper.toCommand(id, request));
     }
 }
