@@ -131,8 +131,6 @@ public final class User extends AggregateRoot {
         registerEvent(new AbsenceMessageUpdated(id));
     }
 
-    // TODO : ajouter la personne responsable de l'activation.
-
     /**
      * Active un compte en attente (PENDING → ACTIVE).
      *

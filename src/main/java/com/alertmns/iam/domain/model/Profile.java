@@ -45,8 +45,6 @@ public final class Profile {
                 .map(message -> new Profile(
                         firstName, lastName, avatar, Optional.of(message.activate()))
                 )
-
-                // TODO : décision métier — lever une exception ou ne rien faire en cas de message d'absence non configuré ?
                 .orElse(this);
     }
 
@@ -55,7 +53,6 @@ public final class Profile {
                 .map(message -> new Profile(
                         firstName, lastName, avatar, Optional.of(message.deactivate()))
                 )
-                // TODO : décision métier — lever une exception ou ne rien faire en cas de message d'absence non configuré ?
                 .orElse(this);
     }
 

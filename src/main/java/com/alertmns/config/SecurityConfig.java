@@ -8,7 +8,6 @@ import org.springframework.security.web.SecurityFilterChain;
 
 /**
  * Configuration Spring Security temporaire.
- * TODO : implémenter la sécurité JWT pour la production.
  */
 @Configuration
 @EnableWebSecurity
