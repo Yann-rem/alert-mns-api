@@ -11,7 +11,6 @@ import java.util.List;
  * récupérés et vidés par {@link #pullDomainEvents()}, typiquement par le service
  * applicatif après la sauvegarde de l'agrégat.</p>
  */
-
 public abstract class AggregateRoot {
 
     private final List<DomainEvent> domainEvents = new ArrayList<>();
