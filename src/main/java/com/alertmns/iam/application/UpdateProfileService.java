@@ -13,9 +13,9 @@ import com.alertmns.iam.domain.port.outgoing.UserRepository;
 import java.util.Objects;
 
 /**
- * Service applicatif pour la mise à jour du profil d’un utilisateur.
- * Orchestre le processus de mise à jour : chargement de l’agrégat, logique métier,
- * persistance et publication des événements du domaine.
+ * Service applicatif représentant l’orchestration de la mise à jour du profil d’un utilisateur.
+ *
+ * <p>Charge l’agrégat → met à jour le profil → persiste → publie les événements.</p>
  */
 final public class UpdateProfileService implements UpdateProfileUseCase {
 

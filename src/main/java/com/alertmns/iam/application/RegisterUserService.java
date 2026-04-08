@@ -17,9 +17,9 @@ import com.alertmns.iam.domain.port.outgoing.UserRepository;
 import java.util.Objects;
 
 /**
- * Service applicatif pour l'inscription des utilisateurs.
- * Orchestre le processus d'inscription : validation, logique métier,
- * persistance et publication des événements du domaine.
+ * Service applicatif représentant l'orchestration de l'inscription des utilisateurs.
+ *
+ * <p>Valide → crée les VO → persiste → publie les événements.</p>
  */
 final public class RegisterUserService implements RegisterUserUseCase {
 

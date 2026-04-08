@@ -11,9 +11,9 @@ import com.alertmns.iam.domain.port.outgoing.UserRepository;
 import java.util.Objects;
 
 /**
- * Service applicatif pour l'activation des utilisateurs.
- * Orchestre le processus d'activation : chargement de l’agrégat, logique métier,
- * persistance et publication des événements du domaine.
+ * Service applicatif représentant l’orchestration de l’activation des utilisateurs.
+ *
+ * <p>Charge l’agrégat → active → persiste → publie les événements.</p>
  */
 final public class ActivateUserService implements ActivateUserUseCase {
 

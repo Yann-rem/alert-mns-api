@@ -11,9 +11,9 @@ import com.alertmns.iam.domain.port.outgoing.UserRepository;
 import java.util.Objects;
 
 /**
- * Service applicatif pour la désactivation des utilisateurs.
- * Orchestre le processus de désactivation : chargement de l’agrégat, logique métier,
- * persistance et publication des événements du domaine.
+ * Service applicatif représentant l’orchestration de la désactivation des utilisateurs.
+ *
+ * <p>Charge l’agrégat → désactive → persiste → publie les événements.</p>
  */
 final public class DisableUserService implements DisableUserUseCase {
 

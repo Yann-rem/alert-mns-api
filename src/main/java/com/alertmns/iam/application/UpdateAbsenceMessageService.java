@@ -12,9 +12,9 @@ import com.alertmns.iam.domain.port.outgoing.UserRepository;
 import java.util.Objects;
 
 /**
- * Service applicatif pour la mise à jour du message d'absence d'un utilisateur.
- * Orchestre le processus de mise à jour : chargement de l’agrégat, logique métier,
- * persistance et publication des événements du domaine.
+ * Service applicatif représentant l’orchestration de la mise à jour du message d’absence d’un utilisateur.
+ *
+ * <p>Charge l’agrégat → met à jour le message d’absence → persiste → publie les événements.</p>
  */
 final public class UpdateAbsenceMessageService implements UpdateAbsenceMessageUseCase {
 
