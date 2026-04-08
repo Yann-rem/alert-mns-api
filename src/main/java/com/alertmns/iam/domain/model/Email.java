@@ -8,6 +8,7 @@ import java.util.regex.Pattern;
  */
 public final class Email {
 
+    private static final int MAX_LENGTH = 254;
     private static final Pattern EMAIL_PATTERN =
             Pattern.compile("^[A-Za-z0-9+_.\\-]+@[A-Za-z0-9.\\-]+\\.[A-Za-z]{2,}$");
 
@@ -16,6 +17,9 @@ public final class Email {
     private Email(String value) {
         Objects.requireNonNull(value, "email must not be null");
         String normalized = value.trim().toLowerCase();
+        if (normalized.length() > MAX_LENGTH) {
+            throw new IllegalArgumentException("email must not exceed " + MAX_LENGTH + " characters");
+        }
         if (!EMAIL_PATTERN.matcher(normalized).matches()) {
             throw new IllegalArgumentException("email format is invalid: " + normalized);
         }

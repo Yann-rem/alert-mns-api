@@ -7,12 +7,16 @@ import java.util.Objects;
  */
 public final class HashedPassword {
 
+    private static final int MAX_LENGTH = 255;
     private final String value;
 
     private HashedPassword(String value) {
         Objects.requireNonNull(value, "hashedPassword must not be null");
         if (value.isBlank()) {
             throw new IllegalArgumentException("hashedPassword must not be blank");
+        }
+        if (value.length() > MAX_LENGTH) {
+            throw new IllegalArgumentException("hashedPassword must not exceed " + MAX_LENGTH + " characters");
         }
         this.value = value;
     }

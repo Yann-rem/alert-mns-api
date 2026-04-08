@@ -4,6 +4,8 @@ import java.util.Objects;
 
 public final class AbsenceMessage {
 
+    private static final int MAX_LENGTH = 500;
+
     private final String content;
     private final boolean active;
 
@@ -13,7 +15,10 @@ public final class AbsenceMessage {
         if (normalized.isEmpty()) {
             throw new IllegalArgumentException("content must not be blank");
         }
-        this.content = content;
+        if (normalized.length() > MAX_LENGTH) {
+            throw new IllegalArgumentException("content must not exceed " + MAX_LENGTH + " characters");
+        }
+        this.content = normalized;
         this.active = active;
     }
 
