@@ -7,6 +7,7 @@ import com.alertmns.iam.domain.model.HashedPassword;
 import com.alertmns.iam.domain.model.LastName;
 import com.alertmns.iam.domain.model.Profile;
 import com.alertmns.iam.domain.model.User;
+import com.alertmns.iam.domain.model.UserId;
 import com.alertmns.iam.domain.port.incoming.RegisterUserUseCase;
 import com.alertmns.iam.domain.port.incoming.command.RegisterUserCommand;
 import com.alertmns.iam.domain.port.outgoing.AuthenticationPort;
@@ -45,7 +46,7 @@ final public class RegisterUserService implements RegisterUserUseCase {
     }
 
     @Override
-    public void register(RegisterUserCommand command) {
+    public UserId register(RegisterUserCommand command) {
         Email email = Email.of(command.email());
 
         if (repository.existsByEmail(email)) {
@@ -62,5 +63,6 @@ final public class RegisterUserService implements RegisterUserUseCase {
         User user = User.register(email, hashedPassword, profile);
         repository.save(user);
         publisher.publish(user.pullDomainEvents());
+        return user.id();
     }
 }

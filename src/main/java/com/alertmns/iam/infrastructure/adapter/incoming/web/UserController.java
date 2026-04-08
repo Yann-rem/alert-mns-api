@@ -1,5 +1,6 @@
 package com.alertmns.iam.infrastructure.adapter.incoming.web;
 
+import com.alertmns.iam.domain.model.UserId;
 import com.alertmns.iam.domain.port.incoming.ActivateUserUseCase;
 import com.alertmns.iam.domain.port.incoming.DisableUserUseCase;
 import com.alertmns.iam.domain.port.incoming.RegisterUserUseCase;
@@ -8,6 +9,7 @@ import com.alertmns.iam.domain.port.incoming.UpdateProfileUseCase;
 import com.alertmns.iam.domain.port.incoming.command.ActivateUserCommand;
 import com.alertmns.iam.domain.port.incoming.command.DisableUserCommand;
 import com.alertmns.iam.infrastructure.adapter.incoming.web.dto.RegisterUserRequest;
+import com.alertmns.iam.infrastructure.adapter.incoming.web.dto.RegisterUserResponse;
 import com.alertmns.iam.infrastructure.adapter.incoming.web.dto.UpdateAbsenceMessageRequest;
 import com.alertmns.iam.infrastructure.adapter.incoming.web.dto.UpdateProfileRequest;
 import com.alertmns.iam.infrastructure.adapter.incoming.web.mapper.UserWebMapper;
@@ -35,8 +37,9 @@ public class UserController {
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
-    public void register(@Valid @RequestBody RegisterUserRequest request) {
-        registerUserUseCase.register(UserWebMapper.toCommand(request));
+    public RegisterUserResponse register(@Valid @RequestBody RegisterUserRequest request) {
+        UserId id = registerUserUseCase.register(UserWebMapper.toCommand(request));
+        return new RegisterUserResponse(id.value().toString());
     }
 
     @PostMapping("/{userId}/activate")

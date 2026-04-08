@@ -1,5 +1,6 @@
 package com.alertmns.iam.domain.port.incoming;
 
+import com.alertmns.iam.domain.model.UserId;
 import com.alertmns.iam.domain.port.incoming.command.RegisterUserCommand;
 
 /**
@@ -8,5 +9,5 @@ import com.alertmns.iam.domain.port.incoming.command.RegisterUserCommand;
  */
 public interface RegisterUserUseCase {
 
-    void register(RegisterUserCommand command);
+    UserId register(RegisterUserCommand command);
 }
