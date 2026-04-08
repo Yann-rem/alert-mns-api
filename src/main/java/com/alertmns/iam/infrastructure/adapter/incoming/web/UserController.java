@@ -13,6 +13,10 @@ import com.alertmns.iam.infrastructure.adapter.incoming.web.dto.RegisterUserResp
 import com.alertmns.iam.infrastructure.adapter.incoming.web.dto.UpdateAbsenceMessageRequest;
 import com.alertmns.iam.infrastructure.adapter.incoming.web.dto.UpdateProfileRequest;
 import com.alertmns.iam.infrastructure.adapter.incoming.web.mapper.UserWebMapper;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -27,6 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
+@Tag(name = "Users", description = "Gestion des utilisateurs")
 public class UserController {
 
     private final RegisterUserUseCase registerUserUseCase;
@@ -35,6 +40,15 @@ public class UserController {
     private final UpdateProfileUseCase updateProfileUseCase;
     private final UpdateAbsenceMessageUseCase updateAbsenceMessageUseCase;
 
+    @Operation(
+            summary = "Inscrire un nouvel utilisateur",
+            description = "Crée un compte utilisateur avec le statut PENDING, en attente d'activation par un administrateur.",
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "Utilisateur inscrit avec succès"),
+                    @ApiResponse(responseCode = "400", description = "Données invalides"),
+                    @ApiResponse(responseCode = "409", description = "Email déjà utilisé")
+            }
+    )
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
     public RegisterUserResponse register(@Valid @RequestBody RegisterUserRequest request) {
@@ -42,31 +56,65 @@ public class UserController {
         return new RegisterUserResponse(id.value().toString());
     }
 
+    @Operation(
+            summary = "Activer un utilisateur",
+            description = "Passe le statut d'un utilisateur de PENDING à ACTIVE.",
+            responses = {
+                    @ApiResponse(responseCode = "204", description = "Utilisateur activé avec succès"),
+                    @ApiResponse(responseCode = "404", description = "Utilisateur introuvable")
+            }
+    )
     @PostMapping("/{userId}/activate")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void activate(@PathVariable String userId) {
+    public void activate(@Parameter(description = "Identifiant de l'utilisateur") @PathVariable String userId) {
         activateUserUseCase.activate(new ActivateUserCommand(userId));
     }
 
+    @Operation(
+            summary = "Désactiver un utilisateur",
+            description = "Passe le statut d'un utilisateur de ACTIVE à DISABLED.",
+            responses = {
+                    @ApiResponse(responseCode = "204", description = "Utilisateur désactivé avec succès"),
+                    @ApiResponse(responseCode = "404", description = "Utilisateur introuvable")
+            }
+    )
     @PostMapping("/{userId}/disable")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void disable(@PathVariable String userId) {
+    public void disable(@Parameter(description = "Identifiant de l'utilisateur") @PathVariable String userId) {
         disableUserUseCase.disable(new DisableUserCommand(userId));
     }
 
+    @Operation(
+            summary = "Mettre à jour le profil",
+            description = "Met à jour le prénom, le nom et l'avatar d'un utilisateur.",
+            responses = {
+                    @ApiResponse(responseCode = "204", description = "Profil mis à jour avec succès"),
+                    @ApiResponse(responseCode = "400", description = "Données invalides"),
+                    @ApiResponse(responseCode = "404", description = "Utilisateur introuvable")
+            }
+    )
     @PutMapping("/{userId}/profile")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updateProfile(
-            @PathVariable String userId,
+            @Parameter(description = "Identifiant de l'utilisateur") @PathVariable String userId,
             @Valid @RequestBody UpdateProfileRequest request
     ) {
         updateProfileUseCase.update(UserWebMapper.toCommand(userId, request));
     }
 
+    @Operation(
+            summary = "Mettre à jour le message d'absence",
+            description = "Met à jour le contenu et le statut d'activation du message d'absence d'un utilisateur.",
+            responses = {
+                    @ApiResponse(responseCode = "204", description = "Message d'absence mis à jour avec succès"),
+                    @ApiResponse(responseCode = "400", description = "Données invalides"),
+                    @ApiResponse(responseCode = "404", description = "Utilisateur introuvable")
+            }
+    )
     @PutMapping("/{userId}/absence-message")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updateAbsenceMessage(
-            @PathVariable String userId,
+            @Parameter(description = "Identifiant de l'utilisateur") @PathVariable String userId,
             @Valid @RequestBody UpdateAbsenceMessageRequest request
     ) {
         updateAbsenceMessageUseCase.update(UserWebMapper.toCommand(userId, request));
