@@ -7,8 +7,9 @@ import java.time.Instant;
 import java.util.Objects;
 
 /**
- * Émis lorsqu'un administrateur désactive un compte utilisateur.
- * Le compte passe du statut ACTIVE à DISABLED.
+ * Événement de domaine représentant la désactivation d'un compte utilisateur.
+ *
+ * <p>Le compte passe du statut ACTIVE à DISABLED.</p>
  */
 public final class UserDisabled implements DomainEvent {
 

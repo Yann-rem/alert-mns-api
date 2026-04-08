@@ -3,7 +3,7 @@ package com.alertmns.iam.domain.model;
 import java.util.Objects;
 
 /**
- * Nom d'un utilisateur.
+ * Value Object représentant le nom d'un utilisateur.
  */
 public final class LastName {
 
@@ -23,6 +23,15 @@ public final class LastName {
         this.value = normalized;
     }
 
+    /**
+     * Crée un nom à partir d'une valeur brute.
+     *
+     * <p>La valeur est normalisée (trim) avant validation.</p>
+     *
+     * @param value la valeur brute
+     * @return le nom validé
+     * @throws IllegalArgumentException si la valeur est vide ou dépasse 100 caractères
+     */
     public static LastName of(String value) {
         return new LastName(value);
     }

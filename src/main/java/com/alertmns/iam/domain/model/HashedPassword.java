@@ -3,7 +3,7 @@ package com.alertmns.iam.domain.model;
 import java.util.Objects;
 
 /**
- * Mot de passe haché d'un utilisateur.
+ * Value Object représentant le mot de passe haché d'un utilisateur.
  */
 public final class HashedPassword {
 
@@ -21,6 +21,13 @@ public final class HashedPassword {
         this.value = value;
     }
 
+    /**
+     * Crée un mot de passe haché à partir d'une valeur brute.
+     *
+     * @param value le hash du mot de passe
+     * @return le mot de passe haché validé
+     * @throws IllegalArgumentException si la valeur est vide ou dépasse 255 caractères
+     */
     public static HashedPassword of(String value) {
         return new HashedPassword(value);
     }

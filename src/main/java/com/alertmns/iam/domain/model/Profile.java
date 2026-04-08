@@ -4,7 +4,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * Profil d'un utilisateur.
+ * Value Object représentant le profil d'un utilisateur.
  */
 public final class Profile {
 
@@ -25,21 +25,47 @@ public final class Profile {
         this.absenceMessage = absenceMessage;
     }
 
+    /**
+     * Crée un profil avec un prénom et un nom.
+     *
+     * @param firstName le prénom
+     * @param lastName  le nom
+     * @return le profil créé
+     */
     public static Profile of(FirstName firstName, LastName lastName) {
         Objects.requireNonNull(firstName, "firstName must not be null");
         Objects.requireNonNull(lastName, "lastName must not be null");
         return new Profile(firstName, lastName, null, Optional.empty());
     }
 
+    /**
+     * Retourne une copie du profil avec l'avatar spécifié.
+     *
+     * @param avatar l'URL de l'avatar (nullable)
+     * @return le profil avec l'avatar
+     */
     public Profile withAvatar(String avatar) {
         return new Profile(firstName, lastName, avatar, absenceMessage);
     }
 
+    /**
+     * Retourne une copie du profil avec le message d'absence spécifié.
+     *
+     * @param absenceMessage le message d'absence
+     * @return le profil avec le message d'absence
+     */
     public Profile withAbsenceMessage(AbsenceMessage absenceMessage) {
         Objects.requireNonNull(absenceMessage, "absenceMessage must not be null");
         return new Profile(firstName, lastName, avatar, Optional.of(absenceMessage));
     }
 
+    /**
+     * Retourne une copie du profil avec le message d'absence activé.
+     *
+     * <p>Si aucun message d'absence n'est configuré, retourne le profil inchangé.</p>
+     *
+     * @return le profil avec le message d'absence activé
+     */
     public Profile activateAbsenceMessage() {
         return absenceMessage
                 .map(message -> new Profile(
@@ -48,6 +74,13 @@ public final class Profile {
                 .orElse(this);
     }
 
+    /**
+     * Retourne une copie du profil avec le message d'absence désactivé.
+     *
+     * <p>Si aucun message d'absence n'est configuré, retourne le profil inchangé.</p>
+     *
+     * @return le profil avec le message d'absence désactivé
+     */
     public Profile deactivateAbsenceMessage() {
         return absenceMessage
                 .map(message -> new Profile(

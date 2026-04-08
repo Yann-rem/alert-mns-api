@@ -9,8 +9,9 @@ import java.time.Instant;
 import java.util.Objects;
 
 /**
- * Émis lorsqu'un nouvel utilisateur s'inscrit avec succès.
- * Le compte est créé avec le statut PENDING, en attente d'activation par un administrateur.
+ * Événement de domaine représentant l'inscription d'un nouvel utilisateur.
+ *
+ * <p>Le compte est créé avec le statut PENDING, en attente d'activation par un administrateur.</p>
  */
 public final class UserRegistered implements DomainEvent {
 

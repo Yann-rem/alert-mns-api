@@ -7,8 +7,9 @@ import java.time.Instant;
 import java.util.Objects;
 
 /**
- * Émis lorsqu'un utilisateur met à jour son profil.
- * Le consommateur doit recharger l'agrégat User pour obtenir le profil mis à jour.
+ * Événement de domaine représentant la mise à jour du profil d'un utilisateur.
+ *
+ * <p>Le consommateur doit recharger l'agrégat User pour obtenir le profil mis à jour.</p>
  */
 public final class ProfileUpdated implements DomainEvent {
 

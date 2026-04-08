@@ -3,7 +3,7 @@ package com.alertmns.iam.domain.model;
 import java.util.Objects;
 
 /**
- * Prénom d'un utilisateur.
+ * Value Object représentant le prénom d'un utilisateur.
  */
 public final class FirstName {
 
@@ -23,6 +23,15 @@ public final class FirstName {
         this.value = normalized;
     }
 
+    /**
+     * Crée un prénom à partir d'une valeur brute.
+     *
+     * <p>La valeur est normalisée (trim) avant validation.</p>
+     *
+     * @param value la valeur brute
+     * @return le prénom validé
+     * @throws IllegalArgumentException si la valeur est vide ou dépasse 100 caractères
+     */
     public static FirstName of(String value) {
         return new FirstName(value);
     }

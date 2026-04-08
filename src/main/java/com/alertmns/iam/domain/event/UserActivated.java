@@ -7,8 +7,9 @@ import java.time.Instant;
 import java.util.Objects;
 
 /**
- * Émis lorsqu'un administrateur active un compte utilisateur.
- * Le compte passe du statut PENDING à ACTIVE.
+ * Événement de domaine représentant l'activation d'un compte utilisateur.
+ *
+ * <p>Le compte passe du statut PENDING à ACTIVE.</p>
  */
 public final class UserActivated implements DomainEvent {
 

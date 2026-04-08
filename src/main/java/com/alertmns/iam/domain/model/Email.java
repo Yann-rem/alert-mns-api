@@ -4,7 +4,7 @@ import java.util.Objects;
 import java.util.regex.Pattern;
 
 /**
- * Adresse email d'un utilisateur.
+ * Value Object représentant l'adresse email d'un utilisateur.
  */
 public final class Email {
 
@@ -26,6 +26,15 @@ public final class Email {
         this.value = normalized;
     }
 
+    /**
+     * Crée un email à partir d'une valeur brute.
+     *
+     * <p>La valeur est normalisée (trim + lowercase) avant validation.</p>
+     *
+     * @param value la valeur brute
+     * @return l'email validé
+     * @throws IllegalArgumentException si le format est invalide ou dépasse 254 caractères
+     */
     public static Email of(String value) {
         return new Email(value);
     }

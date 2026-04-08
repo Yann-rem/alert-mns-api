@@ -11,7 +11,7 @@ import java.time.Instant;
 import java.util.Objects;
 
 /**
- * Agrégat racine du BC IAM.
+ * Agrégat racine représentant un utilisateur dans le BC IAM.
  *
  * <p>Représente un utilisateur avec son cycle de vie et ses règles métier.
  * Un utilisateur suit le cycle : PENDING → ACTIVE → DISABLED → ACTIVE (réactivation).</p>
