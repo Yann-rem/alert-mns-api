@@ -1,7 +1,13 @@
 package com.alertmns.iam.domain.port.incoming.command;
 
+import java.util.Objects;
+
 /**
  * Commande contenant les données nécessaires pour désactiver un utilisateur.
  * Valeur brute — le service applicatif est responsable de la création du VO.
  */
-public record DisableUserCommand(String userId) {}
+public record DisableUserCommand(String userId) {
+    public DisableUserCommand {
+        Objects.requireNonNull(userId, "userId must not be null");
+    }
+}
