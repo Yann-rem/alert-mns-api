@@ -11,6 +11,7 @@ import com.alertmns.iam.infrastructure.adapter.incoming.web.dto.RegisterUserRequ
 import com.alertmns.iam.infrastructure.adapter.incoming.web.dto.UpdateAbsenceMessageRequest;
 import com.alertmns.iam.infrastructure.adapter.incoming.web.dto.UpdateProfileRequest;
 import com.alertmns.iam.infrastructure.adapter.incoming.web.mapper.UserWebMapper;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -34,7 +35,7 @@ public class UserController {
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
-    public void register(@RequestBody RegisterUserRequest request) {
+    public void register(@Valid @RequestBody RegisterUserRequest request) {
         registerUserUseCase.register(UserWebMapper.toCommand(request));
     }
 
@@ -54,7 +55,7 @@ public class UserController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updateProfile(
             @PathVariable String userId,
-            @RequestBody UpdateProfileRequest request
+            @Valid @RequestBody UpdateProfileRequest request
     ) {
         updateProfileUseCase.update(UserWebMapper.toCommand(userId, request));
     }
@@ -63,7 +64,7 @@ public class UserController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updateAbsenceMessage(
             @PathVariable String userId,
-            @RequestBody UpdateAbsenceMessageRequest request
+            @Valid @RequestBody UpdateAbsenceMessageRequest request
     ) {
         updateAbsenceMessageUseCase.update(UserWebMapper.toCommand(userId, request));
     }
