@@ -36,8 +36,7 @@ class ProfileTest {
                     "Je ne suis pas disponible pour le moment", true
             );
 
-            Profile profile = Profile.of(firstName, lastName)
-                    .withAvatar(avatar)
+            Profile profile = Profile.of(firstName, lastName, avatar)
                     .withAbsenceMessage(absenceMessage);
 
             assertEquals(firstName, profile.firstName());
@@ -71,17 +70,24 @@ class ProfileTest {
     class Behaviour {
 
         @Test
-        @DisplayName("withAvatar should return a new profile with avatar")
-        void withAvatarShouldReturnANewProfileWithAvatar() {
+        @DisplayName("withIdentity should return a new profile preserving absence message")
+        void withIdentityShouldReturnANewProfilePreservingAbsenceMessage() {
             FirstName firstName = FirstName.of("John");
             LastName lastName = LastName.of("Doe");
+            AbsenceMessage absenceMessage = AbsenceMessage.of("Absent", true);
+
+            Profile profile = Profile.of(firstName, lastName)
+                    .withAbsenceMessage(absenceMessage);
+
+            FirstName newFirstName = FirstName.of("Jane");
             String avatar = "https://cdn.example.com/avatar.jpg";
-            Profile profile = Profile.of(firstName, lastName);
-            Profile profileWithAvatar = profile.withAvatar(avatar);
-            assertNotSame(profile, profileWithAvatar);
-            assertTrue(profile.avatar().isEmpty());
-            assertTrue(profileWithAvatar.avatar().isPresent());
-            assertEquals(avatar, profileWithAvatar.avatar().orElseThrow());
+            Profile updated = profile.withIdentity(newFirstName, lastName, avatar);
+
+            assertNotSame(profile, updated);
+            assertEquals(newFirstName, updated.firstName());
+            assertEquals(avatar, updated.avatar().orElseThrow());
+            assertTrue(updated.absenceMessage().isPresent());
+            assertEquals(absenceMessage, updated.absenceMessage().orElseThrow());
         }
 
         @Test

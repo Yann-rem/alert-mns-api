@@ -29,12 +29,9 @@ public class UserPersistenceMapper {
     private static Profile buildProfile(UserJpaEntity entity) {
         Profile profile = Profile.of(
                 FirstName.of(entity.getFirstName()),
-                LastName.of(entity.getLastName())
+                LastName.of(entity.getLastName()),
+                entity.getAvatar()
         );
-
-        if (entity.getAvatar() != null) {
-            profile = profile.withAvatar(entity.getAvatar());
-        }
 
         if (entity.getAbsenceContent() != null) {
             profile = profile.withAbsenceMessage(

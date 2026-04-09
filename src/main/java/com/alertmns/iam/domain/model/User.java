@@ -113,7 +113,7 @@ public final class User extends AggregateRoot {
      * @param avatar    l'URL de l'avatar (nullable)
      */
     public void updateProfile(FirstName firstName, LastName lastName, String avatar) {
-        profile = Profile.of(firstName, lastName).withAvatar(avatar);
+        profile = profile.withIdentity(firstName, lastName, avatar);
         registerEvent(new ProfileUpdated(id));
     }
 

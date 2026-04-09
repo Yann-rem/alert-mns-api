@@ -33,18 +33,36 @@ public final class Profile {
      * @return le profil créé
      */
     public static Profile of(FirstName firstName, LastName lastName) {
-        Objects.requireNonNull(firstName, "firstName must not be null");
-        Objects.requireNonNull(lastName, "lastName must not be null");
-        return new Profile(firstName, lastName, null, Optional.empty());
+        return of(firstName, lastName, null);
     }
 
     /**
-     * Retourne une copie du profil avec l'avatar spécifié.
+     * Crée un profil avec un prénom, un nom et un avatar.
      *
-     * @param avatar l'URL de l'avatar (nullable)
-     * @return le profil avec l'avatar
+     * @param firstName le prénom
+     * @param lastName  le nom
+     * @param avatar    l'URL de l'avatar (nullable)
+     * @return le profil créé
      */
-    public Profile withAvatar(String avatar) {
+    public static Profile of(FirstName firstName, LastName lastName, String avatar) {
+        Objects.requireNonNull(firstName, "firstName must not be null");
+        Objects.requireNonNull(lastName, "lastName must not be null");
+        return new Profile(firstName, lastName, avatar, Optional.empty());
+    }
+
+    /**
+     * Retourne une copie du profil avec les informations d'identité mises à jour.
+     *
+     * <p>Le message d'absence est préservé.</p>
+     *
+     * @param firstName le nouveau prénom
+     * @param lastName  le nouveau nom
+     * @param avatar    l'URL de l'avatar (nullable)
+     * @return le profil mis à jour
+     */
+    public Profile withIdentity(FirstName firstName, LastName lastName, String avatar) {
+        Objects.requireNonNull(firstName, "firstName must not be null");
+        Objects.requireNonNull(lastName, "lastName must not be null");
         return new Profile(firstName, lastName, avatar, absenceMessage);
     }
 
