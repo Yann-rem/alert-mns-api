@@ -111,8 +111,10 @@ public final class User extends AggregateRoot {
      * @param firstName le nouveau prénom
      * @param lastName  le nouveau nom
      * @param avatar    l'URL de l'avatar (nullable)
+     * @throws IllegalStateException si le statut n'est pas {@link UserStatus#ACTIVE}
      */
     public void updateProfile(FirstName firstName, LastName lastName, String avatar) {
+        requireActive();
         profile = profile.withIdentity(firstName, lastName, avatar);
         registerEvent(new ProfileUpdated(id));
     }
@@ -123,9 +125,11 @@ public final class User extends AggregateRoot {
      * <p>Émet {@link AbsenceMessageUpdated}.</p>
      *
      * @param absenceMessage le nouveau message d'absence
-     * @throws NullPointerException si absenceMessage est null
+     * @throws NullPointerException  si absenceMessage est null
+     * @throws IllegalStateException si le statut n'est pas {@link UserStatus#ACTIVE}
      */
     public void updateAbsenceMessage(AbsenceMessage absenceMessage) {
+        requireActive();
         Objects.requireNonNull(absenceMessage, "absenceMessage must not be null");
         profile = profile.withAbsenceMessage(absenceMessage);
         registerEvent(new AbsenceMessageUpdated(id));
@@ -173,13 +177,17 @@ public final class User extends AggregateRoot {
      * @throws IllegalStateException si le statut n'est pas {@link UserStatus#ACTIVE}
      */
     public void disable() {
-        if (status != UserStatus.ACTIVE) {
-            throw new IllegalStateException(
-                    "Cannot disable: user is not ACTIVE. Current status: " + status
-            );
-        }
+        requireActive();
         status = UserStatus.DISABLED;
         registerEvent(new UserDisabled(id));
+    }
+
+    private void requireActive() {
+        if (status != UserStatus.ACTIVE) {
+            throw new IllegalStateException(
+                    "Cannot perform action: user is not ACTIVE. Current status: " + status
+            );
+        }
     }
 
     public UserId id() {

@@ -112,6 +112,7 @@ class UserTest {
         @Test
         @DisplayName("updateProfile should update the user profile")
         void updateProfileShouldUpdateTheUserProfile() {
+            user.activate();
             FirstName newFirstName = FirstName.of("Jane");
             LastName newLastName = LastName.of("Smith");
             String newAvatar = "https://cdn.example.com/avatar.jpg";
@@ -125,6 +126,7 @@ class UserTest {
         @Test
         @DisplayName("updateAbsenceMessage should update the absence message")
         void updateAbsenceMessageShouldUpdateTheAbsenceMessage() {
+            user.activate();
             AbsenceMessage absenceMessage = AbsenceMessage.of(
                     "Je ne suis pas disponible pour le moment", true
             );
@@ -132,6 +134,20 @@ class UserTest {
             user.updateAbsenceMessage(absenceMessage);
             assertTrue(user.profile().absenceMessage().isPresent());
             assertEquals(absenceMessage, user.profile().absenceMessage().orElseThrow());
+        }
+
+        @Test
+        @DisplayName("updateProfile should reject non-ACTIVE account")
+        void updateProfileShouldRejectNonACTIVEAccount() {
+            assertThrows(IllegalStateException.class,
+                    () -> user.updateProfile(FirstName.of("Jane"), LastName.of("Smith"), null));
+        }
+
+        @Test
+        @DisplayName("updateAbsenceMessage should reject non-ACTIVE account")
+        void updateAbsenceMessageShouldRejectNonACTIVEAccount() {
+            assertThrows(IllegalStateException.class,
+                    () -> user.updateAbsenceMessage(AbsenceMessage.of("Absent", true)));
         }
 
         @Test
@@ -206,6 +222,7 @@ class UserTest {
         @Test
         @DisplayName("updateProfile should emit ProfileUpdated")
         void updateProfileShouldEmitUpdateProfile() {
+            user.activate();
             user.pullDomainEvents();
 
             user.updateProfile(
@@ -223,6 +240,7 @@ class UserTest {
         @Test
         @DisplayName("updateAbsenceMessage should emit AbsenceMessageUpdated")
         void updateAbsenceMessageShouldEmitUpdateAbsenceMessage() {
+            user.activate();
             user.pullDomainEvents();
 
             user.updateAbsenceMessage(AbsenceMessage.of(
