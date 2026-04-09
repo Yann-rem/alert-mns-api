@@ -2,6 +2,7 @@ package com.alertmns.iam.infrastructure.config;
 
 import com.alertmns.iam.application.ActivateUserService;
 import com.alertmns.iam.application.DisableUserService;
+import com.alertmns.iam.application.ReactivateUserService;
 import com.alertmns.iam.application.RegisterUserService;
 import com.alertmns.iam.application.UpdateAbsenceMessageService;
 import com.alertmns.iam.application.UpdateProfileService;
@@ -67,6 +68,14 @@ public class IamBeanConfig {
             EventPublisher eventPublisher
     ) {
         return new DisableUserService(userRepository, eventPublisher);
+    }
+
+    @Bean
+    public ReactivateUserService reactivateUserService(
+            UserRepository userRepository,
+            EventPublisher eventPublisher
+    ) {
+        return new ReactivateUserService(userRepository, eventPublisher);
     }
 
     @Bean

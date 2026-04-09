@@ -6,8 +6,10 @@ import com.alertmns.iam.domain.port.incoming.DisableUserUseCase;
 import com.alertmns.iam.domain.port.incoming.RegisterUserUseCase;
 import com.alertmns.iam.domain.port.incoming.UpdateAbsenceMessageUseCase;
 import com.alertmns.iam.domain.port.incoming.UpdateProfileUseCase;
+import com.alertmns.iam.domain.port.incoming.ReactivateUserUseCase;
 import com.alertmns.iam.domain.port.incoming.command.ActivateUserCommand;
 import com.alertmns.iam.domain.port.incoming.command.DisableUserCommand;
+import com.alertmns.iam.domain.port.incoming.command.ReactivateUserCommand;
 import com.alertmns.iam.infrastructure.adapter.incoming.web.dto.RegisterUserRequest;
 import com.alertmns.iam.infrastructure.adapter.incoming.web.dto.RegisterUserResponse;
 import com.alertmns.iam.infrastructure.adapter.incoming.web.dto.UpdateAbsenceMessageRequest;
@@ -37,6 +39,7 @@ public class UserController {
     private final RegisterUserUseCase registerUserUseCase;
     private final ActivateUserUseCase activateUserUseCase;
     private final DisableUserUseCase disableUserUseCase;
+    private final ReactivateUserUseCase reactivateUserUseCase;
     private final UpdateProfileUseCase updateProfileUseCase;
     private final UpdateAbsenceMessageUseCase updateAbsenceMessageUseCase;
 
@@ -82,6 +85,21 @@ public class UserController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void disable(@Parameter(description = "Identifiant de l'utilisateur") @PathVariable String id) {
         disableUserUseCase.disable(new DisableUserCommand(id));
+    }
+
+    @Operation(
+            summary = "Réactiver un utilisateur",
+            description = "Passe le statut d'un utilisateur de DISABLED à ACTIVE.",
+            responses = {
+                    @ApiResponse(responseCode = "204", description = "Utilisateur réactivé avec succès"),
+                    @ApiResponse(responseCode = "404", description = "Utilisateur introuvable"),
+                    @ApiResponse(responseCode = "409", description = "Statut incompatible")
+            }
+    )
+    @PostMapping("/{id}/reactivate")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void reactivate(@Parameter(description = "Identifiant de l'utilisateur") @PathVariable String id) {
+        reactivateUserUseCase.reactivate(new ReactivateUserCommand(id));
     }
 
     @Operation(
