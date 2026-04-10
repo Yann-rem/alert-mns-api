@@ -13,6 +13,7 @@ import com.alertmns.iam.domain.model.UserStatus;
 import com.alertmns.iam.domain.port.incoming.command.ReactivateUserCommand;
 import com.alertmns.iam.domain.port.outgoing.EventPublisher;
 import com.alertmns.iam.domain.port.outgoing.UserRepository;
+import com.alertmns.shared.OrganisationId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -45,6 +46,8 @@ class ReactivateUserServiceTest {
     @InjectMocks
     ReactivateUserService service;
 
+    static final OrganisationId ORGANISATION_ID = OrganisationId.generate();
+
     @Nested
     @DisplayName("Reactivation")
     class Reactivation {
@@ -67,6 +70,7 @@ class ReactivateUserServiceTest {
                     Profile.of(FirstName.of("John"), LastName.of("Doe")),
                     UserRole.USER,
                     UserStatus.DISABLED,
+                    ORGANISATION_ID,
                     Instant.now()
             );
         }
@@ -101,6 +105,7 @@ class ReactivateUserServiceTest {
                     disabledUser.profile(),
                     disabledUser.role(),
                     UserStatus.ACTIVE,
+                    disabledUser.organisationId(),
                     Instant.now()
             );
 

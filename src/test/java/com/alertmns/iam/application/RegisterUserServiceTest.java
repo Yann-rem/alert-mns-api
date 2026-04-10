@@ -53,7 +53,8 @@ class RegisterUserServiceTest {
                     "johndoe@example.com",
                     "changeme",
                     "John",
-                    "Doe"
+                    "Doe",
+                    "550e8400-e29b-41d4-a716-446655440000"
             );
 
             service.register(command);
@@ -70,7 +71,8 @@ class RegisterUserServiceTest {
                     "johndoe@example.com",
                     "changeme",
                     "John",
-                    "Doe"
+                    "Doe",
+                    "550e8400-e29b-41d4-a716-446655440000"
             );
 
             assertThrows(EmailAlreadyExistsException.class, () -> service.register(command));

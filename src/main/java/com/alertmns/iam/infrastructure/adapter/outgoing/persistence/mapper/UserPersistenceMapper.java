@@ -9,6 +9,7 @@ import com.alertmns.iam.domain.model.Profile;
 import com.alertmns.iam.domain.model.User;
 import com.alertmns.iam.domain.model.UserId;
 import com.alertmns.iam.infrastructure.adapter.outgoing.persistence.UserJpaEntity;
+import com.alertmns.shared.OrganisationId;
 
 public class UserPersistenceMapper {
 
@@ -22,6 +23,7 @@ public class UserPersistenceMapper {
                 buildProfile(entity),
                 entity.getRole(),
                 entity.getStatus(),
+                OrganisationId.from(entity.getOrganisationId()),
                 entity.getCreatedAt()
         );
     }
@@ -53,6 +55,7 @@ public class UserPersistenceMapper {
                 user.profile().absenceMessage().map(AbsenceMessage::active).orElse(null),
                 user.role(),
                 user.status(),
+                user.organisationId().value(),
                 user.createdAt()
         );
     }

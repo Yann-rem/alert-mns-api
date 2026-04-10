@@ -16,7 +16,8 @@ public class UserWebMapper {
                 request.email(),
                 request.rawPassword(),
                 request.firstName(),
-                request.lastName()
+                request.lastName(),
+                request.organisationId()
         );
     }
 

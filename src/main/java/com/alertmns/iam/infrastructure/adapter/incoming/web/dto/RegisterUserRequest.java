@@ -16,5 +16,8 @@ public record RegisterUserRequest(
         @NotBlank @Size(max = 100) String firstName,
 
         @Schema(description = "Nom", example = "Doe")
-        @NotBlank @Size(max = 100) String lastName
+        @NotBlank @Size(max = 100) String lastName,
+
+        @Schema(description = "Identifiant de l'organisation de rattachement", example = "550e8400-e29b-41d4-a716-446655440000")
+        @NotBlank String organisationId
 ) {}

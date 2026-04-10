@@ -11,12 +11,14 @@ public record RegisterUserCommand(
         String email,
         String rawPassword,
         String firstName,
-        String lastName
+        String lastName,
+        String organisationId
 ) {
     public RegisterUserCommand {
         Objects.requireNonNull(email, "email must not be null");
         Objects.requireNonNull(rawPassword, "rawPassword must not be null");
         Objects.requireNonNull(firstName, "firstName must not be null");
         Objects.requireNonNull(lastName, "lastName must not be null");
+        Objects.requireNonNull(organisationId, "organisationId must not be null");
     }
 }

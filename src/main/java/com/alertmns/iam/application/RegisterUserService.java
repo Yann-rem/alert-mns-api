@@ -9,6 +9,7 @@ import com.alertmns.iam.domain.model.Profile;
 import com.alertmns.iam.domain.model.User;
 import com.alertmns.iam.domain.model.UserId;
 import com.alertmns.iam.domain.port.incoming.RegisterUserUseCase;
+import com.alertmns.shared.OrganisationId;
 import com.alertmns.iam.domain.port.incoming.command.RegisterUserCommand;
 import com.alertmns.iam.domain.port.outgoing.AuthenticationPort;
 import com.alertmns.iam.domain.port.outgoing.EventPublisher;
@@ -60,7 +61,8 @@ final public class RegisterUserService implements RegisterUserUseCase {
         FirstName firstName = FirstName.of(command.firstName());
         LastName lastName = LastName.of(command.lastName());
         Profile profile = Profile.of(firstName, lastName);
-        User user = User.register(email, hashedPassword, profile);
+        OrganisationId organisationId = OrganisationId.from(command.organisationId());
+        User user = User.register(email, hashedPassword, profile, organisationId);
         repository.save(user);
         publisher.publish(user.pullDomainEvents());
         return user.id();

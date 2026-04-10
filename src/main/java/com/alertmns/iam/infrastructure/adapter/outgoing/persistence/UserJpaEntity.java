@@ -29,7 +29,7 @@ public class UserJpaEntity {
     @Column(nullable = false, unique = true, length = 254)
     private String email;
 
-    @Column(nullable = false, length = 255)
+    @Column(nullable = false)
     private String hashedPassword;
 
     @Column(nullable = false, length = 100)
@@ -54,6 +54,9 @@ public class UserJpaEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 10)
     private UserStatus status;
+
+    @Column(nullable = false)
+    private UUID organisationId;
 
     @Column(nullable = false)
     private Instant createdAt;

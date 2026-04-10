@@ -13,6 +13,7 @@ import com.alertmns.iam.domain.model.UserStatus;
 import com.alertmns.iam.domain.port.incoming.command.ActivateUserCommand;
 import com.alertmns.iam.domain.port.outgoing.EventPublisher;
 import com.alertmns.iam.domain.port.outgoing.UserRepository;
+import com.alertmns.shared.OrganisationId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -45,6 +46,8 @@ class ActivateUserServiceTest {
     @InjectMocks
     ActivateUserService service;
 
+    static final OrganisationId ORGANISATION_ID = OrganisationId.generate();
+
     @Nested
     @DisplayName("Activation")
     class Activation {
@@ -67,6 +70,7 @@ class ActivateUserServiceTest {
                     Profile.of(FirstName.of("John"), LastName.of("Doe")),
                     UserRole.USER,
                     UserStatus.PENDING,
+                    ORGANISATION_ID,
                     Instant.now()
             );
         }
@@ -101,6 +105,7 @@ class ActivateUserServiceTest {
                     pendingUser.profile(),
                     pendingUser.role(),
                     UserStatus.ACTIVE,
+                    pendingUser.organisationId(),
                     Instant.now()
             );
 

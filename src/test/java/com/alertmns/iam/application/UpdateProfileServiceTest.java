@@ -13,6 +13,7 @@ import com.alertmns.iam.domain.model.UserStatus;
 import com.alertmns.iam.domain.port.incoming.command.UpdateProfileCommand;
 import com.alertmns.iam.domain.port.outgoing.EventPublisher;
 import com.alertmns.iam.domain.port.outgoing.UserRepository;
+import com.alertmns.shared.OrganisationId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -45,6 +46,8 @@ class UpdateProfileServiceTest {
     @InjectMocks
     UpdateProfileService service;
 
+    static final OrganisationId ORGANISATION_ID = OrganisationId.generate();
+
     @Nested
     @DisplayName("ProfileUpdate")
     class ProfileUpdate {
@@ -67,6 +70,7 @@ class UpdateProfileServiceTest {
                     Profile.of(FirstName.of("John"), LastName.of("Doe")),
                     UserRole.USER,
                     UserStatus.ACTIVE,
+                    ORGANISATION_ID,
                     Instant.now()
             );
         }

@@ -13,6 +13,7 @@ import com.alertmns.iam.domain.model.UserStatus;
 import com.alertmns.iam.domain.port.incoming.command.DisableUserCommand;
 import com.alertmns.iam.domain.port.outgoing.EventPublisher;
 import com.alertmns.iam.domain.port.outgoing.UserRepository;
+import com.alertmns.shared.OrganisationId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -45,6 +46,8 @@ class DisableUserServiceTest {
     @InjectMocks
     DisableUserService service;
 
+    static final OrganisationId ORGANISATION_ID = OrganisationId.generate();
+
     @Nested
     @DisplayName("Disabling")
     class Disabling {
@@ -67,6 +70,7 @@ class DisableUserServiceTest {
                     Profile.of(FirstName.of("John"), LastName.of("Doe")),
                     UserRole.USER,
                     UserStatus.ACTIVE,
+                    ORGANISATION_ID,
                     Instant.now()
             );
         }
@@ -101,6 +105,7 @@ class DisableUserServiceTest {
                     activeUser.profile(),
                     activeUser.role(),
                     UserStatus.PENDING,
+                    activeUser.organisationId(),
                     Instant.now()
             );
 
