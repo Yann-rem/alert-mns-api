@@ -7,7 +7,7 @@ import com.alertmns.iam.application.RegisterUserService;
 import com.alertmns.iam.application.UpdateAbsenceMessageService;
 import com.alertmns.iam.application.UpdateProfileService;
 import com.alertmns.iam.domain.port.outgoing.AuthenticationPort;
-import com.alertmns.iam.domain.port.outgoing.EventPublisher;
+import com.alertmns.shared.EventPublisher;
 import com.alertmns.iam.domain.port.outgoing.UserRepository;
 import com.alertmns.iam.infrastructure.adapter.outgoing.persistence.UserJpaRepository;
 import com.alertmns.iam.infrastructure.adapter.outgoing.persistence.UserPersistenceAdapter;

@@ -4,7 +4,7 @@ import com.alertmns.iam.domain.model.UserId;
 import com.alertmns.iam.domain.port.incoming.command.RegisterUserCommand;
 
 /**
- * Port entrant représentant le cas d'utilisation d'enregistrement d'un utilisateur.
+ * Port entrant représentant le cas d'utilisation d'enregistrement d'un nouvel utilisateur.
  *
  * <p>Implémenté par {@link com.alertmns.iam.application.RegisterUserService}.</p>
  */

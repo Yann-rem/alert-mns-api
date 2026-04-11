@@ -1,6 +1,4 @@
-package com.alertmns.iam.domain.port.outgoing;
-
-import com.alertmns.shared.DomainEvent;
+package com.alertmns.shared;
 
 import java.util.List;
 

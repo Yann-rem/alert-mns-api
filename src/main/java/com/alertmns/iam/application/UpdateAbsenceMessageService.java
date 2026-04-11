@@ -6,7 +6,7 @@ import com.alertmns.iam.domain.model.User;
 import com.alertmns.iam.domain.model.UserId;
 import com.alertmns.iam.domain.port.incoming.UpdateAbsenceMessageUseCase;
 import com.alertmns.iam.domain.port.incoming.command.UpdateAbsenceMessageCommand;
-import com.alertmns.iam.domain.port.outgoing.EventPublisher;
+import com.alertmns.shared.EventPublisher;
 import com.alertmns.iam.domain.port.outgoing.UserRepository;
 
 import java.util.Objects;

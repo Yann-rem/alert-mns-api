@@ -12,7 +12,7 @@ import com.alertmns.iam.domain.port.incoming.RegisterUserUseCase;
 import com.alertmns.shared.OrganisationId;
 import com.alertmns.iam.domain.port.incoming.command.RegisterUserCommand;
 import com.alertmns.iam.domain.port.outgoing.AuthenticationPort;
-import com.alertmns.iam.domain.port.outgoing.EventPublisher;
+import com.alertmns.shared.EventPublisher;
 import com.alertmns.iam.domain.port.outgoing.UserRepository;
 
 import java.util.Objects;

@@ -4,7 +4,7 @@ import com.alertmns.iam.domain.exception.EmailAlreadyExistsException;
 import com.alertmns.iam.domain.model.User;
 import com.alertmns.iam.domain.port.incoming.command.RegisterUserCommand;
 import com.alertmns.iam.domain.port.outgoing.AuthenticationPort;
-import com.alertmns.iam.domain.port.outgoing.EventPublisher;
+import com.alertmns.shared.EventPublisher;
 import com.alertmns.iam.domain.port.outgoing.UserRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
