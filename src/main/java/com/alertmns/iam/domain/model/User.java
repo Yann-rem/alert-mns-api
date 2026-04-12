@@ -4,6 +4,7 @@ import com.alertmns.iam.domain.event.AbsenceMessageUpdated;
 import com.alertmns.iam.domain.event.ProfileUpdated;
 import com.alertmns.iam.domain.event.UserActivated;
 import com.alertmns.iam.domain.event.UserDisabled;
+import com.alertmns.iam.domain.event.UserReactivated;
 import com.alertmns.iam.domain.event.UserRegistered;
 import com.alertmns.shared.AggregateRoot;
 import com.alertmns.shared.OrganisationId;
@@ -164,7 +165,7 @@ public final class User extends AggregateRoot {
     /**
      * Réactive un compte désactivé (DISABLED → ACTIVE).
      *
-     * <p>Émet {@link UserActivated}.</p>
+     * <p>Émet {@link UserReactivated}.</p>
      *
      * @throws IllegalStateException si le statut n'est pas {@link UserStatus#DISABLED}
      */
@@ -175,7 +176,7 @@ public final class User extends AggregateRoot {
             );
         }
         status = UserStatus.ACTIVE;
-        registerEvent(new UserActivated(id));
+        registerEvent(new UserReactivated(id));
     }
 
     /**

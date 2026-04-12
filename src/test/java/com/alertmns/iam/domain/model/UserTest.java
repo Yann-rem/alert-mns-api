@@ -4,6 +4,7 @@ import com.alertmns.iam.domain.event.AbsenceMessageUpdated;
 import com.alertmns.iam.domain.event.ProfileUpdated;
 import com.alertmns.iam.domain.event.UserActivated;
 import com.alertmns.iam.domain.event.UserDisabled;
+import com.alertmns.iam.domain.event.UserReactivated;
 import com.alertmns.iam.domain.event.UserRegistered;
 import com.alertmns.shared.DomainEvent;
 import com.alertmns.shared.OrganisationId;
@@ -291,6 +292,21 @@ class UserTest {
             List<DomainEvent> events = user.pullDomainEvents();
             assertEquals(1, events.size());
             UserDisabled event = assertInstanceOf(UserDisabled.class, events.getFirst());
+            assertEquals(user.id(), event.userId());
+        }
+
+        @Test
+        @DisplayName("reactivate should emit UserReactivated")
+        void reactivateShouldEmitUserReactivated() {
+            user.pullDomainEvents();
+            user.activate();
+            user.pullDomainEvents();
+            user.disable();
+            user.pullDomainEvents();
+            user.reactivate();
+            List<DomainEvent> events = user.pullDomainEvents();
+            assertEquals(1, events.size());
+            UserReactivated event = assertInstanceOf(UserReactivated.class, events.getFirst());
             assertEquals(user.id(), event.userId());
         }
 
