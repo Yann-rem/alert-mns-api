@@ -98,7 +98,6 @@ public final class Organisation extends AggregateRoot {
         return "Organisation{" +
                 "id=" + id +
                 ", name=" + name +
-                ", createdAt=" + createdAt +
                 '}';
     }
 }
