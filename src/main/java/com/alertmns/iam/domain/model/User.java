@@ -124,7 +124,7 @@ public final class User extends AggregateRoot {
      * @throws IllegalStateException si le statut n'est pas {@link UserStatus#ACTIVE}
      */
     public void updateProfile(FirstName firstName, LastName lastName, String avatar) {
-        requireActive();
+        requireActive("update profile");
         profile = profile.withIdentity(firstName, lastName, avatar);
         registerEvent(new ProfileUpdated(id));
     }
@@ -139,7 +139,7 @@ public final class User extends AggregateRoot {
      * @throws IllegalStateException si le statut n'est pas {@link UserStatus#ACTIVE}
      */
     public void updateAbsenceMessage(AbsenceMessage absenceMessage) {
-        requireActive();
+        requireActive("update absence message");
         Objects.requireNonNull(absenceMessage, "absenceMessage must not be null");
         profile = profile.withAbsenceMessage(absenceMessage);
         registerEvent(new AbsenceMessageUpdated(id));
@@ -187,15 +187,15 @@ public final class User extends AggregateRoot {
      * @throws IllegalStateException si le statut n'est pas {@link UserStatus#ACTIVE}
      */
     public void disable() {
-        requireActive();
+        requireActive("disable");
         status = UserStatus.DISABLED;
         registerEvent(new UserDisabled(id));
     }
 
-    private void requireActive() {
+    private void requireActive(String action) {
         if (status != UserStatus.ACTIVE) {
             throw new IllegalStateException(
-                    "Cannot perform action: user is not ACTIVE. Current status: " + status
+                    "Cannot " + action + ": user is not ACTIVE. Current status: " + status
             );
         }
     }
