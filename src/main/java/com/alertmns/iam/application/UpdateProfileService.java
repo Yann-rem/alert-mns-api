@@ -17,7 +17,7 @@ import java.util.Objects;
  *
  * <p>Charge l’agrégat → met à jour le profil → persiste → publie les événements.</p>
  */
-final public class UpdateProfileService implements UpdateProfileUseCase {
+public final class UpdateProfileService implements UpdateProfileUseCase {
 
     private final UserRepository repository;
     private final EventPublisher publisher;

@@ -22,7 +22,7 @@ import java.util.Objects;
  *
  * <p>Valide → crée les VO → persiste → publie les événements.</p>
  */
-final public class RegisterUserService implements RegisterUserUseCase {
+public final class RegisterUserService implements RegisterUserUseCase {
 
     private final UserRepository repository;
     private final AuthenticationPort authentication;

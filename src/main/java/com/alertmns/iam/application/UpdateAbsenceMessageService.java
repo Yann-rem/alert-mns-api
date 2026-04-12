@@ -16,7 +16,7 @@ import java.util.Objects;
  *
  * <p>Charge l’agrégat → met à jour le message d’absence → persiste → publie les événements.</p>
  */
-final public class UpdateAbsenceMessageService implements UpdateAbsenceMessageUseCase {
+public final class UpdateAbsenceMessageService implements UpdateAbsenceMessageUseCase {
 
     private final UserRepository repository;
     private final EventPublisher publisher;

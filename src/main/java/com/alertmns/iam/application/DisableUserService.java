@@ -15,7 +15,7 @@ import java.util.Objects;
  *
  * <p>Charge l’agrégat → désactive → persiste → publie les événements.</p>
  */
-final public class DisableUserService implements DisableUserUseCase {
+public final class DisableUserService implements DisableUserUseCase {
 
     private final UserRepository repository;
     private final EventPublisher publisher;

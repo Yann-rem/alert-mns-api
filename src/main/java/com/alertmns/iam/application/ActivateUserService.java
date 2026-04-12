@@ -15,7 +15,7 @@ import java.util.Objects;
  *
  * <p>Charge l’agrégat → active → persiste → publie les événements.</p>
  */
-final public class ActivateUserService implements ActivateUserUseCase {
+public final class ActivateUserService implements ActivateUserUseCase {
 
     private final UserRepository repository;
     private final EventPublisher publisher;
