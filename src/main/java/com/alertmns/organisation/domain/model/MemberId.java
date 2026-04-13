@@ -3,6 +3,9 @@ package com.alertmns.organisation.domain.model;
 import java.util.Objects;
 import java.util.UUID;
 
+/**
+ * Value Object représentant l'identifiant unique d'un membre.
+ */
 public final class MemberId {
 
     private final UUID value;
