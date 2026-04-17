@@ -10,7 +10,6 @@ import java.util.UUID;
  */
 public final class MemberAlreadyExistsException extends RuntimeException {
     public MemberAlreadyExistsException(OrganisationId organisationId, UUID userId) {
-        super("Member already exists in organisation " + organisationId.value()
-                + " for user " + userId);
+        super("Member already exists in organisation " + organisationId.value() + ": " + userId);
     }
 }
