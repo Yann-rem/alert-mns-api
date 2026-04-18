@@ -1,4 +1,4 @@
-package com.alertmns.iam.infrastructure.adapter.incoming.web;
+package com.alertmns.config;
 
 import com.alertmns.iam.domain.exception.EmailAlreadyExistsException;
 import com.alertmns.iam.domain.exception.UserNotFoundException;
