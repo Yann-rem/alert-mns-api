@@ -1,5 +1,6 @@
 package com.alertmns.organisation.application;
 
+import com.alertmns.organisation.domain.event.MemberActivated;
 import com.alertmns.organisation.domain.exception.MemberNotFoundException;
 import com.alertmns.organisation.domain.model.Member;
 import com.alertmns.organisation.domain.model.MemberId;
@@ -7,6 +8,7 @@ import com.alertmns.organisation.domain.model.MemberRole;
 import com.alertmns.organisation.domain.model.MemberStatus;
 import com.alertmns.organisation.domain.port.incoming.command.ActivateMemberCommand;
 import com.alertmns.organisation.domain.port.outgoing.MemberRepository;
+import com.alertmns.shared.DomainEvent;
 import com.alertmns.shared.EventPublisher;
 import com.alertmns.shared.OrganisationId;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,14 +16,18 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -67,13 +73,34 @@ class ActivateMemberServiceTest {
         }
 
         @Test
-        @DisplayName("should activate a member")
-        void shouldActivateAMember() {
+        @DisplayName("should save the member with status ACTIVE")
+        void shouldSaveTheMemberWithStatusActive() {
             when(repository.findById(any())).thenReturn(Optional.of(pendingMember));
             ActivateMemberCommand command = new ActivateMemberCommand(id.value().toString());
+
             service.activate(command);
-            verify(repository).save(any(Member.class));
-            verify(publisher).publish(anyList());
+
+            ArgumentCaptor<Member> memberCaptor = ArgumentCaptor.forClass(Member.class);
+            verify(repository).save(memberCaptor.capture());
+            Member saved = memberCaptor.getValue();
+            assertEquals(id, saved.id());
+            assertEquals(MemberStatus.ACTIVE, saved.status());
+        }
+
+        @Test
+        @DisplayName("should publish MemberActivated event with the activated member id")
+        void shouldPublishMemberActivatedEvent() {
+            when(repository.findById(any())).thenReturn(Optional.of(pendingMember));
+            ActivateMemberCommand command = new ActivateMemberCommand(id.value().toString());
+
+            service.activate(command);
+
+            ArgumentCaptor<List<DomainEvent>> eventsCaptor = ArgumentCaptor.captor();
+            verify(publisher).publish(eventsCaptor.capture());
+            List<DomainEvent> events = eventsCaptor.getValue();
+            assertEquals(1, events.size());
+            MemberActivated event = assertInstanceOf(MemberActivated.class, events.getFirst());
+            assertEquals(id, event.memberId());
         }
 
         @Test
