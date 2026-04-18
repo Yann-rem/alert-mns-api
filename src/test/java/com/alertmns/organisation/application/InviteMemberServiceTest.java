@@ -1,20 +1,29 @@
 package com.alertmns.organisation.application;
 
+import com.alertmns.organisation.domain.event.MemberInvited;
 import com.alertmns.organisation.domain.exception.MemberAlreadyExistsException;
 import com.alertmns.organisation.domain.model.Member;
+import com.alertmns.organisation.domain.model.MemberRole;
+import com.alertmns.organisation.domain.model.MemberStatus;
 import com.alertmns.organisation.domain.port.incoming.command.InviteMemberCommand;
 import com.alertmns.organisation.domain.port.outgoing.MemberRepository;
+import com.alertmns.shared.DomainEvent;
 import com.alertmns.shared.EventPublisher;
+import com.alertmns.shared.OrganisationId;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -43,27 +52,56 @@ class InviteMemberServiceTest {
     class Invitation {
 
         @Test
-        @DisplayName("should invite a member")
-        void shouldInviteAMember() {
+        @DisplayName("should save the member with organisationId, userId, role MEMBER and status PENDING")
+        void shouldSaveTheMemberWithMemberRole() {
             when(repository.existsByOrganisationIdAndUserId(any(), any())).thenReturn(false);
 
             InviteMemberCommand command = new InviteMemberCommand(ORGANISATION_ID, USER_ID, "MEMBER");
 
             service.invite(command);
-            verify(repository).save(any(Member.class));
-            verify(publisher).publish(anyList());
+
+            ArgumentCaptor<Member> memberCaptor = ArgumentCaptor.forClass(Member.class);
+            verify(repository).save(memberCaptor.capture());
+            Member saved = memberCaptor.getValue();
+            assertEquals(OrganisationId.from(ORGANISATION_ID), saved.organisationId());
+            assertEquals(UUID.fromString(USER_ID), saved.userId());
+            assertEquals(MemberRole.MEMBER, saved.role());
+            assertEquals(MemberStatus.PENDING, saved.status());
         }
 
         @Test
-        @DisplayName("should invite a member with ADMIN role")
-        void shouldInviteAMemberWithAdminRole() {
+        @DisplayName("should save the member with role ADMIN when command role is ADMIN")
+        void shouldSaveTheMemberWithAdminRole() {
             when(repository.existsByOrganisationIdAndUserId(any(), any())).thenReturn(false);
 
             InviteMemberCommand command = new InviteMemberCommand(ORGANISATION_ID, USER_ID, "ADMIN");
 
             service.invite(command);
-            verify(repository).save(any(Member.class));
-            verify(publisher).publish(anyList());
+
+            ArgumentCaptor<Member> memberCaptor = ArgumentCaptor.forClass(Member.class);
+            verify(repository).save(memberCaptor.capture());
+            assertEquals(MemberRole.ADMIN, memberCaptor.getValue().role());
+        }
+
+        @Test
+        @DisplayName("should publish MemberInvited event with the saved member id")
+        void shouldPublishMemberInvitedEvent() {
+            when(repository.existsByOrganisationIdAndUserId(any(), any())).thenReturn(false);
+
+            InviteMemberCommand command = new InviteMemberCommand(ORGANISATION_ID, USER_ID, "MEMBER");
+
+            service.invite(command);
+
+            ArgumentCaptor<Member> memberCaptor = ArgumentCaptor.forClass(Member.class);
+            verify(repository).save(memberCaptor.capture());
+            Member saved = memberCaptor.getValue();
+
+            ArgumentCaptor<List<DomainEvent>> eventsCaptor = ArgumentCaptor.captor();
+            verify(publisher).publish(eventsCaptor.capture());
+            List<DomainEvent> events = eventsCaptor.getValue();
+            assertEquals(1, events.size());
+            MemberInvited event = assertInstanceOf(MemberInvited.class, events.getFirst());
+            assertEquals(saved.id(), event.memberId());
         }
 
         @Test
