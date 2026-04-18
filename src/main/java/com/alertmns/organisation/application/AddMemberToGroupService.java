@@ -38,25 +38,15 @@ public final class AddMemberToGroupService implements AddMemberToGroupUseCase {
             GroupMembershipRepository groupMembershipRepository,
             EventPublisher publisher
     ) {
-        this.groupRepository = Objects.requireNonNull(
-                groupRepository,
-                "groupRepository must not be null"
-        );
-
-        this.memberRepository = Objects.requireNonNull(
-                memberRepository,
-                "memberRepository must not be null"
-        );
+        this.groupRepository = Objects.requireNonNull(groupRepository, "groupRepository must not be null");
+        this.memberRepository = Objects.requireNonNull(memberRepository, "memberRepository must not be null");
 
         this.groupMembershipRepository = Objects.requireNonNull(
                 groupMembershipRepository,
                 "groupMembershipRepository must not be null"
         );
 
-        this.publisher = Objects.requireNonNull(
-                publisher,
-                "publisher must not be null"
-        );
+        this.publisher = Objects.requireNonNull(publisher, "publisher must not be null");
     }
 
     @Override

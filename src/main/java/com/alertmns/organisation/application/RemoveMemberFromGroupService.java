@@ -36,10 +36,7 @@ public final class RemoveMemberFromGroupService implements RemoveMemberFromGroup
                 "groupMembershipRepository must not be null"
         );
 
-        this.publisher = Objects.requireNonNull(
-                publisher,
-                "publisher must not be null"
-        );
+        this.publisher = Objects.requireNonNull(publisher, "publisher must not be null");
     }
 
     @Override

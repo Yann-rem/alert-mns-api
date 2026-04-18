@@ -23,13 +23,8 @@ public final class UpdateProfileService implements UpdateProfileUseCase {
     private final EventPublisher publisher;
 
     public UpdateProfileService(UserRepository repository, EventPublisher publisher) {
-        this.repository = Objects.requireNonNull(
-                repository, "repository must not be null"
-        );
-
-        this.publisher = Objects.requireNonNull(
-                publisher, "publisher must not be null"
-        );
+        this.repository = Objects.requireNonNull(repository, "repository must not be null");
+        this.publisher = Objects.requireNonNull(publisher, "publisher must not be null");
     }
 
     @Override

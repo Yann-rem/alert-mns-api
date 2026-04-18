@@ -22,12 +22,8 @@ public final class CreateOrganisationService implements CreateOrganisationUseCas
     private final EventPublisher publisher;
 
     public CreateOrganisationService(OrganisationRepository repository, EventPublisher publisher) {
-        this.repository = Objects.requireNonNull(
-                repository, "repository must not be null"
-        );
-        this.publisher = Objects.requireNonNull(
-                publisher, "publisher must not be null"
-        );
+        this.repository = Objects.requireNonNull(repository, "repository must not be null");
+        this.publisher = Objects.requireNonNull(publisher, "publisher must not be null");
     }
 
     @Override

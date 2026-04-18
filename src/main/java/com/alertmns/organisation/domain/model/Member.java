@@ -39,11 +39,7 @@ public final class Member extends AggregateRoot {
             Instant joinedAt
     ) {
         this.id = Objects.requireNonNull(id, "id must not be null");
-
-        this.organisationId = Objects.requireNonNull(
-                organisationId, "organisationId must not be null"
-        );
-
+        this.organisationId = Objects.requireNonNull(organisationId, "organisationId must not be null");
         this.userId = Objects.requireNonNull(userId, "userId must not be null");
         this.role = Objects.requireNonNull(role, "role must not be null");
         this.status = Objects.requireNonNull(status, "status must not be null");

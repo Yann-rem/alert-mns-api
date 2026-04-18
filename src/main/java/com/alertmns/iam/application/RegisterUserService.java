@@ -33,17 +33,9 @@ public final class RegisterUserService implements RegisterUserUseCase {
             AuthenticationPort authentication,
             EventPublisher publisher
     ) {
-        this.repository = Objects.requireNonNull(
-                repository, "repository must not be null"
-        );
-
-        this.authentication = Objects.requireNonNull(
-                authentication, "authentication must not be null"
-        );
-
-        this.publisher = Objects.requireNonNull(
-                publisher, "publisher must not be null"
-        );
+        this.repository = Objects.requireNonNull(repository, "repository must not be null");
+        this.authentication = Objects.requireNonNull(authentication, "authentication must not be null");
+        this.publisher = Objects.requireNonNull(publisher, "publisher must not be null");
     }
 
     @Override

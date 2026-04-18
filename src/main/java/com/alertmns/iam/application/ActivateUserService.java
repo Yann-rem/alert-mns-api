@@ -21,13 +21,8 @@ public final class ActivateUserService implements ActivateUserUseCase {
     private final EventPublisher publisher;
 
     public ActivateUserService(UserRepository repository, EventPublisher publisher) {
-        this.repository = Objects.requireNonNull(
-                repository, "repository must not be null"
-        );
-
-        this.publisher = Objects.requireNonNull(
-                publisher, "publisher must not be null"
-        );
+        this.repository = Objects.requireNonNull(repository, "repository must not be null");
+        this.publisher = Objects.requireNonNull(publisher, "publisher must not be null");
     }
 
     @Override

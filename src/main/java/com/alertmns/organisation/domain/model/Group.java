@@ -25,11 +25,7 @@ public final class Group extends AggregateRoot {
     private Group(GroupId id, GroupName name, OrganisationId organisationId, Instant createdAt) {
         this.id = Objects.requireNonNull(id, "id must not be null");
         this.name = Objects.requireNonNull(name, "name must not be null");
-
-        this.organisationId = Objects.requireNonNull(
-                organisationId, "organisationId must not be null"
-        );
-
+        this.organisationId = Objects.requireNonNull(organisationId, "organisationId must not be null");
         this.createdAt = Objects.requireNonNull(createdAt, "createdAt must not be null");
     }
 
