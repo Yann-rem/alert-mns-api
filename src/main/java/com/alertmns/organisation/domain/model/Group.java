@@ -74,7 +74,11 @@ public final class Group extends AggregateRoot {
      * @param name le nouveau nom du groupe
      */
     public void rename(GroupName name) {
-        this.name = Objects.requireNonNull(name, "name must not be null");
+        Objects.requireNonNull(name, "name must not be null");
+        if (this.name.equals(name)) {
+            return;
+        }
+        this.name = name;
         registerEvent(new GroupRenamed(this.id, name));
     }
 

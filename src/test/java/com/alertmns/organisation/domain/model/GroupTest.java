@@ -115,6 +115,14 @@ class GroupTest {
         }
 
         @Test
+        @DisplayName("rename should not change the name when already unchanged")
+        void renameShouldNotChangeTheNameWhenAlreadyUnchanged() {
+            Group group = Group.create(NAME, ORGANISATION_ID);
+            group.rename(NAME);
+            assertEquals(NAME, group.name());
+        }
+
+        @Test
         @DisplayName("rename should reject null name")
         void renameShouldRejectNullName() {
             Group group = Group.create(NAME, ORGANISATION_ID);
@@ -153,6 +161,18 @@ class GroupTest {
             GroupRenamed event = assertInstanceOf(GroupRenamed.class, events.getFirst());
             assertEquals(group.id(), event.groupId());
             assertEquals(newName, event.name());
+        }
+
+        @Test
+        @DisplayName("rename should not emit any event when name is unchanged")
+        void renameShouldNotEmitAnyEventWhenNameIsUnchanged() {
+            Group group = Group.create(NAME, ORGANISATION_ID);
+            group.pullDomainEvents();
+
+            group.rename(NAME);
+
+            List<DomainEvent> events = group.pullDomainEvents();
+            assertTrue(events.isEmpty());
         }
 
         @Test

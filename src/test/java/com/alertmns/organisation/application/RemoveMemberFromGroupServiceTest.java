@@ -56,7 +56,7 @@ class RemoveMemberFromGroupServiceTest {
         void setUp() {
             groupId = GroupId.generate();
             memberId = MemberId.generate();
-            membership = GroupMembership.add(memberId, groupId);
+            membership = GroupMembership.add(groupId, memberId);
         }
 
         @Test

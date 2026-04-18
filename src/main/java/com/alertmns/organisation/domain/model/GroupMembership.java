@@ -16,19 +16,19 @@ import java.util.Objects;
 public final class GroupMembership extends AggregateRoot {
 
     private final GroupMembershipId id;
-    private final MemberId memberId;
     private final GroupId groupId;
+    private final MemberId memberId;
     private final Instant joinedAt;
 
     private GroupMembership(
             GroupMembershipId id,
-            MemberId memberId,
             GroupId groupId,
+            MemberId memberId,
             Instant joinedAt
     ) {
         this.id = Objects.requireNonNull(id, "id must not be null");
-        this.memberId = Objects.requireNonNull(memberId, "memberId must not be null");
         this.groupId = Objects.requireNonNull(groupId, "groupId must not be null");
+        this.memberId = Objects.requireNonNull(memberId, "memberId must not be null");
         this.joinedAt = Objects.requireNonNull(joinedAt, "joinedAt must not be null");
     }
 
@@ -39,15 +39,15 @@ public final class GroupMembership extends AggregateRoot {
      *
      * <p>Émet {@link MemberAddedToGroup}.</p>
      *
-     * @param memberId l'identifiant du membre
      * @param groupId  l'identifiant du groupe
+     * @param memberId l'identifiant du membre
      * @return la nouvelle appartenance créée
      */
-    public static GroupMembership add(MemberId memberId, GroupId groupId) {
+    public static GroupMembership add(GroupId groupId, MemberId memberId) {
         GroupMembership groupMembership = new GroupMembership(
                 GroupMembershipId.generate(),
-                memberId,
                 groupId,
+                memberId,
                 Instant.now()
         );
 
@@ -64,23 +64,23 @@ public final class GroupMembership extends AggregateRoot {
      */
     public static GroupMembership reconstitute(
             GroupMembershipId id,
-            MemberId memberId,
             GroupId groupId,
+            MemberId memberId,
             Instant joinedAt
     ) {
-        return new GroupMembership(id, memberId, groupId, joinedAt);
+        return new GroupMembership(id, groupId, memberId, joinedAt);
     }
 
     public GroupMembershipId id() {
         return id;
     }
 
-    public MemberId memberId() {
-        return memberId;
-    }
-
     public GroupId groupId() {
         return groupId;
+    }
+
+    public MemberId memberId() {
+        return memberId;
     }
 
     public Instant joinedAt() {
@@ -103,8 +103,8 @@ public final class GroupMembership extends AggregateRoot {
     public String toString() {
         return "GroupMembership{" +
                 "id=" + id +
-                ", memberId=" + memberId +
                 ", groupId=" + groupId +
+                ", memberId=" + memberId +
                 '}';
     }
 }

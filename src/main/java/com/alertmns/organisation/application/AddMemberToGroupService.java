@@ -81,7 +81,7 @@ public final class AddMemberToGroupService implements AddMemberToGroupUseCase {
             throw new GroupMembershipAlreadyExistsException(groupId, memberId);
         }
 
-        GroupMembership groupMembership = GroupMembership.add(memberId, groupId);
+        GroupMembership groupMembership = GroupMembership.add(groupId, memberId);
         groupMembershipRepository.save(groupMembership);
         publisher.publish(groupMembership.pullDomainEvents());
         return groupMembership.id();
