@@ -50,7 +50,7 @@ public final class Organisation extends AggregateRoot {
                 Instant.now()
         );
 
-        organisation.registerEvent(new OrganisationCreated(organisation.id, organisation.name));
+        organisation.registerEvent(new OrganisationCreated(organisation.id));
         return organisation;
     }
 

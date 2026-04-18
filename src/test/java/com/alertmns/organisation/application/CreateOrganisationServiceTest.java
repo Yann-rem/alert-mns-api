@@ -61,7 +61,7 @@ class CreateOrganisationServiceTest {
         }
 
         @Test
-        @DisplayName("should publish OrganisationCreated event with the saved organisation id and name")
+        @DisplayName("should publish OrganisationCreated event with the saved organisation id")
         void shouldPublishOrganisationCreatedEvent() {
             when(repository.existsByName(any())).thenReturn(false);
 
@@ -79,7 +79,6 @@ class CreateOrganisationServiceTest {
             assertEquals(1, events.size());
             OrganisationCreated event = assertInstanceOf(OrganisationCreated.class, events.getFirst());
             assertEquals(saved.id(), event.organisationId());
-            assertEquals(saved.name(), event.name());
         }
 
         @Test

@@ -94,7 +94,6 @@ class OrganisationTest {
             assertEquals(1, events.size());
             OrganisationCreated event = assertInstanceOf(OrganisationCreated.class, events.getFirst());
             assertEquals(organisation.id(), event.organisationId());
-            assertEquals(organisation.name(), event.name());
         }
 
         @Test
