@@ -18,14 +18,14 @@ import java.util.Objects;
 public final class Group extends AggregateRoot {
 
     private final GroupId id;
-    private GroupName name;
     private final OrganisationId organisationId;
+    private GroupName name;
     private final Instant createdAt;
 
-    private Group(GroupId id, GroupName name, OrganisationId organisationId, Instant createdAt) {
+    private Group(GroupId id, OrganisationId organisationId, GroupName name, Instant createdAt) {
         this.id = Objects.requireNonNull(id, "id must not be null");
-        this.name = Objects.requireNonNull(name, "name must not be null");
         this.organisationId = Objects.requireNonNull(organisationId, "organisationId must not be null");
+        this.name = Objects.requireNonNull(name, "name must not be null");
         this.createdAt = Objects.requireNonNull(createdAt, "createdAt must not be null");
     }
 
@@ -40,9 +40,9 @@ public final class Group extends AggregateRoot {
      * @param organisationId l'identifiant de l'organisation de rattachement
      * @return le nouveau groupe créé
      */
-    public static Group create(GroupName name, OrganisationId organisationId) {
-        Group group = new Group(GroupId.generate(), name, organisationId, Instant.now());
-        group.registerEvent(new GroupCreated(group.id, group.name, group.organisationId));
+    public static Group create(OrganisationId organisationId, GroupName name) {
+        Group group = new Group(GroupId.generate(), organisationId, name, Instant.now());
+        group.registerEvent(new GroupCreated(group.organisationId, group.id, group.name));
         return group;
     }
 
@@ -55,11 +55,11 @@ public final class Group extends AggregateRoot {
      */
     public static Group reconstitute(
             GroupId id,
-            GroupName name,
             OrganisationId organisationId,
+            GroupName name,
             Instant createdAt
     ) {
-        return new Group(id, name, organisationId, createdAt);
+        return new Group(id, organisationId, name, createdAt);
     }
 
     /**
@@ -82,12 +82,12 @@ public final class Group extends AggregateRoot {
         return id;
     }
 
-    public GroupName name() {
-        return name;
-    }
-
     public OrganisationId organisationId() {
         return organisationId;
+    }
+
+    public GroupName name() {
+        return name;
     }
 
     public Instant createdAt() {

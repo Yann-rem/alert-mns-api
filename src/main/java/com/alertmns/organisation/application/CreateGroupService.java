@@ -37,7 +37,7 @@ public final class CreateGroupService implements CreateGroupUseCase {
             throw new GroupNameAlreadyExistsException(organisationId, name);
         }
 
-        Group group = Group.create(name, organisationId);
+        Group group = Group.create(organisationId, name);
         repository.save(group);
         publisher.publish(group.pullDomainEvents());
         return group.id();

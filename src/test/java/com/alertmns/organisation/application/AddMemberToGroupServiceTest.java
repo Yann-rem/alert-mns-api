@@ -82,8 +82,8 @@ class AddMemberToGroupServiceTest {
 
             group = Group.reconstitute(
                     groupId,
-                    GroupName.of("Développeurs"),
                     ORGANISATION_ID,
+                    GroupName.of("Développeurs"),
                     Instant.now()
             );
 

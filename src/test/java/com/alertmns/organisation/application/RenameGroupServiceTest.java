@@ -62,8 +62,8 @@ class RenameGroupServiceTest {
 
             group = Group.reconstitute(
                     id,
-                    GroupName.of("Développeurs"),
                     ORGANISATION_ID,
+                    GroupName.of("Développeurs"),
                     Instant.now()
             );
         }

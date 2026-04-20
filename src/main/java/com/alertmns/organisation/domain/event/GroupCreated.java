@@ -11,13 +11,13 @@ import java.time.Instant;
  * Événement de domaine représentant la création d'un groupe dans une organisation.
  */
 public record GroupCreated(
+        OrganisationId organisationId,
         GroupId groupId,
         GroupName name,
-        OrganisationId organisationId,
         Instant occurredOn
 ) implements DomainEvent {
 
-    public GroupCreated(GroupId groupId, GroupName name, OrganisationId organisationId) {
-        this(groupId, name, organisationId, Instant.now());
+    public GroupCreated(OrganisationId organisationId, GroupId groupId, GroupName name) {
+        this(organisationId, groupId, name, Instant.now());
     }
 }
