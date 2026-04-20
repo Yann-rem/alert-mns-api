@@ -9,18 +9,18 @@ import com.alertmns.iam.domain.model.Profile;
 import com.alertmns.iam.domain.model.User;
 import com.alertmns.iam.domain.model.UserId;
 import com.alertmns.iam.domain.port.incoming.RegisterUserUseCase;
-import com.alertmns.shared.OrganisationId;
 import com.alertmns.iam.domain.port.incoming.command.RegisterUserCommand;
 import com.alertmns.iam.domain.port.outgoing.AuthenticationPort;
-import com.alertmns.shared.EventPublisher;
 import com.alertmns.iam.domain.port.outgoing.UserRepository;
+import com.alertmns.shared.EventPublisher;
+import com.alertmns.shared.OrganisationId;
 
 import java.util.Objects;
 
 /**
  * Service applicatif représentant l'orchestration de l'inscription des utilisateurs.
  *
- * <p>Valide → crée les VO → persiste → publie les événements.</p>
+ * <p>Parse (VOs) → check (unicité email) → act (hash + agrégat) → save → publish.</p>
  */
 public final class RegisterUserService implements RegisterUserUseCase {
 
@@ -40,7 +40,11 @@ public final class RegisterUserService implements RegisterUserUseCase {
 
     @Override
     public UserId register(RegisterUserCommand command) {
+        OrganisationId organisationId = OrganisationId.from(command.organisationId());
         Email email = Email.of(command.email());
+        FirstName firstName = FirstName.of(command.firstName());
+        LastName lastName = LastName.of(command.lastName());
+        Profile profile = Profile.of(firstName, lastName);
 
         if (repository.existsByEmail(email)) {
             throw new EmailAlreadyExistsException(email);
@@ -50,10 +54,6 @@ public final class RegisterUserService implements RegisterUserUseCase {
                 authentication.hashPassword(command.rawPassword())
         );
 
-        FirstName firstName = FirstName.of(command.firstName());
-        LastName lastName = LastName.of(command.lastName());
-        Profile profile = Profile.of(firstName, lastName);
-        OrganisationId organisationId = OrganisationId.from(command.organisationId());
         User user = User.register(organisationId, email, hashedPassword, profile);
         repository.save(user);
         publisher.publish(user.pullDomainEvents());
