@@ -54,7 +54,7 @@ public final class RegisterUserService implements RegisterUserUseCase {
         LastName lastName = LastName.of(command.lastName());
         Profile profile = Profile.of(firstName, lastName);
         OrganisationId organisationId = OrganisationId.from(command.organisationId());
-        User user = User.register(email, hashedPassword, profile, organisationId);
+        User user = User.register(organisationId, email, hashedPassword, profile);
         repository.save(user);
         publisher.publish(user.pullDomainEvents());
         return user.id();

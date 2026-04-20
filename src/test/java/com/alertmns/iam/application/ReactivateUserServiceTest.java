@@ -67,16 +67,12 @@ class ReactivateUserServiceTest {
 
             disabledUser = User.reconstitute(
                     id,
+                    ORGANISATION_ID,
                     Email.of("johndoe@example.com"),
-
-                    HashedPassword.of(
-                            "$2a$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012345"
-                    ),
-
+                    HashedPassword.of("$2a$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012345"),
                     Profile.of(FirstName.of("John"), LastName.of("Doe")),
                     UserRole.USER,
                     UserStatus.DISABLED,
-                    ORGANISATION_ID,
                     Instant.now()
             );
         }
@@ -127,12 +123,12 @@ class ReactivateUserServiceTest {
         void shouldThrowIllegalStateExceptionWhenUserIsNotDISABLED() {
             User activeUser = User.reconstitute(
                     disabledUser.id(),
+                    disabledUser.organisationId(),
                     disabledUser.email(),
                     disabledUser.hashedPassword(),
                     disabledUser.profile(),
                     disabledUser.role(),
                     UserStatus.ACTIVE,
-                    disabledUser.organisationId(),
                     Instant.now()
             );
 

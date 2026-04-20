@@ -14,14 +14,14 @@ import java.time.Instant;
  * <p>Le compte est créé avec le statut PENDING, en attente d'activation par un administrateur.</p>
  */
 public record UserRegistered(
+        OrganisationId organisationId,
         UserId userId,
         Email email,
         UserRole role,
-        OrganisationId organisationId,
         Instant occurredOn
 ) implements DomainEvent {
 
-    public UserRegistered(UserId userId, Email email, UserRole role, OrganisationId organisationId) {
-        this(userId, email, role, organisationId, Instant.now());
+    public UserRegistered(OrganisationId organisationId, UserId userId, Email email, UserRole role) {
+        this(organisationId, userId, email, role, Instant.now());
     }
 }

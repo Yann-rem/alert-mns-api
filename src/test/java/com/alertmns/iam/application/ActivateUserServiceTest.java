@@ -67,16 +67,12 @@ class ActivateUserServiceTest {
 
             pendingUser = User.reconstitute(
                     id,
+                    ORGANISATION_ID,
                     Email.of("johndoe@example.com"),
-
-                    HashedPassword.of(
-                            "$2a$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012345"
-                    ),
-
+                    HashedPassword.of("$2a$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012345"),
                     Profile.of(FirstName.of("John"), LastName.of("Doe")),
                     UserRole.USER,
                     UserStatus.PENDING,
-                    ORGANISATION_ID,
                     Instant.now()
             );
         }
@@ -127,12 +123,12 @@ class ActivateUserServiceTest {
         void shouldThrowIllegalStateExceptionWhenUserIsNotPENDING() {
             User activeUser = User.reconstitute(
                     pendingUser.id(),
+                    pendingUser.organisationId(),
                     pendingUser.email(),
                     pendingUser.hashedPassword(),
                     pendingUser.profile(),
                     pendingUser.role(),
                     UserStatus.ACTIVE,
-                    pendingUser.organisationId(),
                     Instant.now()
             );
 

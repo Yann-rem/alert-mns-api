@@ -16,15 +16,18 @@ import org.junit.jupiter.api.Test;
 import java.time.Instant;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DisplayName("User")
 class UserTest {
 
-    static final String BCRYPT_HASH =
-            "$2a$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012345";
-
     static final OrganisationId ORGANISATION_ID = OrganisationId.generate();
+    static final String BCRYPT_HASH = "$2a$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012345";
 
     @Nested
     @DisplayName("Creation")
@@ -36,7 +39,7 @@ class UserTest {
             Email email = Email.of("johndoe@example.com");
             HashedPassword hashedPassword = HashedPassword.of(BCRYPT_HASH);
             Profile profile = Profile.of(FirstName.of("John"), LastName.of("Doe"));
-            User user = User.register(email, hashedPassword, profile, ORGANISATION_ID);
+            User user = User.register(ORGANISATION_ID, email, hashedPassword, profile);
             assertEquals(UserStatus.PENDING, user.status());
             assertEquals(UserRole.USER, user.role());
             assertEquals(ORGANISATION_ID, user.organisationId());
@@ -54,8 +57,14 @@ class UserTest {
             Instant createdAt = Instant.now();
 
             User user = User.reconstitute(
-                    id, email, hashedPassword, profile,
-                    UserRole.ADMIN, UserStatus.ACTIVE, ORGANISATION_ID, createdAt
+                    id,
+                    ORGANISATION_ID,
+                    email,
+                    hashedPassword,
+                    profile,
+                    UserRole.ADMIN,
+                    UserStatus.ACTIVE,
+                    createdAt
             );
 
             assertEquals(id, user.id());
@@ -79,7 +88,7 @@ class UserTest {
             HashedPassword hashedPassword = HashedPassword.of(BCRYPT_HASH);
             Profile profile = Profile.of(FirstName.of("John"), LastName.of("Doe"));
             assertThrows(NullPointerException.class,
-                    () -> User.register(null, hashedPassword, profile, ORGANISATION_ID));
+                    () -> User.register(ORGANISATION_ID, null, hashedPassword, profile));
         }
 
         @Test
@@ -88,7 +97,7 @@ class UserTest {
             Email email = Email.of("johndoe@example.com");
             Profile profile = Profile.of(FirstName.of("John"), LastName.of("Doe"));
             assertThrows(NullPointerException.class,
-                    () -> User.register(email, null, profile, ORGANISATION_ID));
+                    () -> User.register(ORGANISATION_ID, email, null, profile));
         }
 
         @Test
@@ -97,7 +106,7 @@ class UserTest {
             Email email = Email.of("johndoe@example.com");
             HashedPassword hashedPassword = HashedPassword.of(BCRYPT_HASH);
             assertThrows(NullPointerException.class,
-                    () -> User.register(email, hashedPassword, null, ORGANISATION_ID));
+                    () -> User.register(ORGANISATION_ID, email, hashedPassword, null));
         }
 
         @Test
@@ -107,7 +116,7 @@ class UserTest {
             HashedPassword hashedPassword = HashedPassword.of(BCRYPT_HASH);
             Profile profile = Profile.of(FirstName.of("John"), LastName.of("Doe"));
             assertThrows(NullPointerException.class,
-                    () -> User.register(email, hashedPassword, profile, null));
+                    () -> User.register(null, email, hashedPassword, profile));
         }
     }
 
@@ -122,7 +131,7 @@ class UserTest {
             Email email = Email.of("johndoe@example.com");
             HashedPassword hashedPassword = HashedPassword.of(BCRYPT_HASH);
             Profile profile = Profile.of(FirstName.of("John"), LastName.of("Doe"));
-            user = User.register(email, hashedPassword, profile, ORGANISATION_ID);
+            user = User.register(ORGANISATION_ID, email, hashedPassword, profile);
         }
 
         @Test
@@ -221,7 +230,7 @@ class UserTest {
             Email email = Email.of("johndoe@example.com");
             HashedPassword hashedPassword = HashedPassword.of(BCRYPT_HASH);
             Profile profile = Profile.of(FirstName.of("John"), LastName.of("Doe"));
-            user = User.register(email, hashedPassword, profile, ORGANISATION_ID);
+            user = User.register(ORGANISATION_ID, email, hashedPassword, profile);
         }
 
         @Test
@@ -333,13 +342,25 @@ class UserTest {
             Instant createdAt = Instant.now();
 
             User user1 = User.reconstitute(
-                    id, email, hashedPassword, profile,
-                    UserRole.ADMIN, UserStatus.ACTIVE, ORGANISATION_ID, createdAt
+                    id,
+                    ORGANISATION_ID,
+                    email,
+                    hashedPassword,
+                    profile,
+                    UserRole.ADMIN,
+                    UserStatus.ACTIVE,
+                    createdAt
             );
 
             User user2 = User.reconstitute(
-                    id, email, hashedPassword, profile,
-                    UserRole.ADMIN, UserStatus.ACTIVE, ORGANISATION_ID, createdAt
+                    id,
+                    ORGANISATION_ID,
+                    email,
+                    hashedPassword,
+                    profile,
+                    UserRole.ADMIN,
+                    UserStatus.ACTIVE,
+                    createdAt
             );
 
             assertEquals(user1, user2);
@@ -351,8 +372,8 @@ class UserTest {
             Email email = Email.of("johndoe@example.com");
             HashedPassword hashedPassword = HashedPassword.of(BCRYPT_HASH);
             Profile profile = Profile.of(FirstName.of("John"), LastName.of("Doe"));
-            User user1 = User.register(email, hashedPassword, profile, ORGANISATION_ID);
-            User user2 = User.register(email, hashedPassword, profile, ORGANISATION_ID);
+            User user1 = User.register(ORGANISATION_ID, email, hashedPassword, profile);
+            User user2 = User.register(ORGANISATION_ID, email, hashedPassword, profile);
             assertNotEquals(user1, user2);
         }
     }

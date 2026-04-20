@@ -31,21 +31,21 @@ public final class User extends AggregateRoot {
 
     private User(
             UserId id,
+            OrganisationId organisationId,
             Email email,
             HashedPassword hashedPassword,
             Profile profile,
             UserRole role,
             UserStatus status,
-            OrganisationId organisationId,
             Instant createdAt
     ) {
         this.id = Objects.requireNonNull(id, "id must not be null");
+        this.organisationId = Objects.requireNonNull(organisationId, "organisationId must not be null");
         this.email = Objects.requireNonNull(email, "email must not be null");
         this.hashedPassword = Objects.requireNonNull(hashedPassword, "hashedPassword must not be null");
         this.profile = Objects.requireNonNull(profile, "profile must not be null");
         this.role = Objects.requireNonNull(role, "role must not be null");
         this.status = Objects.requireNonNull(status, "status must not be null");
-        this.organisationId = Objects.requireNonNull(organisationId, "organisationId must not be null");
         this.createdAt = Objects.requireNonNull(createdAt, "createdAt must not be null");
     }
 
@@ -57,30 +57,30 @@ public final class User extends AggregateRoot {
      *
      * <p>Émet {@link UserRegistered}.</p>
      *
+     * @param organisationId l'identifiant de l'organisation de rattachement
      * @param email          l'adresse email de l'utilisateur
      * @param hashedPassword le mot de passe déjà haché
      * @param profile        le profil de l'utilisateur
-     * @param organisationId l'identifiant de l'organisation de rattachement
      * @return le nouvel utilisateur créé
      */
     public static User register(
+            OrganisationId organisationId,
             Email email,
             HashedPassword hashedPassword,
-            Profile profile,
-            OrganisationId organisationId
+            Profile profile
     ) {
         User user = new User(
                 UserId.generate(),
+                organisationId,
                 email,
                 hashedPassword,
                 profile,
                 UserRole.USER,
                 UserStatus.PENDING,
-                organisationId,
                 Instant.now()
         );
 
-        user.registerEvent(new UserRegistered(user.id, user.email, user.role, user.organisationId));
+        user.registerEvent(new UserRegistered(user.organisationId, user.id, user.email, user.role));
         return user;
     }
 
@@ -93,22 +93,22 @@ public final class User extends AggregateRoot {
      */
     public static User reconstitute(
             UserId id,
+            OrganisationId organisationId,
             Email email,
             HashedPassword hashedPassword,
             Profile profile,
             UserRole role,
             UserStatus status,
-            OrganisationId organisationId,
             Instant createdAt
     ) {
         return new User(
                 id,
+                organisationId,
                 email,
                 hashedPassword,
                 profile,
                 role,
                 status,
-                organisationId,
                 createdAt
         );
     }
@@ -204,6 +204,10 @@ public final class User extends AggregateRoot {
         return id;
     }
 
+    public OrganisationId organisationId() {
+        return organisationId;
+    }
+
     public Email email() {
         return email;
     }
@@ -222,10 +226,6 @@ public final class User extends AggregateRoot {
 
     public UserStatus status() {
         return status;
-    }
-
-    public OrganisationId organisationId() {
-        return organisationId;
     }
 
     public Instant createdAt() {

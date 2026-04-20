@@ -26,6 +26,9 @@ public class UserJpaEntity {
     @Id
     private UUID id;
 
+    @Column(nullable = false)
+    private UUID organisationId;
+
     @Column(nullable = false, unique = true, length = 254)
     private String email;
 
@@ -54,9 +57,6 @@ public class UserJpaEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 10)
     private UserStatus status;
-
-    @Column(nullable = false)
-    private UUID organisationId;
 
     @Column(nullable = false)
     private Instant createdAt;

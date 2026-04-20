@@ -13,17 +13,18 @@ import com.alertmns.shared.OrganisationId;
 
 public class UserPersistenceMapper {
 
-    private UserPersistenceMapper() {}
+    private UserPersistenceMapper() {
+    }
 
     public static User toDomain(UserJpaEntity entity) {
         return User.reconstitute(
                 UserId.from(entity.getId()),
+                OrganisationId.from(entity.getOrganisationId()),
                 Email.of(entity.getEmail()),
                 HashedPassword.of(entity.getHashedPassword()),
                 buildProfile(entity),
                 entity.getRole(),
                 entity.getStatus(),
-                OrganisationId.from(entity.getOrganisationId()),
                 entity.getCreatedAt()
         );
     }
@@ -46,6 +47,7 @@ public class UserPersistenceMapper {
     public static UserJpaEntity toEntity(User user) {
         return new UserJpaEntity(
                 user.id().value(),
+                user.organisationId().value(),
                 user.email().value(),
                 user.hashedPassword().value(),
                 user.profile().firstName().value(),
@@ -55,7 +57,6 @@ public class UserPersistenceMapper {
                 user.profile().absenceMessage().map(AbsenceMessage::active).orElse(null),
                 user.role(),
                 user.status(),
-                user.organisationId().value(),
                 user.createdAt()
         );
     }
