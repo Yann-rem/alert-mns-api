@@ -5,15 +5,15 @@ import com.alertmns.iam.domain.model.User;
 import com.alertmns.iam.domain.model.UserId;
 import com.alertmns.iam.domain.port.incoming.ActivateUserUseCase;
 import com.alertmns.iam.domain.port.incoming.command.ActivateUserCommand;
-import com.alertmns.shared.EventPublisher;
 import com.alertmns.iam.domain.port.outgoing.UserRepository;
+import com.alertmns.shared.EventPublisher;
 
 import java.util.Objects;
 
 /**
- * Service applicatif représentant l’orchestration de l’activation des utilisateurs.
+ * Service applicatif représentant l'orchestration de l'activation des utilisateurs.
  *
- * <p>Charge l’agrégat → active → persiste → publie les événements.</p>
+ * <p>Parse (VO id) → load (agrégat) → act (activate) → save → publish.</p>
  */
 public final class ActivateUserService implements ActivateUserUseCase {
 
