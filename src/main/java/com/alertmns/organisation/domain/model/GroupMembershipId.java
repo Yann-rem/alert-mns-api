@@ -9,7 +9,7 @@ import java.util.UUID;
 public record GroupMembershipId(UUID value) {
 
     public GroupMembershipId {
-        Objects.requireNonNull(value, "id must not be null");
+        Objects.requireNonNull(value, "groupMembershipId must not be null");
     }
 
     /**
