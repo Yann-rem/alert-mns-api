@@ -7,15 +7,15 @@ import com.alertmns.iam.domain.model.User;
 import com.alertmns.iam.domain.model.UserId;
 import com.alertmns.iam.domain.port.incoming.UpdateProfileUseCase;
 import com.alertmns.iam.domain.port.incoming.command.UpdateProfileCommand;
-import com.alertmns.shared.EventPublisher;
 import com.alertmns.iam.domain.port.outgoing.UserRepository;
+import com.alertmns.shared.EventPublisher;
 
 import java.util.Objects;
 
 /**
- * Service applicatif représentant l’orchestration de la mise à jour du profil d’un utilisateur.
+ * Service applicatif représentant l'orchestration de la mise à jour du profil d'un utilisateur.
  *
- * <p>Charge l’agrégat → met à jour le profil → persiste → publie les événements.</p>
+ * <p>Parse (VOs) → load (agrégat) → act (updateProfile) → save → publish.</p>
  */
 public final class UpdateProfileService implements UpdateProfileUseCase {
 
@@ -30,10 +30,13 @@ public final class UpdateProfileService implements UpdateProfileUseCase {
     @Override
     public void update(UpdateProfileCommand command) {
         UserId id = UserId.from(command.userId());
-        User user = repository.findById(id).orElseThrow(() -> new UserNotFoundException(id));
         FirstName firstName = FirstName.of(command.firstName());
         LastName lastName = LastName.of(command.lastName());
+
+        User user = repository.findById(id).orElseThrow(() -> new UserNotFoundException(id));
+
         user.updateProfile(firstName, lastName, command.avatar());
+
         repository.save(user);
         publisher.publish(user.pullDomainEvents());
     }
