@@ -5,12 +5,11 @@ import java.util.Objects;
 /**
  * Value Object représentant le mot de passe haché d'un utilisateur.
  */
-public final class HashedPassword {
+public record HashedPassword(String value) {
 
     private static final int MAX_LENGTH = 255;
-    private final String value;
 
-    private HashedPassword(String value) {
+    public HashedPassword {
         Objects.requireNonNull(value, "hashedPassword must not be null");
         if (value.isBlank()) {
             throw new IllegalArgumentException("hashedPassword must not be blank");
@@ -18,7 +17,6 @@ public final class HashedPassword {
         if (value.length() > MAX_LENGTH) {
             throw new IllegalArgumentException("hashedPassword must not exceed " + MAX_LENGTH + " characters");
         }
-        this.value = value;
     }
 
     /**
@@ -30,26 +28,5 @@ public final class HashedPassword {
      */
     public static HashedPassword of(String value) {
         return new HashedPassword(value);
-    }
-
-    public String value() {
-        return value;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
-        HashedPassword hashedPassword = (HashedPassword) o;
-        return Objects.equals(value, hashedPassword.value);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(value);
-    }
-
-    @Override
-    public String toString() {
-        return "****";
     }
 }

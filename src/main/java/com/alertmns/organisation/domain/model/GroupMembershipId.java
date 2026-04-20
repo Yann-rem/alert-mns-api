@@ -6,13 +6,10 @@ import java.util.UUID;
 /**
  * Value Object représentant l'identifiant unique d'une appartenance membre-groupe.
  */
-public final class GroupMembershipId {
+public record GroupMembershipId(UUID value) {
 
-    private final UUID value;
-
-    private GroupMembershipId(UUID value) {
+    public GroupMembershipId {
         Objects.requireNonNull(value, "id must not be null");
-        this.value = value;
     }
 
     /**
@@ -43,26 +40,5 @@ public final class GroupMembershipId {
      */
     public static GroupMembershipId from(String value) {
         return new GroupMembershipId(UUID.fromString(value));
-    }
-
-    public UUID value() {
-        return value;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
-        GroupMembershipId that = (GroupMembershipId) o;
-        return Objects.equals(value, that.value);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(value);
-    }
-
-    @Override
-    public String toString() {
-        return value.toString();
     }
 }

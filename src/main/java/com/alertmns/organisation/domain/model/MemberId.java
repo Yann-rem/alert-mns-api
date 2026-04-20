@@ -6,13 +6,10 @@ import java.util.UUID;
 /**
  * Value Object représentant l'identifiant unique d'un membre.
  */
-public final class MemberId {
+public record MemberId(UUID value) {
 
-    private final UUID value;
-
-    private MemberId(UUID value) {
+    public MemberId {
         Objects.requireNonNull(value, "id must not be null");
-        this.value = value;
     }
 
     /**
@@ -43,26 +40,5 @@ public final class MemberId {
      */
     public static MemberId from(String value) {
         return new MemberId(UUID.fromString(value));
-    }
-
-    public UUID value() {
-        return value;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
-        MemberId memberId = (MemberId) o;
-        return Objects.equals(value, memberId.value);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(value);
-    }
-
-    @Override
-    public String toString() {
-        return value.toString();
     }
 }

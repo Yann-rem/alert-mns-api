@@ -6,13 +6,10 @@ import java.util.UUID;
 /**
  * Value Object représentant l'identifiant d'un utilisateur.
  */
-public final class UserId {
+public record UserId(UUID value) {
 
-    private final UUID value;
-
-    private UserId(UUID value) {
+    public UserId {
         Objects.requireNonNull(value, "id must not be null");
-        this.value = value;
     }
 
     /**
@@ -43,26 +40,5 @@ public final class UserId {
      */
     public static UserId from(String value) {
         return new UserId(UUID.fromString(value));
-    }
-
-    public UUID value() {
-        return value;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
-        UserId userId = (UserId) o;
-        return Objects.equals(value, userId.value);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(value);
-    }
-
-    @Override
-    public String toString() {
-        return value.toString();
     }
 }
