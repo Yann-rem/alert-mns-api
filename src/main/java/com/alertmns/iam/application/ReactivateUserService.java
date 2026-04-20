@@ -5,15 +5,15 @@ import com.alertmns.iam.domain.model.User;
 import com.alertmns.iam.domain.model.UserId;
 import com.alertmns.iam.domain.port.incoming.ReactivateUserUseCase;
 import com.alertmns.iam.domain.port.incoming.command.ReactivateUserCommand;
-import com.alertmns.shared.EventPublisher;
 import com.alertmns.iam.domain.port.outgoing.UserRepository;
+import com.alertmns.shared.EventPublisher;
 
 import java.util.Objects;
 
 /**
  * Service applicatif représentant l'orchestration de la réactivation des utilisateurs.
  *
- * <p>Charge l'agrégat → réactive → persiste → publie les événements.</p>
+ * <p>Parse (VO id) → load (agrégat) → act (reactivate) → save → publish.</p>
  */
 public final class ReactivateUserService implements ReactivateUserUseCase {
 
