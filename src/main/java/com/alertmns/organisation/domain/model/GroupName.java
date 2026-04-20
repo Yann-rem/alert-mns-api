@@ -22,6 +22,15 @@ public record GroupName(String value) {
         }
     }
 
+    /**
+     * Crée un nom de groupe à partir d'une valeur brute.
+     *
+     * <p>La valeur est normalisée (strip) avant validation.</p>
+     *
+     * @param value la valeur brute
+     * @return le nom validé
+     * @throws IllegalArgumentException si la valeur est vide ou dépasse 150 caractères
+     */
     public static GroupName of(String value) {
         return new GroupName(value);
     }
