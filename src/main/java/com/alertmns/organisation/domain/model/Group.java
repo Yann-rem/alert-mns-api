@@ -36,8 +36,8 @@ public final class Group extends AggregateRoot {
      *
      * <p>Émet {@link GroupCreated}.</p>
      *
-     * @param name           le nom du groupe
      * @param organisationId l'identifiant de l'organisation de rattachement
+     * @param name           le nom du groupe
      * @return le nouveau groupe créé
      */
     public static Group create(OrganisationId organisationId, GroupName name) {
