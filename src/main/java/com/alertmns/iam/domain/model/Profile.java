@@ -6,23 +6,18 @@ import java.util.Optional;
 /**
  * Value Object représentant le profil d'un utilisateur.
  */
-public final class Profile {
+public record Profile(
+        FirstName firstName,
+        LastName lastName,
+        Optional<String> avatar,
+        Optional<AbsenceMessage> absenceMessage
+) {
 
-    private final FirstName firstName;
-    private final LastName lastName;
-    private final String avatar;
-    private final Optional<AbsenceMessage> absenceMessage;
-
-    private Profile(
-            FirstName firstName,
-            LastName lastName,
-            String avatar,
-            Optional<AbsenceMessage> absenceMessage
-    ) {
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.avatar = avatar;
-        this.absenceMessage = absenceMessage;
+    public Profile {
+        Objects.requireNonNull(firstName, "firstName must not be null");
+        Objects.requireNonNull(lastName, "lastName must not be null");
+        Objects.requireNonNull(avatar, "avatar must not be null");
+        Objects.requireNonNull(absenceMessage, "absenceMessage must not be null");
     }
 
     /**
@@ -45,9 +40,7 @@ public final class Profile {
      * @return le profil créé
      */
     public static Profile of(FirstName firstName, LastName lastName, String avatar) {
-        Objects.requireNonNull(firstName, "firstName must not be null");
-        Objects.requireNonNull(lastName, "lastName must not be null");
-        return new Profile(firstName, lastName, avatar, Optional.empty());
+        return new Profile(firstName, lastName, Optional.ofNullable(avatar), Optional.empty());
     }
 
     /**
@@ -61,9 +54,7 @@ public final class Profile {
      * @return le profil mis à jour
      */
     public Profile withIdentity(FirstName firstName, LastName lastName, String avatar) {
-        Objects.requireNonNull(firstName, "firstName must not be null");
-        Objects.requireNonNull(lastName, "lastName must not be null");
-        return new Profile(firstName, lastName, avatar, absenceMessage);
+        return new Profile(firstName, lastName, Optional.ofNullable(avatar), absenceMessage);
     }
 
     /**
@@ -86,9 +77,7 @@ public final class Profile {
      */
     public Profile activateAbsenceMessage() {
         return absenceMessage
-                .map(message -> new Profile(
-                        firstName, lastName, avatar, Optional.of(message.activate()))
-                )
+                .map(message -> new Profile(firstName, lastName, avatar, Optional.of(message.activate())))
                 .orElse(this);
     }
 
@@ -101,48 +90,7 @@ public final class Profile {
      */
     public Profile deactivateAbsenceMessage() {
         return absenceMessage
-                .map(message -> new Profile(
-                        firstName, lastName, avatar, Optional.of(message.deactivate()))
-                )
+                .map(message -> new Profile(firstName, lastName, avatar, Optional.of(message.deactivate())))
                 .orElse(this);
-    }
-
-    public FirstName firstName() {
-        return firstName;
-    }
-
-    public LastName lastName() {
-        return lastName;
-    }
-
-    public Optional<String> avatar() {
-        return Optional.ofNullable(avatar);
-    }
-
-    public Optional<AbsenceMessage> absenceMessage() {
-        return absenceMessage;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
-        Profile that = (Profile) o;
-        return Objects.equals(firstName, that.firstName) &&
-                Objects.equals(lastName, that.lastName) &&
-                Objects.equals(avatar, that.avatar) &&
-                Objects.equals(absenceMessage, that.absenceMessage);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(firstName, lastName, avatar, absenceMessage);
-    }
-
-    @Override
-    public String toString() {
-        return "Profile{" +
-                "firstName=" + firstName +
-                ", lastName=" + lastName +
-                '}';
     }
 }
