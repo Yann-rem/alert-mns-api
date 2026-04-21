@@ -15,8 +15,7 @@ import java.util.Objects;
 /**
  * Service applicatif représentant l'orchestration du renommage des groupes.
  *
- * <p>Charge l'agrégat → court-circuit si le nom est identique → vérifie l'unicité
- * du nouveau nom dans l'organisation → renomme → persiste → publie les événements.</p>
+ * <p>Parse (VOs) → load (agrégat) → check (idempotence + unicité du nouveau nom) → act (rename) → save → publish.</p>
  */
 public final class RenameGroupService implements RenameGroupUseCase {
 
@@ -37,7 +36,6 @@ public final class RenameGroupService implements RenameGroupUseCase {
         if (group.name().equals(name)) {
             return;
         }
-
         if (repository.existsByOrganisationIdAndGroupName(group.organisationId(), name)) {
             throw new GroupNameAlreadyExistsException(group.organisationId(), name);
         }
