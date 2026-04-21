@@ -119,6 +119,7 @@ class RegisterUserServiceTest {
             );
 
             assertThrows(EmailAlreadyExistsException.class, () -> service.register(command));
+            verify(authentication, never()).hashPassword(any());
             verify(repository, never()).save(any());
             verify(publisher, never()).publish(anyList());
         }
@@ -126,14 +127,13 @@ class RegisterUserServiceTest {
         @Test
         @DisplayName("should throw IllegalArgumentException when organisationId is not a valid UUID")
         void shouldThrowWhenOrganisationIdIsInvalid() {
-            when(repository.existsByEmail(any())).thenReturn(false);
-            when(authentication.hashPassword(any())).thenReturn(HASHED_PASSWORD);
-
             RegisterUserCommand command = new RegisterUserCommand(
                     EMAIL, RAW_PASSWORD, FIRST_NAME, LAST_NAME, "invalid"
             );
 
             assertThrows(IllegalArgumentException.class, () -> service.register(command));
+            verify(repository, never()).existsByEmail(any());
+            verify(authentication, never()).hashPassword(any());
             verify(repository, never()).save(any());
             verify(publisher, never()).publish(anyList());
         }
