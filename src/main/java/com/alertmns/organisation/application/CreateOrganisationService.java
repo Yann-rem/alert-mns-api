@@ -14,7 +14,7 @@ import java.util.Objects;
 /**
  * Service applicatif représentant l'orchestration de la création des organisations.
  *
- * <p>Valide → vérifie l'unicité du nom → crée l'agrégat → persiste → publie les événements.</p>
+ * <p>Parse (VO name) → check (unicité du nom) → act (Organisation.create) → save → publish.</p>
  */
 public final class CreateOrganisationService implements CreateOrganisationUseCase {
 
