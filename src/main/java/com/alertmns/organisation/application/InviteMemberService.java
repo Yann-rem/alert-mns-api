@@ -16,8 +16,7 @@ import java.util.UUID;
 /**
  * Service applicatif représentant l'orchestration de l'invitation des membres.
  *
- * <p>Valide → vérifie l'unicité (organisation, utilisateur) → crée l'agrégat →
- * persiste → publie les événements.</p>
+ * <p>Parse (VOs + role) → check (unicité du membre dans l'organisation) → act (Member.invite) → save → publish.</p>
  */
 public final class InviteMemberService implements InviteMemberUseCase {
 
@@ -33,12 +32,13 @@ public final class InviteMemberService implements InviteMemberUseCase {
     public MemberId invite(InviteMemberCommand command) {
         OrganisationId organisationId = OrganisationId.from(command.organisationId());
         UUID userId = UUID.fromString(command.userId());
+        MemberRole role = MemberRole.valueOf(command.role());
 
         if (repository.existsByOrganisationIdAndUserId(organisationId, userId)) {
             throw new MemberAlreadyExistsException(organisationId, userId);
         }
 
-        Member member = Member.invite(organisationId, userId, MemberRole.valueOf(command.role()));
+        Member member = Member.invite(organisationId, userId, role);
         repository.save(member);
         publisher.publish(member.pullDomainEvents());
         return member.id();
