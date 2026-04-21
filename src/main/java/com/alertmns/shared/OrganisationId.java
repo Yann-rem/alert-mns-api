@@ -6,13 +6,10 @@ import java.util.UUID;
 /**
  * Value Object représentant l'identifiant d'une organisation.
  */
-public final class OrganisationId {
+public record OrganisationId(UUID value) {
 
-    private final UUID value;
-
-    private OrganisationId(UUID value) {
+    public OrganisationId {
         Objects.requireNonNull(value, "organisationId must not be null");
-        this.value = value;
     }
 
     /**
@@ -43,28 +40,5 @@ public final class OrganisationId {
      */
     public static OrganisationId from(String value) {
         return new OrganisationId(UUID.fromString(value));
-    }
-
-    public UUID value() {
-        return value;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
-        OrganisationId that = (OrganisationId) o;
-        return Objects.equals(value, that.value);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(value);
-    }
-
-    @Override
-    public String toString() {
-        return "OrganisationId{" +
-                "value=" + value +
-                '}';
     }
 }
