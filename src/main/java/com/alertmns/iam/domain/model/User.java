@@ -121,10 +121,13 @@ public final class User extends AggregateRoot {
      * @param firstName le nouveau prénom
      * @param lastName  le nouveau nom
      * @param avatar    l'URL de l'avatar (nullable)
+     * @throws NullPointerException  si firstName ou lastName est null
      * @throws IllegalStateException si le statut n'est pas {@link UserStatus#ACTIVE}
      */
     public void updateProfile(FirstName firstName, LastName lastName, String avatar) {
-        requireActive("update profile");
+        requireStatus(UserStatus.ACTIVE, "update profile");
+        Objects.requireNonNull(firstName, "firstName must not be null");
+        Objects.requireNonNull(lastName, "lastName must not be null");
         profile = profile.withIdentity(firstName, lastName, avatar);
         registerEvent(new ProfileUpdated(id));
     }
@@ -139,7 +142,7 @@ public final class User extends AggregateRoot {
      * @throws IllegalStateException si le statut n'est pas {@link UserStatus#ACTIVE}
      */
     public void updateAbsenceMessage(AbsenceMessage absenceMessage) {
-        requireActive("update absence message");
+        requireStatus(UserStatus.ACTIVE, "update absence message");
         Objects.requireNonNull(absenceMessage, "absenceMessage must not be null");
         profile = profile.withAbsenceMessage(absenceMessage);
         registerEvent(new AbsenceMessageUpdated(id));
@@ -153,11 +156,7 @@ public final class User extends AggregateRoot {
      * @throws IllegalStateException si le statut n'est pas {@link UserStatus#PENDING}
      */
     public void activate() {
-        if (status != UserStatus.PENDING) {
-            throw new IllegalStateException(
-                    "Cannot activate: user is not PENDING. Current status: " + status
-            );
-        }
+        requireStatus(UserStatus.PENDING, "activate");
         status = UserStatus.ACTIVE;
         registerEvent(new UserActivated(id));
     }
@@ -170,11 +169,7 @@ public final class User extends AggregateRoot {
      * @throws IllegalStateException si le statut n'est pas {@link UserStatus#DISABLED}
      */
     public void reactivate() {
-        if (status != UserStatus.DISABLED) {
-            throw new IllegalStateException(
-                    "Cannot reactivate: user is not DISABLED. Current status: " + status
-            );
-        }
+        requireStatus(UserStatus.DISABLED, "reactivate");
         status = UserStatus.ACTIVE;
         registerEvent(new UserReactivated(id));
     }
@@ -187,15 +182,15 @@ public final class User extends AggregateRoot {
      * @throws IllegalStateException si le statut n'est pas {@link UserStatus#ACTIVE}
      */
     public void disable() {
-        requireActive("disable");
+        requireStatus(UserStatus.ACTIVE, "disable");
         status = UserStatus.DISABLED;
         registerEvent(new UserDisabled(id));
     }
 
-    private void requireActive(String action) {
-        if (status != UserStatus.ACTIVE) {
+    private void requireStatus(UserStatus expected, String action) {
+        if (status != expected) {
             throw new IllegalStateException(
-                    "Cannot " + action + ": user is not ACTIVE. Current status: " + status
+                    "Cannot " + action + ": user is not " + expected + ". Current status: " + status
             );
         }
     }
