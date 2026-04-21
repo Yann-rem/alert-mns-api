@@ -6,8 +6,8 @@ import com.alertmns.iam.domain.model.User;
 import com.alertmns.iam.domain.model.UserId;
 import com.alertmns.iam.domain.port.incoming.UpdateAbsenceMessageUseCase;
 import com.alertmns.iam.domain.port.incoming.command.UpdateAbsenceMessageCommand;
-import com.alertmns.shared.EventPublisher;
 import com.alertmns.iam.domain.port.outgoing.UserRepository;
+import com.alertmns.shared.EventPublisher;
 
 import java.util.Objects;
 
@@ -29,8 +29,10 @@ public final class UpdateAbsenceMessageService implements UpdateAbsenceMessageUs
     @Override
     public void update(UpdateAbsenceMessageCommand command) {
         UserId id = UserId.from(command.userId());
-        User user = repository.findById(id).orElseThrow(() -> new UserNotFoundException(id));
         AbsenceMessage message = AbsenceMessage.of(command.content(), command.active());
+
+        User user = repository.findById(id).orElseThrow(() -> new UserNotFoundException(id));
+
         user.updateAbsenceMessage(message);
         repository.save(user);
         publisher.publish(user.pullDomainEvents());
