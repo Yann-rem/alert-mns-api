@@ -29,6 +29,7 @@ public final class ActivateUserService implements ActivateUserUseCase {
     public void activate(ActivateUserCommand command) {
         UserId id = UserId.from(command.userId());
         User user = repository.findById(id).orElseThrow(() -> new UserNotFoundException(id));
+
         user.activate();
         repository.save(user);
         publisher.publish(user.pullDomainEvents());

@@ -29,6 +29,7 @@ public final class DisableUserService implements DisableUserUseCase {
     public void disable(DisableUserCommand command) {
         UserId id = UserId.from(command.userId());
         User user = repository.findById(id).orElseThrow(() -> new UserNotFoundException(id));
+
         user.disable();
         repository.save(user);
         publisher.publish(user.pullDomainEvents());

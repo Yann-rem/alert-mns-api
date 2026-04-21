@@ -29,6 +29,7 @@ public final class ReactivateUserService implements ReactivateUserUseCase {
     public void reactivate(ReactivateUserCommand command) {
         UserId id = UserId.from(command.userId());
         User user = repository.findById(id).orElseThrow(() -> new UserNotFoundException(id));
+
         user.reactivate();
         repository.save(user);
         publisher.publish(user.pullDomainEvents());

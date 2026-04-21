@@ -32,11 +32,9 @@ public final class UpdateProfileService implements UpdateProfileUseCase {
         UserId id = UserId.from(command.userId());
         FirstName firstName = FirstName.of(command.firstName());
         LastName lastName = LastName.of(command.lastName());
-
         User user = repository.findById(id).orElseThrow(() -> new UserNotFoundException(id));
 
         user.updateProfile(firstName, lastName, command.avatar());
-
         repository.save(user);
         publisher.publish(user.pullDomainEvents());
     }

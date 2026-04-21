@@ -30,7 +30,6 @@ public final class UpdateAbsenceMessageService implements UpdateAbsenceMessageUs
     public void update(UpdateAbsenceMessageCommand command) {
         UserId id = UserId.from(command.userId());
         AbsenceMessage message = AbsenceMessage.of(command.content(), command.active());
-
         User user = repository.findById(id).orElseThrow(() -> new UserNotFoundException(id));
 
         user.updateAbsenceMessage(message);

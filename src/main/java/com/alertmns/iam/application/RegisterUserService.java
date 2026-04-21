@@ -50,9 +50,7 @@ public final class RegisterUserService implements RegisterUserUseCase {
             throw new EmailAlreadyExistsException(email);
         }
 
-        HashedPassword hashedPassword = HashedPassword.of(
-                authentication.hashPassword(command.rawPassword())
-        );
+        HashedPassword hashedPassword = HashedPassword.of(authentication.hashPassword(command.rawPassword()));
 
         User user = User.register(organisationId, email, hashedPassword, profile);
         repository.save(user);
