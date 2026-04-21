@@ -22,8 +22,8 @@ import java.util.Objects;
 /**
  * Service applicatif représentant l'orchestration de l'ajout d'un membre à un groupe.
  *
- * <p>Charge le groupe et le membre → vérifie qu'ils appartiennent à la même organisation →
- * vérifie l'unicité de l'adhésion → crée l'agrégat → persiste → publie les événements.</p>
+ * <p>Parse (VOs) → load (group + member) → check (organisation match + unicité adhésion)
+ * → act (GroupMembership.add) → save → publish.</p>
  */
 public final class AddMemberToGroupService implements AddMemberToGroupUseCase {
 
@@ -40,12 +40,10 @@ public final class AddMemberToGroupService implements AddMemberToGroupUseCase {
     ) {
         this.groupRepository = Objects.requireNonNull(groupRepository, "groupRepository must not be null");
         this.memberRepository = Objects.requireNonNull(memberRepository, "memberRepository must not be null");
-
         this.groupMembershipRepository = Objects.requireNonNull(
                 groupMembershipRepository,
                 "groupMembershipRepository must not be null"
         );
-
         this.publisher = Objects.requireNonNull(publisher, "publisher must not be null");
     }
 
@@ -54,19 +52,12 @@ public final class AddMemberToGroupService implements AddMemberToGroupUseCase {
         GroupId groupId = GroupId.from(command.groupId());
         MemberId memberId = MemberId.from(command.memberId());
 
-        Group group = groupRepository.findById(groupId).orElseThrow(
-                () -> new GroupNotFoundException(groupId));
-
-        Member member = memberRepository.findById(memberId).orElseThrow(
-                () -> new MemberNotFoundException(memberId));
+        Group group = groupRepository.findById(groupId).orElseThrow(() -> new GroupNotFoundException(groupId));
+        Member member = memberRepository.findById(memberId).orElseThrow(() -> new MemberNotFoundException(memberId));
 
         if (!member.organisationId().equals(group.organisationId())) {
-            throw new OrganisationMismatchException(
-                    group.organisationId(),
-                    member.organisationId()
-            );
+            throw new OrganisationMismatchException(group.organisationId(), member.organisationId());
         }
-
         if (groupMembershipRepository.existsByGroupIdAndMemberId(groupId, memberId)) {
             throw new GroupMembershipAlreadyExistsException(groupId, memberId);
         }
