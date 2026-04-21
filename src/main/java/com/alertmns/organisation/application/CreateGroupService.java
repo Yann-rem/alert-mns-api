@@ -15,8 +15,7 @@ import java.util.Objects;
 /**
  * Service applicatif représentant l'orchestration de la création des groupes.
  *
- * <p>Valide → vérifie l'unicité du nom dans l'organisation → crée l'agrégat →
- * persiste → publie les événements.</p>
+ * <p>Parse (VOs) → check (unicité du nom dans l'organisation) → act (Group.create) → save → publish.</p>
  */
 public final class CreateGroupService implements CreateGroupUseCase {
 
