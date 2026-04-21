@@ -16,7 +16,7 @@ import java.util.Objects;
 /**
  * Service applicatif représentant l'orchestration du retrait d'un membre d'un groupe.
  *
- * <p>Charge l'adhésion → supprime → publie l'événement {@link MemberRemovedFromGroup}.</p>
+ * <p>Parse (VOs) → load (adhésion) → act (delete) → publish l'événement {@link MemberRemovedFromGroup}.</p>
  *
  * <p>L'événement est instancié directement par ce service — l'agrégat
  * {@link GroupMembership} étant supprimé, il ne peut pas publier d'événement via le
@@ -35,7 +35,6 @@ public final class RemoveMemberFromGroupService implements RemoveMemberFromGroup
                 groupMembershipRepository,
                 "groupMembershipRepository must not be null"
         );
-
         this.publisher = Objects.requireNonNull(publisher, "publisher must not be null");
     }
 
@@ -43,7 +42,6 @@ public final class RemoveMemberFromGroupService implements RemoveMemberFromGroup
     public void remove(RemoveMemberFromGroupCommand command) {
         GroupId groupId = GroupId.from(command.groupId());
         MemberId memberId = MemberId.from(command.memberId());
-
         GroupMembership membership = groupMembershipRepository
                 .findByGroupIdAndMemberId(groupId, memberId)
                 .orElseThrow(() -> new GroupMembershipNotFoundException(groupId, memberId));
