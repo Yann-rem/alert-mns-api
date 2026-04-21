@@ -26,7 +26,7 @@ public record Email(String value) {
     /**
      * Crée un email à partir d'une valeur brute.
      *
-     * <p>La valeur est normalisée (trim + lowercase) avant validation.</p>
+     * <p>La valeur est normalisée (strip + lowercase) avant validation.</p>
      *
      * @param value la valeur brute
      * @return l'email validé

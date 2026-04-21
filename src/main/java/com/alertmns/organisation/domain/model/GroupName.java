@@ -16,9 +16,7 @@ public record GroupName(String value) {
             throw new IllegalArgumentException("groupName must not be blank");
         }
         if (value.length() > MAX_LENGTH) {
-            throw new IllegalArgumentException(
-                    "groupName must not exceed " + MAX_LENGTH + " characters"
-            );
+            throw new IllegalArgumentException("groupName must not exceed " + MAX_LENGTH + " characters");
         }
     }
 

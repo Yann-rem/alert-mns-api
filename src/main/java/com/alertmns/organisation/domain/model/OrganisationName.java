@@ -16,16 +16,14 @@ public record OrganisationName(String value) {
             throw new IllegalArgumentException("organisationName must not be blank");
         }
         if (value.length() > MAX_LENGTH) {
-            throw new IllegalArgumentException(
-                    "organisationName must not exceed " + MAX_LENGTH + " characters"
-            );
+            throw new IllegalArgumentException("organisationName must not exceed " + MAX_LENGTH + " characters");
         }
     }
 
     /**
      * Crée un nom d'organisation à partir d'une valeur brute.
      *
-     * <p>La valeur est normalisée (trim) avant validation.</p>
+     * <p>La valeur est normalisée (strip) avant validation.</p>
      *
      * @param value la valeur brute
      * @return le nom validé

@@ -23,7 +23,7 @@ public record LastName(String value) {
     /**
      * Crée un nom à partir d'une valeur brute.
      *
-     * <p>La valeur est normalisée (trim) avant validation.</p>
+     * <p>La valeur est normalisée (strip) avant validation.</p>
      *
      * @param value la valeur brute
      * @return le nom validé
