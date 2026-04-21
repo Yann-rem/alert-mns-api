@@ -13,7 +13,7 @@ import java.util.Objects;
 /**
  * Service applicatif représentant l'orchestration de l'activation des membres.
  *
- * <p>Charge l'agrégat → active → persiste → publie les événements.</p>
+ * <p>Parse (VO id) → load (agrégat) → act (activate) → save → publish.</p>
  */
 public final class ActivateMemberService implements ActivateMemberUseCase {
 
@@ -29,6 +29,7 @@ public final class ActivateMemberService implements ActivateMemberUseCase {
     public void activate(ActivateMemberCommand command) {
         MemberId id = MemberId.from(command.memberId());
         Member member = repository.findById(id).orElseThrow(() -> new MemberNotFoundException(id));
+
         member.activate();
         repository.save(member);
         publisher.publish(member.pullDomainEvents());

@@ -13,7 +13,7 @@ import java.util.Objects;
 /**
  * Service applicatif représentant l'orchestration de la suspension des membres.
  *
- * <p>Charge l'agrégat → suspend → persiste → publie les événements.</p>
+ * <p>Parse (VO id) → load (agrégat) → act (suspend) → save → publish.</p>
  */
 public final class SuspendMemberService implements SuspendMemberUseCase {
 
@@ -29,6 +29,7 @@ public final class SuspendMemberService implements SuspendMemberUseCase {
     public void suspend(SuspendMemberCommand command) {
         MemberId id = MemberId.from(command.memberId());
         Member member = repository.findById(id).orElseThrow(() -> new MemberNotFoundException(id));
+
         member.suspend();
         repository.save(member);
         publisher.publish(member.pullDomainEvents());

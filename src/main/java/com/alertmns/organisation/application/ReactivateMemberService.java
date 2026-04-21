@@ -13,7 +13,7 @@ import java.util.Objects;
 /**
  * Service applicatif représentant l'orchestration de la réactivation des membres.
  *
- * <p>Charge l'agrégat → réactive → persiste → publie les événements.</p>
+ * <p>Parse (VO id) → load (agrégat) → act (reactivate) → save → publish.</p>
  */
 public final class ReactivateMemberService implements ReactivateMemberUseCase {
 
@@ -29,6 +29,7 @@ public final class ReactivateMemberService implements ReactivateMemberUseCase {
     public void reactivate(ReactivateMemberCommand command) {
         MemberId id = MemberId.from(command.memberId());
         Member member = repository.findById(id).orElseThrow(() -> new MemberNotFoundException(id));
+
         member.reactivate();
         repository.save(member);
         publisher.publish(member.pullDomainEvents());
