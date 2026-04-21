@@ -12,9 +12,9 @@ import com.alertmns.shared.EventPublisher;
 import java.util.Objects;
 
 /**
- * Service applicatif représentant l’orchestration de la mise à jour du message d’absence d’un utilisateur.
+ * Service applicatif représentant l'orchestration de la mise à jour du message d'absence d'un utilisateur.
  *
- * <p>Charge l’agrégat → met à jour le message d’absence → persiste → publie les événements.</p>
+ * <p>Parse (VOs) → load (agrégat) → act (updateAbsenceMessage) → save → publish.</p>
  */
 public final class UpdateAbsenceMessageService implements UpdateAbsenceMessageUseCase {
 
