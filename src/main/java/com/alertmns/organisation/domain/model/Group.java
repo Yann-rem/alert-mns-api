@@ -42,6 +42,7 @@ public final class Group extends AggregateRoot {
      */
     public static Group create(OrganisationId organisationId, GroupName name) {
         Group group = new Group(GroupId.generate(), organisationId, name, Instant.now());
+
         group.registerEvent(new GroupCreated(group.organisationId, group.id, group.name));
         return group;
     }
