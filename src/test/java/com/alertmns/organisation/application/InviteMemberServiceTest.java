@@ -139,11 +139,10 @@ class InviteMemberServiceTest {
         @Test
         @DisplayName("should throw IllegalArgumentException when role is not a valid MemberRole")
         void shouldThrowWhenRoleIsInvalid() {
-            when(repository.existsByOrganisationIdAndUserId(any(), any())).thenReturn(false);
-
             InviteMemberCommand command = new InviteMemberCommand(ORGANISATION_ID, USER_ID, "INVALID");
 
             assertThrows(IllegalArgumentException.class, () -> service.invite(command));
+            verify(repository, never()).existsByOrganisationIdAndUserId(any(), any());
             verify(repository, never()).save(any());
             verify(publisher, never()).publish(anyList());
         }
