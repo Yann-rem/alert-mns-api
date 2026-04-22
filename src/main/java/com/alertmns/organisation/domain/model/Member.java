@@ -26,7 +26,7 @@ public final class Member extends AggregateRoot {
     private final MemberId id;
     private final OrganisationId organisationId;
     private final UUID userId;
-    private MemberRole role;
+    private final MemberRole role;
     private MemberStatus status;
     private final Instant joinedAt;
 
@@ -109,11 +109,7 @@ public final class Member extends AggregateRoot {
      * @throws IllegalStateException si le statut n'est pas {@link MemberStatus#PENDING}
      */
     public void activate() {
-        if (status != MemberStatus.PENDING) {
-            throw new IllegalStateException(
-                    "Cannot activate: member is not PENDING. Current status: " + status
-            );
-        }
+        requireStatus(MemberStatus.PENDING, "activate");
         status = MemberStatus.ACTIVE;
         registerEvent(new MemberActivated(id));
     }
@@ -126,11 +122,7 @@ public final class Member extends AggregateRoot {
      * @throws IllegalStateException si le statut n'est pas {@link MemberStatus#SUSPENDED}
      */
     public void reactivate() {
-        if (status != MemberStatus.SUSPENDED) {
-            throw new IllegalStateException(
-                    "Cannot reactivate: member is not SUSPENDED. Current status: " + status
-            );
-        }
+        requireStatus(MemberStatus.SUSPENDED, "reactivate");
         status = MemberStatus.ACTIVE;
         registerEvent(new MemberReactivated(id));
     }
@@ -143,13 +135,17 @@ public final class Member extends AggregateRoot {
      * @throws IllegalStateException si le statut n'est pas {@link MemberStatus#ACTIVE}
      */
     public void suspend() {
-        if (status != MemberStatus.ACTIVE) {
-            throw new IllegalStateException(
-                    "Cannot suspend: member is not ACTIVE. Current status: " + status
-            );
-        }
+        requireStatus(MemberStatus.ACTIVE, "suspend");
         status = MemberStatus.SUSPENDED;
         registerEvent(new MemberSuspended(id));
+    }
+
+    private void requireStatus(MemberStatus expected, String action) {
+        if (status != expected) {
+            throw new IllegalStateException(
+                    "Cannot " + action + ": member is not " + expected + ". Current status: " + status
+            );
+        }
     }
 
     public MemberId id() {
