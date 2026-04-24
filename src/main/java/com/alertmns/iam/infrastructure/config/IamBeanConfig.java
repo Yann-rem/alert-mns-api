@@ -34,8 +34,8 @@ public class IamBeanConfig {
     }
 
     @Bean
-    public UserRepository userRepository(UserJpaRepository userJpaRepository) {
-        return new UserPersistenceAdapter(userJpaRepository);
+    public UserRepository userRepository(UserJpaRepository jpaRepository) {
+        return new UserPersistenceAdapter(jpaRepository);
     }
 
     @Bean
