@@ -32,7 +32,7 @@ public class UserJpaEntity {
     @Column(nullable = false, unique = true, length = 254)
     private String email;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 255)
     private String hashedPassword;
 
     @Column(nullable = false, length = 100)
