@@ -44,20 +44,20 @@ public class UserPersistenceMapper {
         return profile;
     }
 
-    public static UserJpaEntity toEntity(User user) {
+    public static UserJpaEntity toEntity(User domain) {
         return new UserJpaEntity(
-                user.id().value(),
-                user.organisationId().value(),
-                user.email().value(),
-                user.hashedPassword().value(),
-                user.profile().firstName().value(),
-                user.profile().lastName().value(),
-                user.profile().avatar().orElse(null),
-                user.profile().absenceMessage().map(AbsenceMessage::content).orElse(null),
-                user.profile().absenceMessage().map(AbsenceMessage::active).orElse(null),
-                user.role(),
-                user.status(),
-                user.createdAt()
+                domain.id().value(),
+                domain.organisationId().value(),
+                domain.email().value(),
+                domain.hashedPassword().value(),
+                domain.profile().firstName().value(),
+                domain.profile().lastName().value(),
+                domain.profile().avatar().orElse(null),
+                domain.profile().absenceMessage().map(AbsenceMessage::content).orElse(null),
+                domain.profile().absenceMessage().map(AbsenceMessage::active).orElse(null),
+                domain.role(),
+                domain.status(),
+                domain.createdAt()
         );
     }
 }
