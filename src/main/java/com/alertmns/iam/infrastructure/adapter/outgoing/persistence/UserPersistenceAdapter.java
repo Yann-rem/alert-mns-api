@@ -10,33 +10,33 @@ import java.util.Optional;
 
 public class UserPersistenceAdapter implements UserRepository {
 
-    private final UserJpaRepository userJpaRepository;
+    private final UserJpaRepository jpaRepository;
 
-    public UserPersistenceAdapter(UserJpaRepository userJpaRepository) {
-        this.userJpaRepository = userJpaRepository;
+    public UserPersistenceAdapter(UserJpaRepository jpaRepository) {
+        this.jpaRepository = jpaRepository;
     }
 
     @Override
     public void save(User user) {
-        userJpaRepository.save(UserPersistenceMapper.toEntity(user));
+        jpaRepository.save(UserPersistenceMapper.toEntity(user));
     }
 
     @Override
     public Optional<User> findById(UserId id) {
-        return userJpaRepository
+        return jpaRepository
                 .findById(id.value())
                 .map(UserPersistenceMapper::toDomain);
     }
 
     @Override
     public Optional<User> findByEmail(Email email) {
-        return userJpaRepository
+        return jpaRepository
                 .findByEmail(email.value())
                 .map(UserPersistenceMapper::toDomain);
     }
 
     @Override
     public boolean existsByEmail(Email email) {
-        return userJpaRepository.existsByEmail(email.value());
+        return jpaRepository.existsByEmail(email.value());
     }
 }
