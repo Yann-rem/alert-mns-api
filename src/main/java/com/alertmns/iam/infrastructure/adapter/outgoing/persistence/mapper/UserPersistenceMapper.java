@@ -13,8 +13,7 @@ import com.alertmns.shared.OrganisationId;
 
 public class UserPersistenceMapper {
 
-    private UserPersistenceMapper() {
-    }
+    private UserPersistenceMapper() {}
 
     public static User toDomain(UserJpaEntity entity) {
         return User.reconstitute(
