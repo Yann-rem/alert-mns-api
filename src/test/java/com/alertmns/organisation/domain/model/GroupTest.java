@@ -159,6 +159,7 @@ class GroupTest {
             List<DomainEvent> events = group.pullDomainEvents();
             assertEquals(1, events.size());
             GroupRenamed event = assertInstanceOf(GroupRenamed.class, events.getFirst());
+            assertEquals(ORGANISATION_ID, event.organisationId());
             assertEquals(group.id(), event.groupId());
             assertEquals(newName, event.name());
         }

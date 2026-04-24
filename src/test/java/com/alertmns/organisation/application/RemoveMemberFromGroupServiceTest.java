@@ -2,13 +2,16 @@ package com.alertmns.organisation.application;
 
 import com.alertmns.organisation.domain.event.MemberRemovedFromGroup;
 import com.alertmns.organisation.domain.exception.GroupMembershipNotFoundException;
+import com.alertmns.organisation.domain.exception.OrganisationMismatchException;
 import com.alertmns.organisation.domain.model.GroupId;
 import com.alertmns.organisation.domain.model.GroupMembership;
+import com.alertmns.organisation.domain.model.GroupMembershipId;
 import com.alertmns.organisation.domain.model.MemberId;
 import com.alertmns.organisation.domain.port.incoming.command.RemoveMemberFromGroupCommand;
 import com.alertmns.organisation.domain.port.outgoing.GroupMembershipRepository;
 import com.alertmns.shared.DomainEvent;
 import com.alertmns.shared.EventPublisher;
+import com.alertmns.shared.OrganisationId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -19,6 +22,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,6 +38,9 @@ import static org.mockito.Mockito.when;
 @DisplayName("RemoveMemberFromGroupService")
 @ExtendWith(MockitoExtension.class)
 class RemoveMemberFromGroupServiceTest {
+
+    static final OrganisationId ORGANISATION_ID = OrganisationId.generate();
+    static final OrganisationId OTHER_ORGANISATION_ID = OrganisationId.generate();
 
     @Mock
     GroupMembershipRepository groupMembershipRepository;
@@ -56,7 +63,7 @@ class RemoveMemberFromGroupServiceTest {
         void setUp() {
             groupId = GroupId.generate();
             memberId = MemberId.generate();
-            membership = GroupMembership.add(groupId, memberId);
+            membership = GroupMembership.add(ORGANISATION_ID, groupId, memberId);
         }
 
         @Test
@@ -66,7 +73,7 @@ class RemoveMemberFromGroupServiceTest {
                     .thenReturn(Optional.of(membership));
 
             RemoveMemberFromGroupCommand command = new RemoveMemberFromGroupCommand(
-                    groupId.value().toString(), memberId.value().toString()
+                    ORGANISATION_ID.value().toString(), groupId.value().toString(), memberId.value().toString()
             );
 
             service.remove(command);
@@ -83,7 +90,7 @@ class RemoveMemberFromGroupServiceTest {
                     .thenReturn(Optional.of(membership));
 
             RemoveMemberFromGroupCommand command = new RemoveMemberFromGroupCommand(
-                    groupId.value().toString(), memberId.value().toString()
+                    ORGANISATION_ID.value().toString(), groupId.value().toString(), memberId.value().toString()
             );
 
             service.remove(command);
@@ -93,6 +100,7 @@ class RemoveMemberFromGroupServiceTest {
             List<DomainEvent> events = eventsCaptor.getValue();
             assertEquals(1, events.size());
             MemberRemovedFromGroup event = assertInstanceOf(MemberRemovedFromGroup.class, events.getFirst());
+            assertEquals(ORGANISATION_ID, event.organisationId());
             assertEquals(membership.id(), event.groupMembershipId());
         }
 
@@ -103,7 +111,7 @@ class RemoveMemberFromGroupServiceTest {
                     .thenReturn(Optional.empty());
 
             RemoveMemberFromGroupCommand command = new RemoveMemberFromGroupCommand(
-                    groupId.value().toString(), memberId.value().toString()
+                    ORGANISATION_ID.value().toString(), groupId.value().toString(), memberId.value().toString()
             );
 
             assertThrows(GroupMembershipNotFoundException.class, () -> service.remove(command));
@@ -112,10 +120,32 @@ class RemoveMemberFromGroupServiceTest {
         }
 
         @Test
+        @DisplayName("should throw OrganisationMismatchException when command organisation differs from membership")
+        void shouldThrowOrganisationMismatchExceptionWhenOrganisationsDiffer() {
+            GroupMembership crossOrgMembership = GroupMembership.reconstitute(
+                    GroupMembershipId.generate(),
+                    OTHER_ORGANISATION_ID,
+                    groupId,
+                    memberId,
+                    Instant.now()
+            );
+            when(groupMembershipRepository.findByGroupIdAndMemberId(any(), any()))
+                    .thenReturn(Optional.of(crossOrgMembership));
+
+            RemoveMemberFromGroupCommand command = new RemoveMemberFromGroupCommand(
+                    ORGANISATION_ID.value().toString(), groupId.value().toString(), memberId.value().toString()
+            );
+
+            assertThrows(OrganisationMismatchException.class, () -> service.remove(command));
+            verify(groupMembershipRepository, never()).delete(any());
+            verify(publisher, never()).publish(anyList());
+        }
+
+        @Test
         @DisplayName("should throw IllegalArgumentException when groupId is not a valid UUID")
         void shouldThrowWhenGroupIdIsInvalid() {
             RemoveMemberFromGroupCommand command = new RemoveMemberFromGroupCommand(
-                    "invalid", memberId.value().toString()
+                    ORGANISATION_ID.value().toString(), "invalid", memberId.value().toString()
             );
 
             assertThrows(IllegalArgumentException.class, () -> service.remove(command));
@@ -127,7 +157,7 @@ class RemoveMemberFromGroupServiceTest {
         @DisplayName("should throw IllegalArgumentException when memberId is not a valid UUID")
         void shouldThrowWhenMemberIdIsInvalid() {
             RemoveMemberFromGroupCommand command = new RemoveMemberFromGroupCommand(
-                    groupId.value().toString(), "invalid"
+                    ORGANISATION_ID.value().toString(), groupId.value().toString(), "invalid"
             );
 
             assertThrows(IllegalArgumentException.class, () -> service.remove(command));
@@ -155,17 +185,33 @@ class RemoveMemberFromGroupServiceTest {
         }
 
         @Test
+        @DisplayName("should reject null command organisationId")
+        void shouldRejectNullCommandOrganisationId() {
+            assertThrows(NullPointerException.class,
+                    () -> new RemoveMemberFromGroupCommand(
+                            null,
+                            GroupId.generate().value().toString(),
+                            MemberId.generate().value().toString()));
+        }
+
+        @Test
         @DisplayName("should reject null command groupId")
         void shouldRejectNullCommandGroupId() {
             assertThrows(NullPointerException.class,
-                    () -> new RemoveMemberFromGroupCommand(null, MemberId.generate().value().toString()));
+                    () -> new RemoveMemberFromGroupCommand(
+                            ORGANISATION_ID.value().toString(),
+                            null,
+                            MemberId.generate().value().toString()));
         }
 
         @Test
         @DisplayName("should reject null command memberId")
         void shouldRejectNullCommandMemberId() {
             assertThrows(NullPointerException.class,
-                    () -> new RemoveMemberFromGroupCommand(GroupId.generate().value().toString(), null));
+                    () -> new RemoveMemberFromGroupCommand(
+                            ORGANISATION_ID.value().toString(),
+                            GroupId.generate().value().toString(),
+                            null));
         }
     }
 }

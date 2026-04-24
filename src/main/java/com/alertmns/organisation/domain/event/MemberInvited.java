@@ -2,6 +2,7 @@ package com.alertmns.organisation.domain.event;
 
 import com.alertmns.organisation.domain.model.MemberId;
 import com.alertmns.shared.DomainEvent;
+import com.alertmns.shared.OrganisationId;
 
 import java.time.Instant;
 
@@ -10,9 +11,13 @@ import java.time.Instant;
  *
  * <p>Le membre est créé avec le statut PENDING, en attente d'activation.</p>
  */
-public record MemberInvited(MemberId memberId, Instant occurredOn) implements DomainEvent {
+public record MemberInvited(
+        OrganisationId organisationId,
+        MemberId memberId,
+        Instant occurredOn
+) implements DomainEvent {
 
-    public MemberInvited(MemberId memberId) {
-        this(memberId, Instant.now());
+    public MemberInvited(OrganisationId organisationId, MemberId memberId) {
+        this(organisationId, memberId, Instant.now());
     }
 }

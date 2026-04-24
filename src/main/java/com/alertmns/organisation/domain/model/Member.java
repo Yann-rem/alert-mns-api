@@ -72,7 +72,7 @@ public final class Member extends AggregateRoot {
                 Instant.now()
         );
 
-        member.registerEvent(new MemberInvited(member.id));
+        member.registerEvent(new MemberInvited(member.organisationId, member.id));
         return member;
     }
 
@@ -111,7 +111,7 @@ public final class Member extends AggregateRoot {
     public void activate() {
         requireStatus(MemberStatus.PENDING, "activate");
         status = MemberStatus.ACTIVE;
-        registerEvent(new MemberActivated(id));
+        registerEvent(new MemberActivated(organisationId, id));
     }
 
     /**
@@ -124,7 +124,7 @@ public final class Member extends AggregateRoot {
     public void reactivate() {
         requireStatus(MemberStatus.SUSPENDED, "reactivate");
         status = MemberStatus.ACTIVE;
-        registerEvent(new MemberReactivated(id));
+        registerEvent(new MemberReactivated(organisationId, id));
     }
 
     /**
@@ -137,7 +137,7 @@ public final class Member extends AggregateRoot {
     public void suspend() {
         requireStatus(MemberStatus.ACTIVE, "suspend");
         status = MemberStatus.SUSPENDED;
-        registerEvent(new MemberSuspended(id));
+        registerEvent(new MemberSuspended(organisationId, id));
     }
 
     private void requireStatus(MemberStatus expected, String action) {

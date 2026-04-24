@@ -16,6 +16,7 @@ import com.alertmns.organisation.domain.port.outgoing.GroupMembershipRepository;
 import com.alertmns.organisation.domain.port.outgoing.GroupRepository;
 import com.alertmns.organisation.domain.port.outgoing.MemberRepository;
 import com.alertmns.shared.EventPublisher;
+import com.alertmns.shared.OrganisationId;
 
 import java.util.Objects;
 
@@ -49,12 +50,16 @@ public final class AddMemberToGroupService implements AddMemberToGroupUseCase {
 
     @Override
     public GroupMembershipId add(AddMemberToGroupCommand command) {
+        OrganisationId organisationId = OrganisationId.from(command.organisationId());
         GroupId groupId = GroupId.from(command.groupId());
         MemberId memberId = MemberId.from(command.memberId());
 
         Group group = groupRepository.findById(groupId).orElseThrow(() -> new GroupNotFoundException(groupId));
         Member member = memberRepository.findById(memberId).orElseThrow(() -> new MemberNotFoundException(memberId));
 
+        if (!organisationId.equals(group.organisationId())) {
+            throw new OrganisationMismatchException(group.organisationId(), organisationId);
+        }
         if (!member.organisationId().equals(group.organisationId())) {
             throw new OrganisationMismatchException(group.organisationId(), member.organisationId());
         }
@@ -62,7 +67,7 @@ public final class AddMemberToGroupService implements AddMemberToGroupUseCase {
             throw new GroupMembershipAlreadyExistsException(groupId, memberId);
         }
 
-        GroupMembership groupMembership = GroupMembership.add(groupId, memberId);
+        GroupMembership groupMembership = GroupMembership.add(organisationId, groupId, memberId);
         groupMembershipRepository.save(groupMembership);
         publisher.publish(groupMembership.pullDomainEvents());
         return groupMembership.id();

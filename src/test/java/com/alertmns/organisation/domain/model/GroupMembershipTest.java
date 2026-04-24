@@ -2,6 +2,7 @@ package com.alertmns.organisation.domain.model;
 
 import com.alertmns.organisation.domain.event.MemberAddedToGroup;
 import com.alertmns.shared.DomainEvent;
+import com.alertmns.shared.OrganisationId;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -14,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @DisplayName("GroupMembership")
 class GroupMembershipTest {
 
+    static final OrganisationId ORGANISATION_ID = OrganisationId.generate();
     static final MemberId MEMBER_ID = MemberId.generate();
     static final GroupId GROUP_ID = GroupId.generate();
 
@@ -24,7 +26,7 @@ class GroupMembershipTest {
         @Test
         @DisplayName("should add a member to a group")
         void shouldAddAMemberToAGroup() {
-            GroupMembership membership = GroupMembership.add(GROUP_ID, MEMBER_ID);
+            GroupMembership membership = GroupMembership.add(ORGANISATION_ID, GROUP_ID, MEMBER_ID);
             assertEquals(MEMBER_ID, membership.memberId());
             assertEquals(GROUP_ID, membership.groupId());
             assertNotNull(membership.id());
@@ -38,7 +40,7 @@ class GroupMembershipTest {
             Instant joinedAt = Instant.now();
 
             GroupMembership membership = GroupMembership.reconstitute(
-                    id, GROUP_ID, MEMBER_ID, joinedAt
+                    id, ORGANISATION_ID, GROUP_ID, MEMBER_ID, joinedAt
             );
 
             assertEquals(id, membership.id());
@@ -53,17 +55,24 @@ class GroupMembershipTest {
     class Invariants {
 
         @Test
+        @DisplayName("should reject null organisationId")
+        void shouldRejectNullOrganisationId() {
+            assertThrows(NullPointerException.class,
+                    () -> GroupMembership.add(null, GROUP_ID, MEMBER_ID));
+        }
+
+        @Test
         @DisplayName("should reject null groupId")
         void shouldRejectNullGroupId() {
             assertThrows(NullPointerException.class,
-                    () -> GroupMembership.add(null, MEMBER_ID));
+                    () -> GroupMembership.add(ORGANISATION_ID, null, MEMBER_ID));
         }
 
         @Test
         @DisplayName("should reject null memberId")
         void shouldRejectNullMemberId() {
             assertThrows(NullPointerException.class,
-                    () -> GroupMembership.add(GROUP_ID, null));
+                    () -> GroupMembership.add(ORGANISATION_ID, GROUP_ID, null));
         }
 
         @Test
@@ -71,7 +80,16 @@ class GroupMembershipTest {
         void shouldRejectNullIdOnReconstitute() {
             Instant joinedAt = Instant.now();
             assertThrows(NullPointerException.class,
-                    () -> GroupMembership.reconstitute(null, GROUP_ID, MEMBER_ID, joinedAt));
+                    () -> GroupMembership.reconstitute(null, ORGANISATION_ID, GROUP_ID, MEMBER_ID, joinedAt));
+        }
+
+        @Test
+        @DisplayName("should reject null organisationId on reconstitute")
+        void shouldRejectNullOrganisationIdOnReconstitute() {
+            GroupMembershipId id = GroupMembershipId.generate();
+            Instant joinedAt = Instant.now();
+            assertThrows(NullPointerException.class,
+                    () -> GroupMembership.reconstitute(id, null, GROUP_ID, MEMBER_ID, joinedAt));
         }
 
         @Test
@@ -80,7 +98,7 @@ class GroupMembershipTest {
             GroupMembershipId id = GroupMembershipId.generate();
             Instant joinedAt = Instant.now();
             assertThrows(NullPointerException.class,
-                    () -> GroupMembership.reconstitute(id, null, MEMBER_ID, joinedAt));
+                    () -> GroupMembership.reconstitute(id, ORGANISATION_ID, null, MEMBER_ID, joinedAt));
         }
 
         @Test
@@ -89,7 +107,7 @@ class GroupMembershipTest {
             GroupMembershipId id = GroupMembershipId.generate();
             Instant joinedAt = Instant.now();
             assertThrows(NullPointerException.class,
-                    () -> GroupMembership.reconstitute(id, GROUP_ID, null, joinedAt));
+                    () -> GroupMembership.reconstitute(id, ORGANISATION_ID, GROUP_ID, null, joinedAt));
         }
 
         @Test
@@ -97,7 +115,7 @@ class GroupMembershipTest {
         void shouldRejectNullJoinedAtOnReconstitute() {
             GroupMembershipId id = GroupMembershipId.generate();
             assertThrows(NullPointerException.class,
-                    () -> GroupMembership.reconstitute(id, GROUP_ID, MEMBER_ID, null));
+                    () -> GroupMembership.reconstitute(id, ORGANISATION_ID, GROUP_ID, MEMBER_ID, null));
         }
     }
 
@@ -108,11 +126,12 @@ class GroupMembershipTest {
         @Test
         @DisplayName("add should emit MemberAddedToGroup")
         void addShouldEmitMemberAddedToGroup() {
-            GroupMembership membership = GroupMembership.add(GROUP_ID, MEMBER_ID);
+            GroupMembership membership = GroupMembership.add(ORGANISATION_ID, GROUP_ID, MEMBER_ID);
 
             List<DomainEvent> events = membership.pullDomainEvents();
             assertEquals(1, events.size());
             MemberAddedToGroup event = assertInstanceOf(MemberAddedToGroup.class, events.getFirst());
+            assertEquals(ORGANISATION_ID, event.organisationId());
             assertEquals(membership.id(), event.groupMembershipId());
         }
 
@@ -123,7 +142,7 @@ class GroupMembershipTest {
             Instant joinedAt = Instant.now();
 
             GroupMembership membership = GroupMembership.reconstitute(
-                    id, GROUP_ID, MEMBER_ID, joinedAt
+                    id, ORGANISATION_ID, GROUP_ID, MEMBER_ID, joinedAt
             );
 
             List<DomainEvent> events = membership.pullDomainEvents();
@@ -133,7 +152,7 @@ class GroupMembershipTest {
         @Test
         @DisplayName("pullDomainEvents should clear events after pull")
         void pullDomainEventsShouldClearEventsAfterPull() {
-            GroupMembership membership = GroupMembership.add(GROUP_ID, MEMBER_ID);
+            GroupMembership membership = GroupMembership.add(ORGANISATION_ID, GROUP_ID, MEMBER_ID);
             membership.pullDomainEvents();
             List<DomainEvent> events = membership.pullDomainEvents();
             assertTrue(events.isEmpty());
@@ -151,11 +170,11 @@ class GroupMembershipTest {
             Instant joinedAt = Instant.now();
 
             GroupMembership membership1 = GroupMembership.reconstitute(
-                    id, GROUP_ID, MEMBER_ID, joinedAt
+                    id, ORGANISATION_ID, GROUP_ID, MEMBER_ID, joinedAt
             );
 
             GroupMembership membership2 = GroupMembership.reconstitute(
-                    id, GROUP_ID, MEMBER_ID, joinedAt
+                    id, ORGANISATION_ID, GROUP_ID, MEMBER_ID, joinedAt
             );
 
             assertEquals(membership1, membership2);
@@ -164,8 +183,8 @@ class GroupMembershipTest {
         @Test
         @DisplayName("two group memberships with different ids should not be equal")
         void twoGroupMembershipsWithDifferentIdsShouldNotBeEqual() {
-            GroupMembership membership1 = GroupMembership.add(GROUP_ID, MEMBER_ID);
-            GroupMembership membership2 = GroupMembership.add(GROUP_ID, MEMBER_ID);
+            GroupMembership membership1 = GroupMembership.add(ORGANISATION_ID, GROUP_ID, MEMBER_ID);
+            GroupMembership membership2 = GroupMembership.add(ORGANISATION_ID, GROUP_ID, MEMBER_ID);
             assertNotEquals(membership1, membership2);
         }
     }

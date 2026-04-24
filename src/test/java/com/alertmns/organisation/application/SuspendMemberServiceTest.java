@@ -98,6 +98,7 @@ class SuspendMemberServiceTest {
             List<DomainEvent> events = eventsCaptor.getValue();
             assertEquals(1, events.size());
             MemberSuspended event = assertInstanceOf(MemberSuspended.class, events.getFirst());
+            assertEquals(ORGANISATION_ID, event.organisationId());
             assertEquals(id, event.memberId());
         }
 

@@ -100,6 +100,7 @@ class ActivateMemberServiceTest {
             List<DomainEvent> events = eventsCaptor.getValue();
             assertEquals(1, events.size());
             MemberActivated event = assertInstanceOf(MemberActivated.class, events.getFirst());
+            assertEquals(ORGANISATION_ID, event.organisationId());
             assertEquals(id, event.memberId());
         }
 

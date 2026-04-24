@@ -105,7 +105,7 @@ class AddMemberToGroupServiceTest {
             when(groupMembershipRepository.existsByGroupIdAndMemberId(any(), any())).thenReturn(false);
 
             AddMemberToGroupCommand command = new AddMemberToGroupCommand(
-                    groupId.value().toString(), memberId.value().toString()
+                    ORGANISATION_ID.value().toString(), groupId.value().toString(), memberId.value().toString()
             );
 
             service.add(command);
@@ -125,7 +125,7 @@ class AddMemberToGroupServiceTest {
             when(groupMembershipRepository.existsByGroupIdAndMemberId(any(), any())).thenReturn(false);
 
             AddMemberToGroupCommand command = new AddMemberToGroupCommand(
-                    groupId.value().toString(), memberId.value().toString()
+                    ORGANISATION_ID.value().toString(), groupId.value().toString(), memberId.value().toString()
             );
 
             service.add(command);
@@ -134,7 +134,8 @@ class AddMemberToGroupServiceTest {
             verify(publisher).publish(eventsCaptor.capture());
             List<DomainEvent> events = eventsCaptor.getValue();
             assertEquals(1, events.size());
-            assertInstanceOf(MemberAddedToGroup.class, events.getFirst());
+            MemberAddedToGroup event = assertInstanceOf(MemberAddedToGroup.class, events.getFirst());
+            assertEquals(ORGANISATION_ID, event.organisationId());
         }
 
         @Test
@@ -143,7 +144,7 @@ class AddMemberToGroupServiceTest {
             when(groupRepository.findById(any())).thenReturn(Optional.empty());
 
             AddMemberToGroupCommand command = new AddMemberToGroupCommand(
-                    groupId.value().toString(), memberId.value().toString()
+                    ORGANISATION_ID.value().toString(), groupId.value().toString(), memberId.value().toString()
             );
 
             assertThrows(GroupNotFoundException.class, () -> service.add(command));
@@ -158,7 +159,7 @@ class AddMemberToGroupServiceTest {
             when(memberRepository.findById(any())).thenReturn(Optional.empty());
 
             AddMemberToGroupCommand command = new AddMemberToGroupCommand(
-                    groupId.value().toString(), memberId.value().toString()
+                    ORGANISATION_ID.value().toString(), groupId.value().toString(), memberId.value().toString()
             );
 
             assertThrows(MemberNotFoundException.class, () -> service.add(command));
@@ -182,7 +183,7 @@ class AddMemberToGroupServiceTest {
             when(memberRepository.findById(any())).thenReturn(Optional.of(crossOrgMember));
 
             AddMemberToGroupCommand command = new AddMemberToGroupCommand(
-                    groupId.value().toString(), memberId.value().toString()
+                    ORGANISATION_ID.value().toString(), groupId.value().toString(), memberId.value().toString()
             );
 
             assertThrows(OrganisationMismatchException.class, () -> service.add(command));
@@ -198,7 +199,7 @@ class AddMemberToGroupServiceTest {
             when(groupMembershipRepository.existsByGroupIdAndMemberId(any(), any())).thenReturn(true);
 
             AddMemberToGroupCommand command = new AddMemberToGroupCommand(
-                    groupId.value().toString(), memberId.value().toString()
+                    ORGANISATION_ID.value().toString(), groupId.value().toString(), memberId.value().toString()
             );
 
             assertThrows(GroupMembershipAlreadyExistsException.class, () -> service.add(command));
@@ -210,7 +211,7 @@ class AddMemberToGroupServiceTest {
         @DisplayName("should throw IllegalArgumentException when groupId is not a valid UUID")
         void shouldThrowWhenGroupIdIsInvalid() {
             AddMemberToGroupCommand command = new AddMemberToGroupCommand(
-                    "invalid", memberId.value().toString()
+                    ORGANISATION_ID.value().toString(), "invalid", memberId.value().toString()
             );
 
             assertThrows(IllegalArgumentException.class, () -> service.add(command));
@@ -222,7 +223,7 @@ class AddMemberToGroupServiceTest {
         @DisplayName("should throw IllegalArgumentException when memberId is not a valid UUID")
         void shouldThrowWhenMemberIdIsInvalid() {
             AddMemberToGroupCommand command = new AddMemberToGroupCommand(
-                    groupId.value().toString(), "invalid"
+                    ORGANISATION_ID.value().toString(), groupId.value().toString(), "invalid"
             );
 
             assertThrows(IllegalArgumentException.class, () -> service.add(command));
@@ -264,17 +265,33 @@ class AddMemberToGroupServiceTest {
         }
 
         @Test
+        @DisplayName("should reject null command organisationId")
+        void shouldRejectNullCommandOrganisationId() {
+            assertThrows(NullPointerException.class,
+                    () -> new AddMemberToGroupCommand(
+                            null,
+                            GroupId.generate().value().toString(),
+                            MemberId.generate().value().toString()));
+        }
+
+        @Test
         @DisplayName("should reject null command groupId")
         void shouldRejectNullCommandGroupId() {
             assertThrows(NullPointerException.class,
-                    () -> new AddMemberToGroupCommand(null, MemberId.generate().value().toString()));
+                    () -> new AddMemberToGroupCommand(
+                            ORGANISATION_ID.value().toString(),
+                            null,
+                            MemberId.generate().value().toString()));
         }
 
         @Test
         @DisplayName("should reject null command memberId")
         void shouldRejectNullCommandMemberId() {
             assertThrows(NullPointerException.class,
-                    () -> new AddMemberToGroupCommand(GroupId.generate().value().toString(), null));
+                    () -> new AddMemberToGroupCommand(
+                            ORGANISATION_ID.value().toString(),
+                            GroupId.generate().value().toString(),
+                            null));
         }
     }
 }

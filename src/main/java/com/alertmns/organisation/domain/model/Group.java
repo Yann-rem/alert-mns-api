@@ -76,7 +76,7 @@ public final class Group extends AggregateRoot {
             return;
         }
         this.name = name;
-        registerEvent(new GroupRenamed(this.id, name));
+        registerEvent(new GroupRenamed(organisationId, id, name));
     }
 
     public GroupId id() {
@@ -111,8 +111,8 @@ public final class Group extends AggregateRoot {
     public String toString() {
         return "Group{" +
                 "id=" + id +
-                ", name=" + name +
                 ", organisationId=" + organisationId +
+                ", name=" + name +
                 '}';
     }
 }

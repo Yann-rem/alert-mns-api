@@ -2,6 +2,7 @@ package com.alertmns.organisation.domain.model;
 
 import com.alertmns.organisation.domain.event.MemberAddedToGroup;
 import com.alertmns.shared.AggregateRoot;
+import com.alertmns.shared.OrganisationId;
 
 import java.time.Instant;
 import java.util.Objects;
@@ -16,17 +17,20 @@ import java.util.Objects;
 public final class GroupMembership extends AggregateRoot {
 
     private final GroupMembershipId id;
+    private final OrganisationId organisationId;
     private final GroupId groupId;
     private final MemberId memberId;
     private final Instant joinedAt;
 
     private GroupMembership(
             GroupMembershipId id,
+            OrganisationId organisationId,
             GroupId groupId,
             MemberId memberId,
             Instant joinedAt
     ) {
         this.id = Objects.requireNonNull(id, "id must not be null");
+        this.organisationId = Objects.requireNonNull(organisationId, "organisationId must not be null");
         this.groupId = Objects.requireNonNull(groupId, "groupId must not be null");
         this.memberId = Objects.requireNonNull(memberId, "memberId must not be null");
         this.joinedAt = Objects.requireNonNull(joinedAt, "joinedAt must not be null");
@@ -39,19 +43,21 @@ public final class GroupMembership extends AggregateRoot {
      *
      * <p>Émet {@link MemberAddedToGroup}.</p>
      *
-     * @param groupId  l'identifiant du groupe
-     * @param memberId l'identifiant du membre
+     * @param organisationId l'identifiant de l'organisation de rattachement
+     * @param groupId        l'identifiant du groupe
+     * @param memberId       l'identifiant du membre
      * @return la nouvelle appartenance créée
      */
-    public static GroupMembership add(GroupId groupId, MemberId memberId) {
+    public static GroupMembership add(OrganisationId organisationId, GroupId groupId, MemberId memberId) {
         GroupMembership groupMembership = new GroupMembership(
                 GroupMembershipId.generate(),
+                organisationId,
                 groupId,
                 memberId,
                 Instant.now()
         );
 
-        groupMembership.registerEvent(new MemberAddedToGroup(groupMembership.id));
+        groupMembership.registerEvent(new MemberAddedToGroup(organisationId, groupMembership.id));
         return groupMembership;
     }
 
@@ -64,15 +70,20 @@ public final class GroupMembership extends AggregateRoot {
      */
     public static GroupMembership reconstitute(
             GroupMembershipId id,
+            OrganisationId organisationId,
             GroupId groupId,
             MemberId memberId,
             Instant joinedAt
     ) {
-        return new GroupMembership(id, groupId, memberId, joinedAt);
+        return new GroupMembership(id, organisationId, groupId, memberId, joinedAt);
     }
 
     public GroupMembershipId id() {
         return id;
+    }
+
+    public OrganisationId organisationId() {
+        return organisationId;
     }
 
     public GroupId groupId() {
@@ -103,6 +114,7 @@ public final class GroupMembership extends AggregateRoot {
     public String toString() {
         return "GroupMembership{" +
                 "id=" + id +
+                ", organisationId=" + organisationId +
                 ", groupId=" + groupId +
                 ", memberId=" + memberId +
                 '}';

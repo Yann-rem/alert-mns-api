@@ -98,6 +98,7 @@ class RenameGroupServiceTest {
             List<DomainEvent> events = eventsCaptor.getValue();
             assertEquals(1, events.size());
             GroupRenamed event = assertInstanceOf(GroupRenamed.class, events.getFirst());
+            assertEquals(ORGANISATION_ID, event.organisationId());
             assertEquals(id, event.groupId());
             assertEquals(GroupName.of("Designers"), event.name());
         }

@@ -101,6 +101,7 @@ class InviteMemberServiceTest {
             List<DomainEvent> events = eventsCaptor.getValue();
             assertEquals(1, events.size());
             MemberInvited event = assertInstanceOf(MemberInvited.class, events.getFirst());
+            assertEquals(OrganisationId.from(ORGANISATION_ID), event.organisationId());
             assertEquals(saved.id(), event.memberId());
         }
 
