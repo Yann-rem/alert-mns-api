@@ -8,7 +8,7 @@ import com.alertmns.iam.infrastructure.adapter.outgoing.persistence.mapper.UserP
 
 import java.util.Optional;
 
-public class UserPersistenceAdapter implements UserRepository {
+public final class UserPersistenceAdapter implements UserRepository {
 
     private final UserJpaRepository jpaRepository;
 

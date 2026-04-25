@@ -11,7 +11,7 @@ import com.alertmns.iam.domain.model.UserId;
 import com.alertmns.iam.infrastructure.adapter.outgoing.persistence.UserJpaEntity;
 import com.alertmns.shared.OrganisationId;
 
-public class UserPersistenceMapper {
+public final class UserPersistenceMapper {
 
     private UserPersistenceMapper() {}
 
