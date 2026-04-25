@@ -39,58 +39,43 @@ public class IamBeanConfig {
     }
 
     @Bean
-    public EventPublisher eventPublisher(ApplicationEventPublisher publisher) {
-        return events -> events.forEach(publisher::publishEvent);
+    public EventPublisher eventPublisher(ApplicationEventPublisher applicationEventPublisher) {
+        return events -> events.forEach(applicationEventPublisher::publishEvent);
     }
 
     // --- Services ---
 
     @Bean
     public RegisterUserService registerUserService(
-            UserRepository userRepository,
+            UserRepository repository,
             AuthenticationPort authenticationPort,
-            EventPublisher eventPublisher
+            EventPublisher publisher
     ) {
-        return new RegisterUserService(userRepository, authenticationPort, eventPublisher);
+        return new RegisterUserService(repository, authenticationPort, publisher);
     }
 
     @Bean
-    public ActivateUserService activateUserService(
-            UserRepository userRepository,
-            EventPublisher eventPublisher
-    ) {
-        return new ActivateUserService(userRepository, eventPublisher);
+    public ActivateUserService activateUserService(UserRepository repository, EventPublisher publisher) {
+        return new ActivateUserService(repository, publisher);
     }
 
     @Bean
-    public DisableUserService disableUserService(
-            UserRepository userRepository,
-            EventPublisher eventPublisher
-    ) {
-        return new DisableUserService(userRepository, eventPublisher);
+    public DisableUserService disableUserService(UserRepository repository, EventPublisher publisher) {
+        return new DisableUserService(repository, publisher);
     }
 
     @Bean
-    public ReactivateUserService reactivateUserService(
-            UserRepository userRepository,
-            EventPublisher eventPublisher
-    ) {
-        return new ReactivateUserService(userRepository, eventPublisher);
+    public ReactivateUserService reactivateUserService(UserRepository repository, EventPublisher publisher) {
+        return new ReactivateUserService(repository, publisher);
     }
 
     @Bean
-    public UpdateProfileService updateProfileService(
-            UserRepository userRepository,
-            EventPublisher eventPublisher
-    ) {
-        return new UpdateProfileService(userRepository, eventPublisher);
+    public UpdateProfileService updateProfileService(UserRepository repository, EventPublisher publisher) {
+        return new UpdateProfileService(repository, publisher);
     }
 
     @Bean
-    public UpdateAbsenceMessageService updateAbsenceMessageService(
-            UserRepository userRepository,
-            EventPublisher eventPublisher
-    ) {
-        return new UpdateAbsenceMessageService(userRepository, eventPublisher);
+    public UpdateAbsenceMessageService updateAbsenceMessageService(UserRepository repository, EventPublisher publisher) {
+        return new UpdateAbsenceMessageService(repository, publisher);
     }
 }
