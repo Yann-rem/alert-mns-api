@@ -46,15 +46,6 @@ public class IamBeanConfig {
     // --- Services ---
 
     @Bean
-    public RegisterUserService registerUserService(
-            UserRepository repository,
-            AuthenticationPort authenticationPort,
-            EventPublisher publisher
-    ) {
-        return new RegisterUserService(repository, authenticationPort, publisher);
-    }
-
-    @Bean
     public ActivateUserService activateUserService(UserRepository repository, EventPublisher publisher) {
         return new ActivateUserService(repository, publisher);
     }
@@ -70,12 +61,21 @@ public class IamBeanConfig {
     }
 
     @Bean
-    public UpdateProfileService updateProfileService(UserRepository repository, EventPublisher publisher) {
-        return new UpdateProfileService(repository, publisher);
+    public RegisterUserService registerUserService(
+            UserRepository repository,
+            AuthenticationPort authenticationPort,
+            EventPublisher publisher
+    ) {
+        return new RegisterUserService(repository, authenticationPort, publisher);
     }
 
     @Bean
     public UpdateAbsenceMessageService updateAbsenceMessageService(UserRepository repository, EventPublisher publisher) {
         return new UpdateAbsenceMessageService(repository, publisher);
+    }
+
+    @Bean
+    public UpdateProfileService updateProfileService(UserRepository repository, EventPublisher publisher) {
+        return new UpdateProfileService(repository, publisher);
     }
 }
