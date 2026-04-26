@@ -51,11 +51,11 @@ public class UserJpaEntity {
     private Boolean absenceActive;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 10)
+    @Column(nullable = false, length = 20)
     private UserRole role;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 10)
+    @Column(nullable = false, length = 20)
     private UserStatus status;
 
     @Column(nullable = false)
