@@ -1,6 +1,7 @@
 package com.alertmns.iam.infrastructure.adapter.outgoing.security;
 
 import com.alertmns.iam.domain.port.outgoing.AuthenticationPort;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 public final class SpringSecurityAdapter implements AuthenticationPort {
