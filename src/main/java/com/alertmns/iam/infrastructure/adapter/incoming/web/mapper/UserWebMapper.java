@@ -7,7 +7,9 @@ import com.alertmns.iam.infrastructure.adapter.incoming.web.dto.RegisterUserRequ
 import com.alertmns.iam.infrastructure.adapter.incoming.web.dto.UpdateAbsenceMessageRequest;
 import com.alertmns.iam.infrastructure.adapter.incoming.web.dto.UpdateProfileRequest;
 
-public class UserWebMapper {
+import java.util.UUID;
+
+public final class UserWebMapper {
 
     private UserWebMapper() {}
 
@@ -17,13 +19,13 @@ public class UserWebMapper {
                 request.rawPassword(),
                 request.firstName(),
                 request.lastName(),
-                request.organisationId()
+                request.organisationId().toString()
         );
     }
 
-    public static UpdateProfileCommand toCommand(String userId, UpdateProfileRequest request) {
+    public static UpdateProfileCommand toCommand(UUID userId, UpdateProfileRequest request) {
         return new UpdateProfileCommand(
-                userId,
+                userId.toString(),
                 request.firstName(),
                 request.lastName(),
                 request.avatar()
@@ -31,9 +33,9 @@ public class UserWebMapper {
     }
 
     public static UpdateAbsenceMessageCommand toCommand(
-            String userId,
+            UUID userId,
             UpdateAbsenceMessageRequest request
     ) {
-        return new UpdateAbsenceMessageCommand(userId, request.content(), request.active());
+        return new UpdateAbsenceMessageCommand(userId.toString(), request.content(), request.active());
     }
 }

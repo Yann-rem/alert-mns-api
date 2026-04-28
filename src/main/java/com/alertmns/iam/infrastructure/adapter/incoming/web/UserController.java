@@ -30,6 +30,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
@@ -56,7 +58,7 @@ public class UserController {
     @ResponseStatus(HttpStatus.CREATED)
     public RegisterUserResponse register(@Valid @RequestBody RegisterUserRequest request) {
         UserId id = registerUserUseCase.register(UserWebMapper.toCommand(request));
-        return new RegisterUserResponse(id.value().toString());
+        return new RegisterUserResponse(id.value());
     }
 
     @Operation(
@@ -69,8 +71,8 @@ public class UserController {
     )
     @PostMapping("/{id}/activate")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void activate(@Parameter(description = "Identifiant de l'utilisateur") @PathVariable String id) {
-        activateUserUseCase.activate(new ActivateUserCommand(id));
+    public void activate(@Parameter(description = "Identifiant de l'utilisateur") @PathVariable UUID id) {
+        activateUserUseCase.activate(new ActivateUserCommand(id.toString()));
     }
 
     @Operation(
@@ -83,8 +85,8 @@ public class UserController {
     )
     @PostMapping("/{id}/disable")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void disable(@Parameter(description = "Identifiant de l'utilisateur") @PathVariable String id) {
-        disableUserUseCase.disable(new DisableUserCommand(id));
+    public void disable(@Parameter(description = "Identifiant de l'utilisateur") @PathVariable UUID id) {
+        disableUserUseCase.disable(new DisableUserCommand(id.toString()));
     }
 
     @Operation(
@@ -98,8 +100,8 @@ public class UserController {
     )
     @PostMapping("/{id}/reactivate")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void reactivate(@Parameter(description = "Identifiant de l'utilisateur") @PathVariable String id) {
-        reactivateUserUseCase.reactivate(new ReactivateUserCommand(id));
+    public void reactivate(@Parameter(description = "Identifiant de l'utilisateur") @PathVariable UUID id) {
+        reactivateUserUseCase.reactivate(new ReactivateUserCommand(id.toString()));
     }
 
     @Operation(
@@ -114,7 +116,7 @@ public class UserController {
     @PutMapping("/{id}/profile")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updateProfile(
-            @Parameter(description = "Identifiant de l'utilisateur") @PathVariable String id,
+            @Parameter(description = "Identifiant de l'utilisateur") @PathVariable UUID id,
             @Valid @RequestBody UpdateProfileRequest request
     ) {
         updateProfileUseCase.update(UserWebMapper.toCommand(id, request));
@@ -132,7 +134,7 @@ public class UserController {
     @PutMapping("/{id}/absence-message")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updateAbsenceMessage(
-            @Parameter(description = "Identifiant de l'utilisateur") @PathVariable String id,
+            @Parameter(description = "Identifiant de l'utilisateur") @PathVariable UUID id,
             @Valid @RequestBody UpdateAbsenceMessageRequest request
     ) {
         updateAbsenceMessageUseCase.update(UserWebMapper.toCommand(id, request));

@@ -2,7 +2,10 @@ package com.alertmns.iam.infrastructure.adapter.incoming.web.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
+import java.util.UUID;
 
 @Schema(description = "Requête d'inscription d'un nouvel utilisateur")
 public record RegisterUserRequest(
@@ -19,5 +22,5 @@ public record RegisterUserRequest(
         @NotBlank @Size(max = 100) String lastName,
 
         @Schema(description = "Identifiant de l'organisation de rattachement", example = "550e8400-e29b-41d4-a716-446655440000")
-        @NotBlank String organisationId
+        @NotNull UUID organisationId
 ) {}
