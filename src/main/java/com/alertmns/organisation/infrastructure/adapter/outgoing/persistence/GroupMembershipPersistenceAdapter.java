@@ -32,9 +32,4 @@ public final class GroupMembershipPersistenceAdapter implements GroupMembershipR
                 .findByGroupIdAndMemberId(groupId.value(), memberId.value())
                 .map(GroupMembershipPersistenceMapper::toDomain);
     }
-
-    @Override
-    public boolean existsByGroupIdAndMemberId(GroupId groupId, MemberId memberId) {
-        return jpaRepository.existsByGroupIdAndMemberId(groupId.value(), memberId.value());
-    }
 }

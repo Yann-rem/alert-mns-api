@@ -1,6 +1,5 @@
 package com.alertmns.organisation.application;
 
-import com.alertmns.organisation.domain.exception.GroupMembershipAlreadyExistsException;
 import com.alertmns.organisation.domain.exception.GroupNotFoundException;
 import com.alertmns.organisation.domain.exception.MemberNotFoundException;
 import com.alertmns.organisation.domain.exception.OrganisationMismatchException;
@@ -19,12 +18,16 @@ import com.alertmns.shared.EventPublisher;
 import com.alertmns.shared.OrganisationId;
 
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Service applicatif représentant l'orchestration de l'ajout d'un membre à un groupe.
  *
- * <p>Parse (VOs) → load (group + member) → check (organisation match + unicité adhésion)
+ * <p>Parse (VOs) → load (group + member) → check (tenant) → idempotence (no-op si l'adhésion existe)
  * → act (GroupMembership.add) → save → publish.</p>
+ *
+ * <p>L'opération est idempotente : si l'adhésion {@code (groupId, memberId)} existe déjà, le service
+ * renvoie l'identifiant existant sans publier d'événement ni écrire en base.</p>
  */
 public final class AddMemberToGroupService implements AddMemberToGroupUseCase {
 
@@ -63,8 +66,9 @@ public final class AddMemberToGroupService implements AddMemberToGroupUseCase {
         if (!member.organisationId().equals(group.organisationId())) {
             throw new OrganisationMismatchException(group.organisationId(), member.organisationId());
         }
-        if (groupMembershipRepository.existsByGroupIdAndMemberId(groupId, memberId)) {
-            throw new GroupMembershipAlreadyExistsException(groupId, memberId);
+        Optional<GroupMembership> existing = groupMembershipRepository.findByGroupIdAndMemberId(groupId, memberId);
+        if (existing.isPresent()) {
+            return existing.get().id();
         }
 
         GroupMembership groupMembership = GroupMembership.add(organisationId, groupId, memberId);

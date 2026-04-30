@@ -8,6 +8,4 @@ import java.util.UUID;
 public interface GroupMembershipJpaRepository extends JpaRepository<GroupMembershipJpaEntity, UUID> {
 
     Optional<GroupMembershipJpaEntity> findByGroupIdAndMemberId(UUID groupId, UUID memberId);
-
-    boolean existsByGroupIdAndMemberId(UUID groupId, UUID memberId);
 }

@@ -1,7 +1,6 @@
 package com.alertmns.organisation.application;
 
 import com.alertmns.organisation.domain.event.MemberAddedToGroup;
-import com.alertmns.organisation.domain.exception.GroupMembershipAlreadyExistsException;
 import com.alertmns.organisation.domain.exception.GroupNotFoundException;
 import com.alertmns.organisation.domain.exception.MemberNotFoundException;
 import com.alertmns.organisation.domain.exception.OrganisationMismatchException;
@@ -102,7 +101,7 @@ class AddMemberToGroupServiceTest {
         void shouldAddAMemberToAGroupAndSaveTheMembership() {
             when(groupRepository.findById(any())).thenReturn(Optional.of(group));
             when(memberRepository.findById(any())).thenReturn(Optional.of(member));
-            when(groupMembershipRepository.existsByGroupIdAndMemberId(any(), any())).thenReturn(false);
+            when(groupMembershipRepository.findByGroupIdAndMemberId(any(), any())).thenReturn(Optional.empty());
 
             AddMemberToGroupCommand command = new AddMemberToGroupCommand(
                     ORGANISATION_ID.value().toString(), groupId.value().toString(), memberId.value().toString()
@@ -122,7 +121,7 @@ class AddMemberToGroupServiceTest {
         void shouldPublishMemberAddedToGroupEvent() {
             when(groupRepository.findById(any())).thenReturn(Optional.of(group));
             when(memberRepository.findById(any())).thenReturn(Optional.of(member));
-            when(groupMembershipRepository.existsByGroupIdAndMemberId(any(), any())).thenReturn(false);
+            when(groupMembershipRepository.findByGroupIdAndMemberId(any(), any())).thenReturn(Optional.empty());
 
             AddMemberToGroupCommand command = new AddMemberToGroupCommand(
                     ORGANISATION_ID.value().toString(), groupId.value().toString(), memberId.value().toString()
@@ -192,17 +191,18 @@ class AddMemberToGroupServiceTest {
         }
 
         @Test
-        @DisplayName("should throw GroupMembershipAlreadyExistsException when member is already in the group")
-        void shouldThrowGroupMembershipAlreadyExistsExceptionWhenMembershipAlreadyExists() {
+        @DisplayName("should be idempotent and return the existing membership id when the member is already in the group")
+        void shouldBeIdempotentWhenMembershipAlreadyExists() {
+            GroupMembership existing = GroupMembership.add(ORGANISATION_ID, groupId, memberId);
             when(groupRepository.findById(any())).thenReturn(Optional.of(group));
             when(memberRepository.findById(any())).thenReturn(Optional.of(member));
-            when(groupMembershipRepository.existsByGroupIdAndMemberId(any(), any())).thenReturn(true);
+            when(groupMembershipRepository.findByGroupIdAndMemberId(any(), any())).thenReturn(Optional.of(existing));
 
             AddMemberToGroupCommand command = new AddMemberToGroupCommand(
                     ORGANISATION_ID.value().toString(), groupId.value().toString(), memberId.value().toString()
             );
 
-            assertThrows(GroupMembershipAlreadyExistsException.class, () -> service.add(command));
+            assertEquals(existing.id(), service.add(command));
             verify(groupMembershipRepository, never()).save(any());
             verify(publisher, never()).publish(anyList());
         }

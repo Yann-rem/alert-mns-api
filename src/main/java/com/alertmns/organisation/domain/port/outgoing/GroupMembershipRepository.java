@@ -33,13 +33,4 @@ public interface GroupMembershipRepository {
      * @return l'adhésion trouvée, ou vide
      */
     Optional<GroupMembership> findByGroupIdAndMemberId(GroupId groupId, MemberId memberId);
-
-    /**
-     * Vérifie si une adhésion existe déjà pour le couple (groupe, membre).
-     *
-     * @param groupId  l'identifiant du groupe
-     * @param memberId l'identifiant du membre
-     * @return {@code true} si l'adhésion existe déjà
-     */
-    boolean existsByGroupIdAndMemberId(GroupId groupId, MemberId memberId);
 }
