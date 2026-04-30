@@ -5,11 +5,13 @@ import java.util.Objects;
 /**
  * Commande représentant la demande de suspension d'un membre.
  *
- * <p>Valeur brute — le service applicatif est responsable de la création du VO
- * {@link com.alertmns.organisation.domain.model.MemberId}.</p>
+ * <p>Valeurs brutes — le service applicatif est responsable de la création des VO
+ * ({@link com.alertmns.shared.OrganisationId},
+ * {@link com.alertmns.organisation.domain.model.MemberId}).</p>
  */
-public record SuspendMemberCommand(String memberId) {
+public record SuspendMemberCommand(String organisationId, String memberId) {
     public SuspendMemberCommand {
+        Objects.requireNonNull(organisationId, "organisationId must not be null");
         Objects.requireNonNull(memberId, "memberId must not be null");
     }
 }

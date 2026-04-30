@@ -1,19 +1,21 @@
 package com.alertmns.organisation.application;
 
 import com.alertmns.organisation.domain.exception.MemberNotFoundException;
+import com.alertmns.organisation.domain.exception.OrganisationMismatchException;
 import com.alertmns.organisation.domain.model.Member;
 import com.alertmns.organisation.domain.model.MemberId;
 import com.alertmns.organisation.domain.port.incoming.ActivateMemberUseCase;
 import com.alertmns.organisation.domain.port.incoming.command.ActivateMemberCommand;
 import com.alertmns.organisation.domain.port.outgoing.MemberRepository;
 import com.alertmns.shared.EventPublisher;
+import com.alertmns.shared.OrganisationId;
 
 import java.util.Objects;
 
 /**
  * Service applicatif représentant l'orchestration de l'activation des membres.
  *
- * <p>Parse (VO id) → load (agrégat) → act (activate) → save → publish.</p>
+ * <p>Parse (VOs) → load (agrégat) → check (tenant) → act (activate) → save → publish.</p>
  */
 public final class ActivateMemberService implements ActivateMemberUseCase {
 
@@ -27,8 +29,13 @@ public final class ActivateMemberService implements ActivateMemberUseCase {
 
     @Override
     public void activate(ActivateMemberCommand command) {
-        MemberId id = MemberId.from(command.memberId());
-        Member member = repository.findById(id).orElseThrow(() -> new MemberNotFoundException(id));
+        OrganisationId organisationId = OrganisationId.from(command.organisationId());
+        MemberId memberId = MemberId.from(command.memberId());
+        Member member = repository.findById(memberId).orElseThrow(() -> new MemberNotFoundException(memberId));
+
+        if (!member.organisationId().equals(organisationId)) {
+            throw new OrganisationMismatchException(member.organisationId(), organisationId);
+        }
 
         member.activate();
         repository.save(member);
