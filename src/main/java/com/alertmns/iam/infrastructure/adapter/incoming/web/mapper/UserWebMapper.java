@@ -32,10 +32,7 @@ public final class UserWebMapper {
         );
     }
 
-    public static UpdateAbsenceMessageCommand toCommand(
-            UUID userId,
-            UpdateAbsenceMessageRequest request
-    ) {
+    public static UpdateAbsenceMessageCommand toCommand(UUID userId, UpdateAbsenceMessageRequest request) {
         return new UpdateAbsenceMessageCommand(userId.toString(), request.content(), request.active());
     }
 }
