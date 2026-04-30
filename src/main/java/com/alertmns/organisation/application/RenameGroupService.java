@@ -17,7 +17,7 @@ import java.util.Objects;
 /**
  * Service applicatif représentant l'orchestration du renommage des groupes.
  *
- * <p>Parse (VOs) → load (agrégat) → check (idempotence + unicité du nouveau nom) → act (rename) → save → publish.</p>
+ * <p>Parse (VOs) → load (agrégat) → check (tenant + idempotence + unicité du nouveau nom) → act (rename) → save → publish.</p>
  */
 public final class RenameGroupService implements RenameGroupUseCase {
 
