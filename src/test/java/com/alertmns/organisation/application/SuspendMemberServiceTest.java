@@ -2,6 +2,7 @@ package com.alertmns.organisation.application;
 
 import com.alertmns.organisation.domain.event.MemberSuspended;
 import com.alertmns.organisation.domain.exception.MemberNotFoundException;
+import com.alertmns.organisation.domain.exception.OrganisationMismatchException;
 import com.alertmns.organisation.domain.model.Member;
 import com.alertmns.organisation.domain.model.MemberId;
 import com.alertmns.organisation.domain.model.MemberRole;
@@ -40,6 +41,7 @@ import static org.mockito.Mockito.when;
 class SuspendMemberServiceTest {
 
     static final OrganisationId ORGANISATION_ID = OrganisationId.generate();
+    static final OrganisationId OTHER_ORGANISATION_ID = OrganisationId.generate();
     static final UUID USER_ID = UUID.randomUUID();
 
     @Mock
@@ -76,7 +78,9 @@ class SuspendMemberServiceTest {
         @DisplayName("should suspend a member and save it with SUSPENDED status")
         void shouldSuspendAMemberAndSaveItWithSuspendedStatus() {
             when(repository.findById(any())).thenReturn(Optional.of(activeMember));
-            SuspendMemberCommand command = new SuspendMemberCommand(id.value().toString());
+            SuspendMemberCommand command = new SuspendMemberCommand(
+                    ORGANISATION_ID.value().toString(), id.value().toString()
+            );
 
             service.suspend(command);
 
@@ -89,7 +93,9 @@ class SuspendMemberServiceTest {
         @DisplayName("should publish MemberSuspended event")
         void shouldPublishMemberSuspendedEvent() {
             when(repository.findById(any())).thenReturn(Optional.of(activeMember));
-            SuspendMemberCommand command = new SuspendMemberCommand(id.value().toString());
+            SuspendMemberCommand command = new SuspendMemberCommand(
+                    ORGANISATION_ID.value().toString(), id.value().toString()
+            );
 
             service.suspend(command);
 
@@ -106,8 +112,23 @@ class SuspendMemberServiceTest {
         @DisplayName("should throw MemberNotFoundException when member not found")
         void shouldThrowMemberNotFoundExceptionWhenMemberNotFound() {
             when(repository.findById(any())).thenReturn(Optional.empty());
-            SuspendMemberCommand command = new SuspendMemberCommand(id.value().toString());
+            SuspendMemberCommand command = new SuspendMemberCommand(
+                    ORGANISATION_ID.value().toString(), id.value().toString()
+            );
             assertThrows(MemberNotFoundException.class, () -> service.suspend(command));
+            verify(repository, never()).save(any());
+            verify(publisher, never()).publish(anyList());
+        }
+
+        @Test
+        @DisplayName("should throw OrganisationMismatchException when member belongs to another organisation")
+        void shouldThrowOrganisationMismatchExceptionWhenOrganisationsDiffer() {
+            when(repository.findById(any())).thenReturn(Optional.of(activeMember));
+            SuspendMemberCommand command = new SuspendMemberCommand(
+                    OTHER_ORGANISATION_ID.value().toString(), id.value().toString()
+            );
+
+            assertThrows(OrganisationMismatchException.class, () -> service.suspend(command));
             verify(repository, never()).save(any());
             verify(publisher, never()).publish(anyList());
         }
@@ -125,7 +146,9 @@ class SuspendMemberServiceTest {
             );
 
             when(repository.findById(any())).thenReturn(Optional.of(pendingMember));
-            SuspendMemberCommand command = new SuspendMemberCommand(id.value().toString());
+            SuspendMemberCommand command = new SuspendMemberCommand(
+                    ORGANISATION_ID.value().toString(), id.value().toString()
+            );
             assertThrows(IllegalStateException.class, () -> service.suspend(command));
             verify(repository, never()).save(any());
             verify(publisher, never()).publish(anyList());
@@ -134,7 +157,20 @@ class SuspendMemberServiceTest {
         @Test
         @DisplayName("should throw IllegalArgumentException when memberId is not a valid UUID")
         void shouldThrowWhenMemberIdIsInvalid() {
-            SuspendMemberCommand command = new SuspendMemberCommand("invalid");
+            SuspendMemberCommand command = new SuspendMemberCommand(
+                    ORGANISATION_ID.value().toString(), "invalid"
+            );
+            assertThrows(IllegalArgumentException.class, () -> service.suspend(command));
+            verify(repository, never()).save(any());
+            verify(publisher, never()).publish(anyList());
+        }
+
+        @Test
+        @DisplayName("should throw IllegalArgumentException when organisationId is not a valid UUID")
+        void shouldThrowWhenOrganisationIdIsInvalid() {
+            SuspendMemberCommand command = new SuspendMemberCommand(
+                    "invalid", id.value().toString()
+            );
             assertThrows(IllegalArgumentException.class, () -> service.suspend(command));
             verify(repository, never()).save(any());
             verify(publisher, never()).publish(anyList());
@@ -160,10 +196,17 @@ class SuspendMemberServiceTest {
         }
 
         @Test
+        @DisplayName("should reject null command organisationId")
+        void shouldRejectNullCommandOrganisationId() {
+            assertThrows(NullPointerException.class,
+                    () -> new SuspendMemberCommand(null, MemberId.generate().value().toString()));
+        }
+
+        @Test
         @DisplayName("should reject null command memberId")
         void shouldRejectNullCommandMemberId() {
             assertThrows(NullPointerException.class,
-                    () -> new SuspendMemberCommand(null));
+                    () -> new SuspendMemberCommand(ORGANISATION_ID.value().toString(), null));
         }
     }
 }

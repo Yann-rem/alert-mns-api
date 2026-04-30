@@ -3,6 +3,7 @@ package com.alertmns.organisation.application;
 import com.alertmns.organisation.domain.event.GroupRenamed;
 import com.alertmns.organisation.domain.exception.GroupNameAlreadyExistsException;
 import com.alertmns.organisation.domain.exception.GroupNotFoundException;
+import com.alertmns.organisation.domain.exception.OrganisationMismatchException;
 import com.alertmns.organisation.domain.model.Group;
 import com.alertmns.organisation.domain.model.GroupId;
 import com.alertmns.organisation.domain.model.GroupName;
@@ -39,6 +40,7 @@ import static org.mockito.Mockito.when;
 class RenameGroupServiceTest {
 
     static final OrganisationId ORGANISATION_ID = OrganisationId.generate();
+    static final OrganisationId OTHER_ORGANISATION_ID = OrganisationId.generate();
 
     @Mock
     GroupRepository repository;
@@ -74,7 +76,9 @@ class RenameGroupServiceTest {
             when(repository.findById(any())).thenReturn(Optional.of(group));
             when(repository.existsByOrganisationIdAndGroupName(any(), any())).thenReturn(false);
 
-            RenameGroupCommand command = new RenameGroupCommand(id.value().toString(), "Designers");
+            RenameGroupCommand command = new RenameGroupCommand(
+                    ORGANISATION_ID.value().toString(), id.value().toString(), "Designers"
+            );
 
             service.rename(command);
 
@@ -89,7 +93,9 @@ class RenameGroupServiceTest {
             when(repository.findById(any())).thenReturn(Optional.of(group));
             when(repository.existsByOrganisationIdAndGroupName(any(), any())).thenReturn(false);
 
-            RenameGroupCommand command = new RenameGroupCommand(id.value().toString(), "Designers");
+            RenameGroupCommand command = new RenameGroupCommand(
+                    ORGANISATION_ID.value().toString(), id.value().toString(), "Designers"
+            );
 
             service.rename(command);
 
@@ -108,7 +114,9 @@ class RenameGroupServiceTest {
         void shouldDoNothingWhenNewNameEqualsCurrentName() {
             when(repository.findById(any())).thenReturn(Optional.of(group));
 
-            RenameGroupCommand command = new RenameGroupCommand(id.value().toString(), "Développeurs");
+            RenameGroupCommand command = new RenameGroupCommand(
+                    ORGANISATION_ID.value().toString(), id.value().toString(), "Développeurs"
+            );
 
             service.rename(command);
 
@@ -123,7 +131,9 @@ class RenameGroupServiceTest {
             when(repository.findById(any())).thenReturn(Optional.of(group));
             when(repository.existsByOrganisationIdAndGroupName(any(), any())).thenReturn(true);
 
-            RenameGroupCommand command = new RenameGroupCommand(id.value().toString(), "Designers");
+            RenameGroupCommand command = new RenameGroupCommand(
+                    ORGANISATION_ID.value().toString(), id.value().toString(), "Designers"
+            );
 
             assertThrows(GroupNameAlreadyExistsException.class, () -> service.rename(command));
             verify(repository, never()).save(any());
@@ -135,7 +145,9 @@ class RenameGroupServiceTest {
         void shouldThrowGroupNotFoundExceptionWhenGroupNotFound() {
             when(repository.findById(any())).thenReturn(Optional.empty());
 
-            RenameGroupCommand command = new RenameGroupCommand(id.value().toString(), "Designers");
+            RenameGroupCommand command = new RenameGroupCommand(
+                    ORGANISATION_ID.value().toString(), id.value().toString(), "Designers"
+            );
 
             assertThrows(GroupNotFoundException.class, () -> service.rename(command));
             verify(repository, never()).save(any());
@@ -143,9 +155,37 @@ class RenameGroupServiceTest {
         }
 
         @Test
+        @DisplayName("should throw OrganisationMismatchException when group belongs to another organisation")
+        void shouldThrowOrganisationMismatchExceptionWhenOrganisationsDiffer() {
+            when(repository.findById(any())).thenReturn(Optional.of(group));
+
+            RenameGroupCommand command = new RenameGroupCommand(
+                    OTHER_ORGANISATION_ID.value().toString(), id.value().toString(), "Designers"
+            );
+
+            assertThrows(OrganisationMismatchException.class, () -> service.rename(command));
+            verify(repository, never()).save(any());
+            verify(publisher, never()).publish(anyList());
+        }
+
+        @Test
         @DisplayName("should throw IllegalArgumentException when groupId is not a valid UUID")
         void shouldThrowWhenGroupIdIsInvalid() {
-            RenameGroupCommand command = new RenameGroupCommand("invalid", "Designers");
+            RenameGroupCommand command = new RenameGroupCommand(
+                    ORGANISATION_ID.value().toString(), "invalid", "Designers"
+            );
+
+            assertThrows(IllegalArgumentException.class, () -> service.rename(command));
+            verify(repository, never()).save(any());
+            verify(publisher, never()).publish(anyList());
+        }
+
+        @Test
+        @DisplayName("should throw IllegalArgumentException when organisationId is not a valid UUID")
+        void shouldThrowWhenOrganisationIdIsInvalid() {
+            RenameGroupCommand command = new RenameGroupCommand(
+                    "invalid", id.value().toString(), "Designers"
+            );
 
             assertThrows(IllegalArgumentException.class, () -> service.rename(command));
             verify(repository, never()).save(any());
@@ -172,17 +212,27 @@ class RenameGroupServiceTest {
         }
 
         @Test
+        @DisplayName("should reject null command organisationId")
+        void shouldRejectNullCommandOrganisationId() {
+            assertThrows(NullPointerException.class,
+                    () -> new RenameGroupCommand(null, GroupId.generate().value().toString(), "Designers"));
+        }
+
+        @Test
         @DisplayName("should reject null command groupId")
         void shouldRejectNullCommandGroupId() {
             assertThrows(NullPointerException.class,
-                    () -> new RenameGroupCommand(null, "Designers"));
+                    () -> new RenameGroupCommand(ORGANISATION_ID.value().toString(), null, "Designers"));
         }
 
         @Test
         @DisplayName("should reject null command name")
         void shouldRejectNullCommandName() {
             assertThrows(NullPointerException.class,
-                    () -> new RenameGroupCommand(GroupId.generate().value().toString(), null));
+                    () -> new RenameGroupCommand(
+                            ORGANISATION_ID.value().toString(),
+                            GroupId.generate().value().toString(),
+                            null));
         }
     }
 }

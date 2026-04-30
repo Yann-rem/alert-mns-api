@@ -2,6 +2,7 @@ package com.alertmns.organisation.application;
 
 import com.alertmns.organisation.domain.event.MemberReactivated;
 import com.alertmns.organisation.domain.exception.MemberNotFoundException;
+import com.alertmns.organisation.domain.exception.OrganisationMismatchException;
 import com.alertmns.organisation.domain.model.Member;
 import com.alertmns.organisation.domain.model.MemberId;
 import com.alertmns.organisation.domain.model.MemberRole;
@@ -40,6 +41,7 @@ import static org.mockito.Mockito.when;
 class ReactivateMemberServiceTest {
 
     static final OrganisationId ORGANISATION_ID = OrganisationId.generate();
+    static final OrganisationId OTHER_ORGANISATION_ID = OrganisationId.generate();
     static final UUID USER_ID = UUID.randomUUID();
 
     @Mock
@@ -76,7 +78,9 @@ class ReactivateMemberServiceTest {
         @DisplayName("should reactivate a member and save it with ACTIVE status")
         void shouldReactivateAMemberAndSaveItWithActiveStatus() {
             when(repository.findById(any())).thenReturn(Optional.of(suspendedMember));
-            ReactivateMemberCommand command = new ReactivateMemberCommand(id.value().toString());
+            ReactivateMemberCommand command = new ReactivateMemberCommand(
+                    ORGANISATION_ID.value().toString(), id.value().toString()
+            );
 
             service.reactivate(command);
 
@@ -89,7 +93,9 @@ class ReactivateMemberServiceTest {
         @DisplayName("should publish MemberReactivated event")
         void shouldPublishMemberReactivatedEvent() {
             when(repository.findById(any())).thenReturn(Optional.of(suspendedMember));
-            ReactivateMemberCommand command = new ReactivateMemberCommand(id.value().toString());
+            ReactivateMemberCommand command = new ReactivateMemberCommand(
+                    ORGANISATION_ID.value().toString(), id.value().toString()
+            );
 
             service.reactivate(command);
 
@@ -106,8 +112,23 @@ class ReactivateMemberServiceTest {
         @DisplayName("should throw MemberNotFoundException when member not found")
         void shouldThrowMemberNotFoundExceptionWhenMemberNotFound() {
             when(repository.findById(any())).thenReturn(Optional.empty());
-            ReactivateMemberCommand command = new ReactivateMemberCommand(id.value().toString());
+            ReactivateMemberCommand command = new ReactivateMemberCommand(
+                    ORGANISATION_ID.value().toString(), id.value().toString()
+            );
             assertThrows(MemberNotFoundException.class, () -> service.reactivate(command));
+            verify(repository, never()).save(any());
+            verify(publisher, never()).publish(anyList());
+        }
+
+        @Test
+        @DisplayName("should throw OrganisationMismatchException when member belongs to another organisation")
+        void shouldThrowOrganisationMismatchExceptionWhenOrganisationsDiffer() {
+            when(repository.findById(any())).thenReturn(Optional.of(suspendedMember));
+            ReactivateMemberCommand command = new ReactivateMemberCommand(
+                    OTHER_ORGANISATION_ID.value().toString(), id.value().toString()
+            );
+
+            assertThrows(OrganisationMismatchException.class, () -> service.reactivate(command));
             verify(repository, never()).save(any());
             verify(publisher, never()).publish(anyList());
         }
@@ -125,7 +146,9 @@ class ReactivateMemberServiceTest {
             );
 
             when(repository.findById(any())).thenReturn(Optional.of(activeMember));
-            ReactivateMemberCommand command = new ReactivateMemberCommand(id.value().toString());
+            ReactivateMemberCommand command = new ReactivateMemberCommand(
+                    ORGANISATION_ID.value().toString(), id.value().toString()
+            );
             assertThrows(IllegalStateException.class, () -> service.reactivate(command));
             verify(repository, never()).save(any());
             verify(publisher, never()).publish(anyList());
@@ -134,7 +157,20 @@ class ReactivateMemberServiceTest {
         @Test
         @DisplayName("should throw IllegalArgumentException when memberId is not a valid UUID")
         void shouldThrowWhenMemberIdIsInvalid() {
-            ReactivateMemberCommand command = new ReactivateMemberCommand("invalid");
+            ReactivateMemberCommand command = new ReactivateMemberCommand(
+                    ORGANISATION_ID.value().toString(), "invalid"
+            );
+            assertThrows(IllegalArgumentException.class, () -> service.reactivate(command));
+            verify(repository, never()).save(any());
+            verify(publisher, never()).publish(anyList());
+        }
+
+        @Test
+        @DisplayName("should throw IllegalArgumentException when organisationId is not a valid UUID")
+        void shouldThrowWhenOrganisationIdIsInvalid() {
+            ReactivateMemberCommand command = new ReactivateMemberCommand(
+                    "invalid", id.value().toString()
+            );
             assertThrows(IllegalArgumentException.class, () -> service.reactivate(command));
             verify(repository, never()).save(any());
             verify(publisher, never()).publish(anyList());
@@ -160,10 +196,17 @@ class ReactivateMemberServiceTest {
         }
 
         @Test
+        @DisplayName("should reject null command organisationId")
+        void shouldRejectNullCommandOrganisationId() {
+            assertThrows(NullPointerException.class,
+                    () -> new ReactivateMemberCommand(null, MemberId.generate().value().toString()));
+        }
+
+        @Test
         @DisplayName("should reject null command memberId")
         void shouldRejectNullCommandMemberId() {
             assertThrows(NullPointerException.class,
-                    () -> new ReactivateMemberCommand(null));
+                    () -> new ReactivateMemberCommand(ORGANISATION_ID.value().toString(), null));
         }
     }
 }
