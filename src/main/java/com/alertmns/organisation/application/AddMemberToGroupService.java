@@ -6,7 +6,6 @@ import com.alertmns.organisation.domain.exception.OrganisationMismatchException;
 import com.alertmns.organisation.domain.model.Group;
 import com.alertmns.organisation.domain.model.GroupId;
 import com.alertmns.organisation.domain.model.GroupMembership;
-import com.alertmns.organisation.domain.model.GroupMembershipId;
 import com.alertmns.organisation.domain.model.Member;
 import com.alertmns.organisation.domain.model.MemberId;
 import com.alertmns.organisation.domain.port.incoming.AddMemberToGroupUseCase;
@@ -18,7 +17,6 @@ import com.alertmns.shared.EventPublisher;
 import com.alertmns.shared.OrganisationId;
 
 import java.util.Objects;
-import java.util.Optional;
 
 /**
  * Service applicatif représentant l'orchestration de l'ajout d'un membre à un groupe.
@@ -27,7 +25,7 @@ import java.util.Optional;
  * → act (GroupMembership.add) → save → publish.</p>
  *
  * <p>L'opération est idempotente : si l'adhésion {@code (groupId, memberId)} existe déjà, le service
- * renvoie l'identifiant existant sans publier d'événement ni écrire en base.</p>
+ * retourne sans publier d'événement ni écrire en base.</p>
  */
 public final class AddMemberToGroupService implements AddMemberToGroupUseCase {
 
@@ -52,7 +50,7 @@ public final class AddMemberToGroupService implements AddMemberToGroupUseCase {
     }
 
     @Override
-    public GroupMembershipId add(AddMemberToGroupCommand command) {
+    public void add(AddMemberToGroupCommand command) {
         OrganisationId organisationId = OrganisationId.from(command.organisationId());
         GroupId groupId = GroupId.from(command.groupId());
         MemberId memberId = MemberId.from(command.memberId());
@@ -66,14 +64,12 @@ public final class AddMemberToGroupService implements AddMemberToGroupUseCase {
         if (!member.organisationId().equals(group.organisationId())) {
             throw new OrganisationMismatchException(group.organisationId(), member.organisationId());
         }
-        Optional<GroupMembership> existing = groupMembershipRepository.findByGroupIdAndMemberId(groupId, memberId);
-        if (existing.isPresent()) {
-            return existing.get().id();
+        if (groupMembershipRepository.findByGroupIdAndMemberId(groupId, memberId).isPresent()) {
+            return;
         }
 
         GroupMembership groupMembership = GroupMembership.add(organisationId, groupId, memberId);
         groupMembershipRepository.save(groupMembership);
         publisher.publish(groupMembership.pullDomainEvents());
-        return groupMembership.id();
     }
 }

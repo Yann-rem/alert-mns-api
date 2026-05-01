@@ -1,6 +1,5 @@
 package com.alertmns.organisation.domain.port.incoming;
 
-import com.alertmns.organisation.domain.model.GroupMembershipId;
 import com.alertmns.organisation.domain.port.incoming.command.AddMemberToGroupCommand;
 
 /**
@@ -14,7 +13,6 @@ public interface AddMemberToGroupUseCase {
      * Ajoute un membre à un groupe de la même organisation.
      *
      * @param command la commande d'ajout
-     * @return l'identifiant de l'adhésion créée
      */
-    GroupMembershipId add(AddMemberToGroupCommand command);
+    void add(AddMemberToGroupCommand command);
 }

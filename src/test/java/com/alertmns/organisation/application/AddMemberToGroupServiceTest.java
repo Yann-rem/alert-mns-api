@@ -191,7 +191,7 @@ class AddMemberToGroupServiceTest {
         }
 
         @Test
-        @DisplayName("should be idempotent and return the existing membership id when the member is already in the group")
+        @DisplayName("should be idempotent and do nothing when the member is already in the group")
         void shouldBeIdempotentWhenMembershipAlreadyExists() {
             GroupMembership existing = GroupMembership.add(ORGANISATION_ID, groupId, memberId);
             when(groupRepository.findById(any())).thenReturn(Optional.of(group));
@@ -202,7 +202,8 @@ class AddMemberToGroupServiceTest {
                     ORGANISATION_ID.value().toString(), groupId.value().toString(), memberId.value().toString()
             );
 
-            assertEquals(existing.id(), service.add(command));
+            service.add(command);
+
             verify(groupMembershipRepository, never()).save(any());
             verify(publisher, never()).publish(anyList());
         }
