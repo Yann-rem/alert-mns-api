@@ -49,7 +49,7 @@ public class GroupController {
             @Parameter(description = "Identifiant de l'organisation") @PathVariable UUID orgId,
             @Valid @RequestBody CreateGroupRequest request
     ) {
-        GroupId id = createGroupUseCase.create(GroupWebMapper.toCommand(orgId, request));
+        GroupId id = createGroupUseCase.create(GroupWebMapper.toCreateGroupCommand(orgId, request));
         return new CreateGroupResponse(id.value());
     }
 
@@ -71,6 +71,6 @@ public class GroupController {
             @Parameter(description = "Identifiant du groupe") @PathVariable UUID id,
             @Valid @RequestBody RenameGroupRequest request
     ) {
-        renameGroupUseCase.rename(GroupWebMapper.toCommand(orgId, id, request));
+        renameGroupUseCase.rename(GroupWebMapper.toRenameGroupCommand(orgId, id, request));
     }
 }

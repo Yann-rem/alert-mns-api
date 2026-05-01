@@ -9,7 +9,7 @@ public final class MemberWebMapper {
 
     private MemberWebMapper() {}
 
-    public static InviteMemberCommand toCommand(UUID organisationId, InviteMemberRequest request) {
+    public static InviteMemberCommand toInviteMemberCommand(UUID organisationId, InviteMemberRequest request) {
         return new InviteMemberCommand(
                 organisationId.toString(),
                 request.userId().toString(),

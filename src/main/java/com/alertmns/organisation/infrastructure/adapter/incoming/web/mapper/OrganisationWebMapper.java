@@ -7,7 +7,7 @@ public final class OrganisationWebMapper {
 
     private OrganisationWebMapper() {}
 
-    public static CreateOrganisationCommand toCommand(CreateOrganisationRequest request) {
+    public static CreateOrganisationCommand toCreateOrganisationCommand(CreateOrganisationRequest request) {
         return new CreateOrganisationCommand(request.name());
     }
 }

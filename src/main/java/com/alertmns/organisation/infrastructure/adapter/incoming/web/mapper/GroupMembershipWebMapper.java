@@ -9,11 +9,11 @@ public final class GroupMembershipWebMapper {
 
     private GroupMembershipWebMapper() {}
 
-    public static AddMemberToGroupCommand toAddMemberCommand(UUID organisationId, UUID groupId, UUID memberId) {
+    public static AddMemberToGroupCommand toAddMemberToGroupCommand(UUID organisationId, UUID groupId, UUID memberId) {
         return new AddMemberToGroupCommand(organisationId.toString(), groupId.toString(), memberId.toString());
     }
 
-    public static RemoveMemberFromGroupCommand toRemoveMemberCommand(
+    public static RemoveMemberFromGroupCommand toRemoveMemberFromGroupCommand(
             UUID organisationId,
             UUID groupId,
             UUID memberId

@@ -37,7 +37,9 @@ public class OrganisationController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public CreateOrganisationResponse create(@Valid @RequestBody CreateOrganisationRequest request) {
-        OrganisationId id = createOrganisationUseCase.create(OrganisationWebMapper.toCommand(request));
+        OrganisationId id = createOrganisationUseCase.create(
+                OrganisationWebMapper.toCreateOrganisationCommand(request)
+        );
         return new CreateOrganisationResponse(id.value());
     }
 }

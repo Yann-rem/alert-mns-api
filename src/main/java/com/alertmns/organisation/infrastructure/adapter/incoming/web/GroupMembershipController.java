@@ -44,7 +44,7 @@ public class GroupMembershipController {
             @Parameter(description = "Identifiant du groupe") @PathVariable UUID groupId,
             @Parameter(description = "Identifiant du membre") @PathVariable UUID memberId
     ) {
-        addMemberToGroupUseCase.add(GroupMembershipWebMapper.toAddMemberCommand(orgId, groupId, memberId));
+        addMemberToGroupUseCase.add(GroupMembershipWebMapper.toAddMemberToGroupCommand(orgId, groupId, memberId));
     }
 
     @Operation(
@@ -63,6 +63,8 @@ public class GroupMembershipController {
             @Parameter(description = "Identifiant du groupe") @PathVariable UUID groupId,
             @Parameter(description = "Identifiant du membre") @PathVariable UUID memberId
     ) {
-        removeMemberFromGroupUseCase.remove(GroupMembershipWebMapper.toRemoveMemberCommand(orgId, groupId, memberId));
+        removeMemberFromGroupUseCase.remove(
+                GroupMembershipWebMapper.toRemoveMemberFromGroupCommand(orgId, groupId, memberId)
+        );
     }
 }

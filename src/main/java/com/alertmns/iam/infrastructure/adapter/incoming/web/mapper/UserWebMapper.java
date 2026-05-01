@@ -13,7 +13,7 @@ public final class UserWebMapper {
 
     private UserWebMapper() {}
 
-    public static RegisterUserCommand toCommand(RegisterUserRequest request) {
+    public static RegisterUserCommand toRegisterUserCommand(RegisterUserRequest request) {
         return new RegisterUserCommand(
                 request.email(),
                 request.rawPassword(),
@@ -23,7 +23,7 @@ public final class UserWebMapper {
         );
     }
 
-    public static UpdateProfileCommand toCommand(UUID userId, UpdateProfileRequest request) {
+    public static UpdateProfileCommand toUpdateProfileCommand(UUID userId, UpdateProfileRequest request) {
         return new UpdateProfileCommand(
                 userId.toString(),
                 request.firstName(),
@@ -32,7 +32,10 @@ public final class UserWebMapper {
         );
     }
 
-    public static UpdateAbsenceMessageCommand toCommand(UUID userId, UpdateAbsenceMessageRequest request) {
+    public static UpdateAbsenceMessageCommand toUpdateAbsenceMessageCommand(
+            UUID userId,
+            UpdateAbsenceMessageRequest request
+    ) {
         return new UpdateAbsenceMessageCommand(userId.toString(), request.content(), request.active());
     }
 }

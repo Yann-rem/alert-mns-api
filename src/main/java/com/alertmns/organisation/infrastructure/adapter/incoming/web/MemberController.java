@@ -54,7 +54,7 @@ public class MemberController {
             @Parameter(description = "Identifiant de l'organisation") @PathVariable UUID orgId,
             @Valid @RequestBody InviteMemberRequest request
     ) {
-        MemberId id = inviteMemberUseCase.invite(MemberWebMapper.toCommand(orgId, request));
+        MemberId id = inviteMemberUseCase.invite(MemberWebMapper.toInviteMemberCommand(orgId, request));
         return new InviteMemberResponse(id.value());
     }
 

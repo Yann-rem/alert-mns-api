@@ -11,11 +11,15 @@ public final class GroupWebMapper {
 
     private GroupWebMapper() {}
 
-    public static CreateGroupCommand toCommand(UUID organisationId, CreateGroupRequest request) {
+    public static CreateGroupCommand toCreateGroupCommand(UUID organisationId, CreateGroupRequest request) {
         return new CreateGroupCommand(organisationId.toString(), request.name());
     }
 
-    public static RenameGroupCommand toCommand(UUID organisationId, UUID groupId, RenameGroupRequest request) {
+    public static RenameGroupCommand toRenameGroupCommand(
+            UUID organisationId,
+            UUID groupId,
+            RenameGroupRequest request
+    ) {
         return new RenameGroupCommand(organisationId.toString(), groupId.toString(), request.name());
     }
 }

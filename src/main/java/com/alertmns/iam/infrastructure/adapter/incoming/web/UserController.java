@@ -57,7 +57,7 @@ public class UserController {
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
     public RegisterUserResponse register(@Valid @RequestBody RegisterUserRequest request) {
-        UserId id = registerUserUseCase.register(UserWebMapper.toCommand(request));
+        UserId id = registerUserUseCase.register(UserWebMapper.toRegisterUserCommand(request));
         return new RegisterUserResponse(id.value());
     }
 
@@ -119,7 +119,7 @@ public class UserController {
             @Parameter(description = "Identifiant de l'utilisateur") @PathVariable UUID id,
             @Valid @RequestBody UpdateProfileRequest request
     ) {
-        updateProfileUseCase.update(UserWebMapper.toCommand(id, request));
+        updateProfileUseCase.update(UserWebMapper.toUpdateProfileCommand(id, request));
     }
 
     @Operation(
@@ -137,6 +137,6 @@ public class UserController {
             @Parameter(description = "Identifiant de l'utilisateur") @PathVariable UUID id,
             @Valid @RequestBody UpdateAbsenceMessageRequest request
     ) {
-        updateAbsenceMessageUseCase.update(UserWebMapper.toCommand(id, request));
+        updateAbsenceMessageUseCase.update(UserWebMapper.toUpdateAbsenceMessageCommand(id, request));
     }
 }
