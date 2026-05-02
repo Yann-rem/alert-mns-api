@@ -1,9 +1,9 @@
 package com.alertmns.iam.infrastructure.config;
 
 import com.alertmns.iam.application.ActivateUserService;
-import com.alertmns.iam.application.DisableUserService;
 import com.alertmns.iam.application.ReactivateUserService;
 import com.alertmns.iam.application.RegisterUserService;
+import com.alertmns.iam.application.SuspendUserService;
 import com.alertmns.iam.application.UpdateAbsenceMessageService;
 import com.alertmns.iam.application.UpdateProfileService;
 import com.alertmns.iam.domain.port.outgoing.AuthenticationPort;
@@ -51,8 +51,8 @@ public class IamBeanConfig {
     }
 
     @Bean
-    public DisableUserService disableUserService(UserRepository repository, EventPublisher publisher) {
-        return new DisableUserService(repository, publisher);
+    public SuspendUserService suspendUserServiceUserService(UserRepository repository, EventPublisher publisher) {
+        return new SuspendUserService(repository, publisher);
     }
 
     @Bean

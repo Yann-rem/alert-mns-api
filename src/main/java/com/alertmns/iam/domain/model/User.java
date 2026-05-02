@@ -3,9 +3,9 @@ package com.alertmns.iam.domain.model;
 import com.alertmns.iam.domain.event.AbsenceMessageUpdated;
 import com.alertmns.iam.domain.event.ProfileUpdated;
 import com.alertmns.iam.domain.event.UserActivated;
-import com.alertmns.iam.domain.event.UserDisabled;
 import com.alertmns.iam.domain.event.UserReactivated;
 import com.alertmns.iam.domain.event.UserRegistered;
+import com.alertmns.iam.domain.event.UserSuspended;
 import com.alertmns.shared.AggregateRoot;
 import com.alertmns.shared.OrganisationId;
 
@@ -16,7 +16,7 @@ import java.util.Objects;
  * Agrégat racine représentant un utilisateur dans le BC IAM.
  *
  * <p>Représente un utilisateur avec son cycle de vie et ses règles métier.
- * Un utilisateur suit le cycle : PENDING → ACTIVE → DISABLED → ACTIVE (réactivation).</p>
+ * Un utilisateur suit le cycle : PENDING → ACTIVE → SUSPENDED → ACTIVE (réactivation).</p>
  */
 public final class User extends AggregateRoot {
 
@@ -162,29 +162,29 @@ public final class User extends AggregateRoot {
     }
 
     /**
-     * Réactive un compte désactivé (DISABLED → ACTIVE).
+     * Réactive un compte suspendu (SUSPENDED → ACTIVE).
      *
      * <p>Émet {@link UserReactivated}.</p>
      *
-     * @throws IllegalStateException si le statut n'est pas {@link UserStatus#DISABLED}
+     * @throws IllegalStateException si le statut n'est pas {@link UserStatus#SUSPENDED}
      */
     public void reactivate() {
-        requireStatus(UserStatus.DISABLED, "reactivate");
+        requireStatus(UserStatus.SUSPENDED, "reactivate");
         status = UserStatus.ACTIVE;
         registerEvent(new UserReactivated(id));
     }
 
     /**
-     * Désactive un compte actif (ACTIVE → DISABLED).
+     * Suspend un compte actif (ACTIVE → SUSPENDED).
      *
-     * <p>Émet {@link UserDisabled}.</p>
+     * <p>Émet {@link UserSuspended}.</p>
      *
      * @throws IllegalStateException si le statut n'est pas {@link UserStatus#ACTIVE}
      */
-    public void disable() {
-        requireStatus(UserStatus.ACTIVE, "disable");
-        status = UserStatus.DISABLED;
-        registerEvent(new UserDisabled(id));
+    public void suspend() {
+        requireStatus(UserStatus.ACTIVE, "suspend");
+        status = UserStatus.SUSPENDED;
+        registerEvent(new UserSuspended(id));
     }
 
     private void requireStatus(UserStatus expected, String action) {

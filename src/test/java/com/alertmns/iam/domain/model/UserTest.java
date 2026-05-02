@@ -3,9 +3,9 @@ package com.alertmns.iam.domain.model;
 import com.alertmns.iam.domain.event.AbsenceMessageUpdated;
 import com.alertmns.iam.domain.event.ProfileUpdated;
 import com.alertmns.iam.domain.event.UserActivated;
-import com.alertmns.iam.domain.event.UserDisabled;
 import com.alertmns.iam.domain.event.UserReactivated;
 import com.alertmns.iam.domain.event.UserRegistered;
+import com.alertmns.iam.domain.event.UserSuspended;
 import com.alertmns.shared.DomainEvent;
 import com.alertmns.shared.OrganisationId;
 import org.junit.jupiter.api.BeforeEach;
@@ -190,31 +190,31 @@ class UserTest {
         }
 
         @Test
-        @DisplayName("disable should transition ACTIVE to DISABLED")
-        void disableShouldTransitionACTIVEToDISABLED() {
+        @DisplayName("suspend should transition ACTIVE to SUSPENDED")
+        void suspendShouldTransitionACTIVEToSUSPENDED() {
             user.activate();
-            user.disable();
-            assertEquals(UserStatus.DISABLED, user.status());
+            user.suspend();
+            assertEquals(UserStatus.SUSPENDED, user.status());
         }
 
         @Test
-        @DisplayName("disable should reject non-ACTIVE account")
-        void disableShouldRejectNonACTIVEAccount() {
-            assertThrows(IllegalStateException.class, () -> user.disable());
+        @DisplayName("suspend should reject non-ACTIVE account")
+        void suspendShouldRejectNonACTIVEAccount() {
+            assertThrows(IllegalStateException.class, () -> user.suspend());
         }
 
         @Test
-        @DisplayName("reactivate should transition DISABLED to ACTIVE")
-        void reactivateShouldTransitionDISABLEDToACTIVE() {
+        @DisplayName("reactivate should transition SUSPENDED to ACTIVE")
+        void reactivateShouldTransitionSUSPENDEDToACTIVE() {
             user.activate();
-            user.disable();
+            user.suspend();
             user.reactivate();
             assertEquals(UserStatus.ACTIVE, user.status());
         }
 
         @Test
-        @DisplayName("reactivate should reject non-DISABLED account")
-        void reactivateShouldRejectNonDISABLEDAccount() {
+        @DisplayName("reactivate should reject non-SUSPENDED account")
+        void reactivateShouldRejectNonSUSPENDEDAccount() {
             assertThrows(IllegalStateException.class, () -> user.reactivate());
         }
     }
@@ -292,15 +292,15 @@ class UserTest {
         }
 
         @Test
-        @DisplayName("disable should emit UserDisabled")
-        void disableShouldEmitUserDisabled() {
+        @DisplayName("suspend should emit UserSuspended")
+        void suspendShouldEmitUserSuspended() {
             user.pullDomainEvents();
             user.activate();
             user.pullDomainEvents();
-            user.disable();
+            user.suspend();
             List<DomainEvent> events = user.pullDomainEvents();
             assertEquals(1, events.size());
-            UserDisabled event = assertInstanceOf(UserDisabled.class, events.getFirst());
+            UserSuspended event = assertInstanceOf(UserSuspended.class, events.getFirst());
             assertEquals(user.id(), event.userId());
         }
 
@@ -310,7 +310,7 @@ class UserTest {
             user.pullDomainEvents();
             user.activate();
             user.pullDomainEvents();
-            user.disable();
+            user.suspend();
             user.pullDomainEvents();
             user.reactivate();
             List<DomainEvent> events = user.pullDomainEvents();

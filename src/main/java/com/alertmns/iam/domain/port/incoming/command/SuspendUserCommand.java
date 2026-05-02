@@ -7,8 +7,8 @@ import java.util.Objects;
  *
  * <p>Valeur brute — le service applicatif est responsable de la création du VO.</p>
  */
-public record DisableUserCommand(String userId) {
-    public DisableUserCommand {
+public record SuspendUserCommand(String userId) {
+    public SuspendUserCommand {
         Objects.requireNonNull(userId, "userId must not be null");
     }
 }

@@ -1,6 +1,6 @@
 package com.alertmns.iam.application;
 
-import com.alertmns.iam.domain.event.UserDisabled;
+import com.alertmns.iam.domain.event.UserSuspended;
 import com.alertmns.iam.domain.exception.UserNotFoundException;
 import com.alertmns.iam.domain.model.Email;
 import com.alertmns.iam.domain.model.FirstName;
@@ -11,7 +11,7 @@ import com.alertmns.iam.domain.model.User;
 import com.alertmns.iam.domain.model.UserId;
 import com.alertmns.iam.domain.model.UserRole;
 import com.alertmns.iam.domain.model.UserStatus;
-import com.alertmns.iam.domain.port.incoming.command.DisableUserCommand;
+import com.alertmns.iam.domain.port.incoming.command.SuspendUserCommand;
 import com.alertmns.iam.domain.port.outgoing.UserRepository;
 import com.alertmns.shared.DomainEvent;
 import com.alertmns.shared.EventPublisher;
@@ -39,9 +39,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@DisplayName("DisableUserService")
+@DisplayName("SuspendUserService")
 @ExtendWith(MockitoExtension.class)
-class DisableUserServiceTest {
+class SuspendUserServiceTest {
 
     static final OrganisationId ORGANISATION_ID = OrganisationId.generate();
 
@@ -52,11 +52,11 @@ class DisableUserServiceTest {
     EventPublisher publisher;
 
     @InjectMocks
-    DisableUserService service;
+    SuspendUserService service;
 
     @Nested
-    @DisplayName("Disabling")
-    class Disabling {
+    @DisplayName("Suspending")
+    class Suspending {
 
         UserId id;
         User activeUser;
@@ -78,33 +78,33 @@ class DisableUserServiceTest {
         }
 
         @Test
-        @DisplayName("should save the user with status DISABLED")
-        void shouldSaveTheUserWithStatusDisabled() {
+        @DisplayName("should save the user with status SUSPENDED")
+        void shouldSaveTheUserWithStatusSuspended() {
             when(repository.findById(any())).thenReturn(Optional.of(activeUser));
-            DisableUserCommand command = new DisableUserCommand(id.value().toString());
+            SuspendUserCommand command = new SuspendUserCommand(id.value().toString());
 
-            service.disable(command);
+            service.suspend(command);
 
             ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
             verify(repository).save(userCaptor.capture());
             User saved = userCaptor.getValue();
             assertEquals(id, saved.id());
-            assertEquals(UserStatus.DISABLED, saved.status());
+            assertEquals(UserStatus.SUSPENDED, saved.status());
         }
 
         @Test
-        @DisplayName("should publish UserDisabled event with the disabled user id")
-        void shouldPublishUserDisabledEvent() {
+        @DisplayName("should publish UserSuspended event with the suspended user id")
+        void shouldPublishUserSuspendedEvent() {
             when(repository.findById(any())).thenReturn(Optional.of(activeUser));
-            DisableUserCommand command = new DisableUserCommand(id.value().toString());
+            SuspendUserCommand command = new SuspendUserCommand(id.value().toString());
 
-            service.disable(command);
+            service.suspend(command);
 
             ArgumentCaptor<List<DomainEvent>> eventsCaptor = ArgumentCaptor.captor();
             verify(publisher).publish(eventsCaptor.capture());
             List<DomainEvent> events = eventsCaptor.getValue();
             assertEquals(1, events.size());
-            UserDisabled event = assertInstanceOf(UserDisabled.class, events.getFirst());
+            UserSuspended event = assertInstanceOf(UserSuspended.class, events.getFirst());
             assertEquals(id, event.userId());
         }
 
@@ -112,8 +112,8 @@ class DisableUserServiceTest {
         @DisplayName("should throw UserNotFoundException when user not found")
         void shouldThrowUserNotFoundExceptionWhenUserNotFound() {
             when(repository.findById(any())).thenReturn(Optional.empty());
-            DisableUserCommand command = new DisableUserCommand(id.value().toString());
-            assertThrows(UserNotFoundException.class, () -> service.disable(command));
+            SuspendUserCommand command = new SuspendUserCommand(id.value().toString());
+            assertThrows(UserNotFoundException.class, () -> service.suspend(command));
             verify(repository, never()).save(any());
             verify(publisher, never()).publish(anyList());
         }
@@ -133,8 +133,8 @@ class DisableUserServiceTest {
             );
 
             when(repository.findById(any())).thenReturn(Optional.of(pendingUser));
-            DisableUserCommand command = new DisableUserCommand(id.value().toString());
-            assertThrows(IllegalStateException.class, () -> service.disable(command));
+            SuspendUserCommand command = new SuspendUserCommand(id.value().toString());
+            assertThrows(IllegalStateException.class, () -> service.suspend(command));
             verify(repository, never()).save(any());
             verify(publisher, never()).publish(anyList());
         }
@@ -142,8 +142,8 @@ class DisableUserServiceTest {
         @Test
         @DisplayName("should throw IllegalArgumentException when userId is not a valid UUID")
         void shouldThrowWhenUserIdIsInvalid() {
-            DisableUserCommand command = new DisableUserCommand("invalid");
-            assertThrows(IllegalArgumentException.class, () -> service.disable(command));
+            SuspendUserCommand command = new SuspendUserCommand("invalid");
+            assertThrows(IllegalArgumentException.class, () -> service.suspend(command));
             verify(repository, never()).save(any());
             verify(publisher, never()).publish(anyList());
         }
@@ -157,21 +157,21 @@ class DisableUserServiceTest {
         @DisplayName("should reject null repository")
         void shouldRejectNullRepository() {
             assertThrows(NullPointerException.class,
-                    () -> new DisableUserService(null, publisher));
+                    () -> new SuspendUserService(null, publisher));
         }
 
         @Test
         @DisplayName("should reject null publisher")
         void shouldRejectNullPublisher() {
             assertThrows(NullPointerException.class,
-                    () -> new DisableUserService(repository, null));
+                    () -> new SuspendUserService(repository, null));
         }
 
         @Test
         @DisplayName("should reject null command userId")
         void shouldRejectNullCommandUserId() {
             assertThrows(NullPointerException.class,
-                    () -> new DisableUserCommand(null));
+                    () -> new SuspendUserCommand(null));
         }
     }
 }

@@ -59,20 +59,20 @@ class ReactivateUserServiceTest {
     class Reactivation {
 
         UserId id;
-        User disabledUser;
+        User suspendedUser;
 
         @BeforeEach
         void setUp() {
             id = UserId.generate();
 
-            disabledUser = User.reconstitute(
+            suspendedUser = User.reconstitute(
                     id,
                     ORGANISATION_ID,
                     Email.of("johndoe@example.com"),
                     HashedPassword.of("$2a$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012345"),
                     Profile.of(FirstName.of("John"), LastName.of("Doe")),
                     UserRole.USER,
-                    UserStatus.DISABLED,
+                    UserStatus.SUSPENDED,
                     Instant.now()
             );
         }
@@ -80,7 +80,7 @@ class ReactivateUserServiceTest {
         @Test
         @DisplayName("should save the user with status ACTIVE")
         void shouldSaveTheUserWithStatusActive() {
-            when(repository.findById(any())).thenReturn(Optional.of(disabledUser));
+            when(repository.findById(any())).thenReturn(Optional.of(suspendedUser));
             ReactivateUserCommand command = new ReactivateUserCommand(id.value().toString());
 
             service.reactivate(command);
@@ -95,7 +95,7 @@ class ReactivateUserServiceTest {
         @Test
         @DisplayName("should publish UserReactivated event with the reactivated user id")
         void shouldPublishUserReactivatedEvent() {
-            when(repository.findById(any())).thenReturn(Optional.of(disabledUser));
+            when(repository.findById(any())).thenReturn(Optional.of(suspendedUser));
             ReactivateUserCommand command = new ReactivateUserCommand(id.value().toString());
 
             service.reactivate(command);
@@ -119,15 +119,15 @@ class ReactivateUserServiceTest {
         }
 
         @Test
-        @DisplayName("should throw IllegalStateException when user is not DISABLED")
-        void shouldThrowIllegalStateExceptionWhenUserIsNotDISABLED() {
+        @DisplayName("should throw IllegalStateException when user is not SUSPENDED")
+        void shouldThrowIllegalStateExceptionWhenUserIsNotSUSPENDED() {
             User activeUser = User.reconstitute(
-                    disabledUser.id(),
-                    disabledUser.organisationId(),
-                    disabledUser.email(),
-                    disabledUser.hashedPassword(),
-                    disabledUser.profile(),
-                    disabledUser.role(),
+                    suspendedUser.id(),
+                    suspendedUser.organisationId(),
+                    suspendedUser.email(),
+                    suspendedUser.hashedPassword(),
+                    suspendedUser.profile(),
+                    suspendedUser.role(),
                     UserStatus.ACTIVE,
                     Instant.now()
             );

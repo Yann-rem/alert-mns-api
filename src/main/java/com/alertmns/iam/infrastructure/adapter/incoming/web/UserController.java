@@ -2,14 +2,14 @@ package com.alertmns.iam.infrastructure.adapter.incoming.web;
 
 import com.alertmns.iam.domain.model.UserId;
 import com.alertmns.iam.domain.port.incoming.ActivateUserUseCase;
-import com.alertmns.iam.domain.port.incoming.DisableUserUseCase;
 import com.alertmns.iam.domain.port.incoming.ReactivateUserUseCase;
 import com.alertmns.iam.domain.port.incoming.RegisterUserUseCase;
+import com.alertmns.iam.domain.port.incoming.SuspendUserUseCase;
 import com.alertmns.iam.domain.port.incoming.UpdateAbsenceMessageUseCase;
 import com.alertmns.iam.domain.port.incoming.UpdateProfileUseCase;
 import com.alertmns.iam.domain.port.incoming.command.ActivateUserCommand;
-import com.alertmns.iam.domain.port.incoming.command.DisableUserCommand;
 import com.alertmns.iam.domain.port.incoming.command.ReactivateUserCommand;
+import com.alertmns.iam.domain.port.incoming.command.SuspendUserCommand;
 import com.alertmns.iam.infrastructure.adapter.incoming.web.dto.RegisterUserRequest;
 import com.alertmns.iam.infrastructure.adapter.incoming.web.dto.RegisterUserResponse;
 import com.alertmns.iam.infrastructure.adapter.incoming.web.dto.UpdateAbsenceMessageRequest;
@@ -40,7 +40,7 @@ public class UserController {
 
     private final RegisterUserUseCase registerUserUseCase;
     private final ActivateUserUseCase activateUserUseCase;
-    private final DisableUserUseCase disableUserUseCase;
+    private final SuspendUserUseCase suspendUserUseCase;
     private final ReactivateUserUseCase reactivateUserUseCase;
     private final UpdateProfileUseCase updateProfileUseCase;
     private final UpdateAbsenceMessageUseCase updateAbsenceMessageUseCase;
@@ -76,22 +76,22 @@ public class UserController {
     }
 
     @Operation(
-            summary = "Désactiver un utilisateur",
-            description = "Passe le statut d'un utilisateur de ACTIVE à DISABLED.",
+            summary = "Suspendre un utilisateur",
+            description = "Passe le statut d'un utilisateur de ACTIVE à SUSPENDED.",
             responses = {
-                    @ApiResponse(responseCode = "204", description = "Utilisateur désactivé avec succès"),
+                    @ApiResponse(responseCode = "204", description = "Utilisateur suspendu avec succès"),
                     @ApiResponse(responseCode = "404", description = "Utilisateur introuvable")
             }
     )
-    @PostMapping("/{id}/disable")
+    @PostMapping("/{id}/suspend")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void disable(@Parameter(description = "Identifiant de l'utilisateur") @PathVariable UUID id) {
-        disableUserUseCase.disable(new DisableUserCommand(id.toString()));
+    public void suspend(@Parameter(description = "Identifiant de l'utilisateur") @PathVariable UUID id) {
+        suspendUserUseCase.suspend(new SuspendUserCommand(id.toString()));
     }
 
     @Operation(
             summary = "Réactiver un utilisateur",
-            description = "Passe le statut d'un utilisateur de DISABLED à ACTIVE.",
+            description = "Passe le statut d'un utilisateur de SUSPENDED à ACTIVE.",
             responses = {
                     @ApiResponse(responseCode = "204", description = "Utilisateur réactivé avec succès"),
                     @ApiResponse(responseCode = "404", description = "Utilisateur introuvable"),
