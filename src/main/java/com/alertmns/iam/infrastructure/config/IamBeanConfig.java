@@ -8,6 +8,7 @@ import com.alertmns.iam.application.UpdateAbsenceMessageService;
 import com.alertmns.iam.application.UpdateProfileService;
 import com.alertmns.iam.domain.port.outgoing.AuthenticationPort;
 import com.alertmns.iam.domain.port.outgoing.UserRepository;
+import com.alertmns.iam.infrastructure.adapter.incoming.web.security.DomainUserDetailsService;
 import com.alertmns.iam.infrastructure.adapter.outgoing.persistence.UserJpaRepository;
 import com.alertmns.iam.infrastructure.adapter.outgoing.persistence.UserPersistenceAdapter;
 import com.alertmns.iam.infrastructure.adapter.outgoing.security.SpringSecurityAdapter;
@@ -41,6 +42,13 @@ public class IamBeanConfig {
     @Bean
     public EventPublisher eventPublisher(ApplicationEventPublisher applicationEventPublisher) {
         return events -> events.forEach(applicationEventPublisher::publishEvent);
+    }
+
+    // --- Spring Security ---
+
+    @Bean
+    public DomainUserDetailsService domainUserDetailsService(UserRepository userRepository) {
+        return new DomainUserDetailsService(userRepository);
     }
 
     // --- Services ---
