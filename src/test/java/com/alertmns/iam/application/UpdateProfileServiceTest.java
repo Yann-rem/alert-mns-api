@@ -76,6 +76,7 @@ class UpdateProfileServiceTest {
                     Profile.of(FirstName.of("John"), LastName.of("Doe")),
                     UserRole.USER,
                     UserStatus.ACTIVE,
+                    false,
                     Instant.now()
             );
         }

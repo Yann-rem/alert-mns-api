@@ -17,7 +17,11 @@ import java.util.Objects;
  * Agrégat racine représentant un utilisateur dans le BC IAM.
  *
  * <p>Représente un utilisateur avec son cycle de vie et ses règles métier.
- * Un utilisateur suit le cycle : PENDING → ACTIVE → SUSPENDED → ACTIVE (réactivation).</p>
+ * Un utilisateur suit le cycle : PENDING → ACTIVE → SUSPENDED → ACTIVE (réactivation).
+ * BANNED est terminal.</p>
+ *
+ * <p>L'attribut {@code isAnonymized} est orthogonal au statut : il marque l'effacement effectif des PII pour
+ * conformité RGPD.</p>
  */
 public final class User extends AggregateRoot {
 
@@ -28,6 +32,7 @@ public final class User extends AggregateRoot {
     private final UserRole role;
     private UserStatus status;
     private final OrganisationId organisationId;
+    private boolean isAnonymized;
     private final Instant createdAt;
 
     private User(
@@ -38,6 +43,7 @@ public final class User extends AggregateRoot {
             Profile profile,
             UserRole role,
             UserStatus status,
+            boolean isAnonymized,
             Instant createdAt
     ) {
         this.id = Objects.requireNonNull(id, "id must not be null");
@@ -47,6 +53,7 @@ public final class User extends AggregateRoot {
         this.profile = Objects.requireNonNull(profile, "profile must not be null");
         this.role = Objects.requireNonNull(role, "role must not be null");
         this.status = Objects.requireNonNull(status, "status must not be null");
+        this.isAnonymized = isAnonymized;
         this.createdAt = Objects.requireNonNull(createdAt, "createdAt must not be null");
     }
 
@@ -54,7 +61,8 @@ public final class User extends AggregateRoot {
      * Crée un nouvel utilisateur avec le statut {@link UserStatus#PENDING}.
      *
      * <p>L'identifiant et la date de création sont générés automatiquement.
-     * Le rôle par défaut est {@link UserRole#USER}.</p>
+     * Le rôle par défaut est {@link UserRole#USER}.
+     * Le drapeau {@code isAnonymized} est initialisé à {@code false}.</p>
      *
      * <p>Émet {@link UserRegistered}.</p>
      *
@@ -78,6 +86,7 @@ public final class User extends AggregateRoot {
                 profile,
                 UserRole.USER,
                 UserStatus.PENDING,
+                false,
                 Instant.now()
         );
 
@@ -90,6 +99,7 @@ public final class User extends AggregateRoot {
      *
      * <p>Aucun événement de domaine n'est émis.</p>
      *
+     * @param isAnonymized indique si les PII de l'utilisateur ont été effacées (RGPD)
      * @return l'utilisateur reconstitué
      */
     public static User reconstitute(
@@ -100,6 +110,7 @@ public final class User extends AggregateRoot {
             Profile profile,
             UserRole role,
             UserStatus status,
+            boolean isAnonymized,
             Instant createdAt
     ) {
         return new User(
@@ -110,6 +121,7 @@ public final class User extends AggregateRoot {
                 profile,
                 role,
                 status,
+                isAnonymized,
                 createdAt
         );
     }
@@ -230,6 +242,10 @@ public final class User extends AggregateRoot {
         return status;
     }
 
+    public boolean isAnonymized() {
+        return isAnonymized;
+    }
+
     public Instant createdAt() {
         return createdAt;
     }
@@ -253,6 +269,7 @@ public final class User extends AggregateRoot {
                 ", email=" + email +
                 ", role=" + role +
                 ", status=" + status +
+                ", isAnonymized=" + isAnonymized +
                 '}';
     }
 }

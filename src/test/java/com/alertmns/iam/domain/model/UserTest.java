@@ -18,6 +18,7 @@ import java.time.Instant;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -65,6 +66,7 @@ class UserTest {
                     profile,
                     UserRole.ADMIN,
                     UserStatus.ACTIVE,
+                    true,
                     createdAt
             );
 
@@ -75,7 +77,18 @@ class UserTest {
             assertEquals(UserRole.ADMIN, user.role());
             assertEquals(UserStatus.ACTIVE, user.status());
             assertEquals(ORGANISATION_ID, user.organisationId());
+            assertTrue(user.isAnonymized());
             assertEquals(createdAt, user.createdAt());
+        }
+
+        @Test
+        @DisplayName("should register a new user with isAnonymized = false")
+        void shouldRegisterANewUserWithIsAnonymizedFalse() {
+            Email email = Email.of("johndoe@example.com");
+            HashedPassword hashedPassword = HashedPassword.of(BCRYPT_HASH);
+            Profile profile = Profile.of(FirstName.of("John"), LastName.of("Doe"));
+            User user = User.register(ORGANISATION_ID, email, hashedPassword, profile);
+            assertFalse(user.isAnonymized());
         }
     }
 
@@ -230,6 +243,7 @@ class UserTest {
                     Profile.of(FirstName.of("John"), LastName.of("Doe")),
                     UserRole.USER,
                     UserStatus.BANNED,
+                    false,
                     Instant.now()
             );
 
@@ -349,6 +363,7 @@ class UserTest {
                     Profile.of(FirstName.of("John"), LastName.of("Doe")),
                     UserRole.USER,
                     UserStatus.BANNED,
+                    false,
                     Instant.now()
             );
 
@@ -386,6 +401,7 @@ class UserTest {
                     profile,
                     UserRole.ADMIN,
                     UserStatus.ACTIVE,
+                    false,
                     createdAt
             );
 
@@ -397,6 +413,7 @@ class UserTest {
                     profile,
                     UserRole.ADMIN,
                     UserStatus.ACTIVE,
+                    false,
                     createdAt
             );
 

@@ -74,6 +74,7 @@ class ReactivateUserServiceTest {
                     Profile.of(FirstName.of("John"), LastName.of("Doe")),
                     UserRole.USER,
                     UserStatus.SUSPENDED,
+                    false,
                     Instant.now()
             );
         }
@@ -130,6 +131,7 @@ class ReactivateUserServiceTest {
                     suspendedUser.profile(),
                     suspendedUser.role(),
                     UserStatus.ACTIVE,
+                    false,
                     Instant.now()
             );
 
@@ -151,6 +153,7 @@ class ReactivateUserServiceTest {
                     suspendedUser.profile(),
                     suspendedUser.role(),
                     UserStatus.BANNED,
+                    false,
                     Instant.now()
             );
 

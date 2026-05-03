@@ -73,6 +73,7 @@ class SuspendUserServiceTest {
                     Profile.of(FirstName.of("John"), LastName.of("Doe")),
                     UserRole.USER,
                     UserStatus.ACTIVE,
+                    false,
                     Instant.now()
             );
         }
@@ -129,6 +130,7 @@ class SuspendUserServiceTest {
                     activeUser.profile(),
                     activeUser.role(),
                     UserStatus.PENDING,
+                    false,
                     Instant.now()
             );
 

@@ -73,6 +73,7 @@ class ActivateUserServiceTest {
                     Profile.of(FirstName.of("John"), LastName.of("Doe")),
                     UserRole.USER,
                     UserStatus.PENDING,
+                    false,
                     Instant.now()
             );
         }
@@ -129,6 +130,7 @@ class ActivateUserServiceTest {
                     pendingUser.profile(),
                     pendingUser.role(),
                     UserStatus.ACTIVE,
+                    false,
                     Instant.now()
             );
 

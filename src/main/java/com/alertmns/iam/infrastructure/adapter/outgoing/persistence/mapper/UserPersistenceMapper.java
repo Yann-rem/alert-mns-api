@@ -24,6 +24,7 @@ public final class UserPersistenceMapper {
                 buildProfile(entity),
                 entity.getRole(),
                 entity.getStatus(),
+                entity.isAnonymized(),
                 entity.getCreatedAt()
         );
     }
@@ -56,6 +57,7 @@ public final class UserPersistenceMapper {
                 domain.profile().absenceMessage().map(AbsenceMessage::active).orElse(null),
                 domain.role(),
                 domain.status(),
+                domain.isAnonymized(),
                 domain.createdAt()
         );
     }
