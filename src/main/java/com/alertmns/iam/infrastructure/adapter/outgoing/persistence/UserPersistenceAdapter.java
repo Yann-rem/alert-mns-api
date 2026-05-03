@@ -2,7 +2,7 @@ package com.alertmns.iam.infrastructure.adapter.outgoing.persistence;
 
 import com.alertmns.iam.domain.model.Email;
 import com.alertmns.iam.domain.model.User;
-import com.alertmns.iam.domain.model.UserId;
+import com.alertmns.shared.UserId;
 import com.alertmns.iam.domain.port.outgoing.UserRepository;
 import com.alertmns.iam.infrastructure.adapter.outgoing.persistence.mapper.UserPersistenceMapper;
 

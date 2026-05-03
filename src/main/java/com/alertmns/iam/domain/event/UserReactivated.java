@@ -1,6 +1,6 @@
 package com.alertmns.iam.domain.event;
 
-import com.alertmns.iam.domain.model.UserId;
+import com.alertmns.shared.UserId;
 import com.alertmns.shared.DomainEvent;
 
 import java.time.Instant;

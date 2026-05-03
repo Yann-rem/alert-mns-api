@@ -1,6 +1,6 @@
 package com.alertmns.iam.infrastructure.adapter.incoming.web;
 
-import com.alertmns.iam.domain.model.UserId;
+import com.alertmns.shared.UserId;
 import com.alertmns.iam.domain.port.incoming.ActivateUserUseCase;
 import com.alertmns.iam.domain.port.incoming.ReactivateUserUseCase;
 import com.alertmns.iam.domain.port.incoming.RegisterUserUseCase;

@@ -1,6 +1,6 @@
 package com.alertmns.iam.domain.port.incoming;
 
-import com.alertmns.iam.domain.model.UserId;
+import com.alertmns.shared.UserId;
 import com.alertmns.iam.domain.port.incoming.command.RegisterUserCommand;
 
 /**

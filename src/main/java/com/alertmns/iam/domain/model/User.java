@@ -9,6 +9,7 @@ import com.alertmns.iam.domain.event.UserSuspended;
 import com.alertmns.iam.domain.exception.BannedUserCannotBeReactivatedException;
 import com.alertmns.shared.AggregateRoot;
 import com.alertmns.shared.OrganisationId;
+import com.alertmns.shared.UserId;
 
 import java.time.Instant;
 import java.util.Objects;

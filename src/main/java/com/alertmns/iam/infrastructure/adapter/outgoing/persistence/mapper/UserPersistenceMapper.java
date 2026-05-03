@@ -7,7 +7,7 @@ import com.alertmns.iam.domain.model.HashedPassword;
 import com.alertmns.iam.domain.model.LastName;
 import com.alertmns.iam.domain.model.Profile;
 import com.alertmns.iam.domain.model.User;
-import com.alertmns.iam.domain.model.UserId;
+import com.alertmns.shared.UserId;
 import com.alertmns.iam.infrastructure.adapter.outgoing.persistence.UserJpaEntity;
 import com.alertmns.shared.OrganisationId;
 

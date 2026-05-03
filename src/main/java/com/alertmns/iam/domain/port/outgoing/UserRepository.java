@@ -2,7 +2,7 @@ package com.alertmns.iam.domain.port.outgoing;
 
 import com.alertmns.iam.domain.model.Email;
 import com.alertmns.iam.domain.model.User;
-import com.alertmns.iam.domain.model.UserId;
+import com.alertmns.shared.UserId;
 
 import java.util.Optional;
 

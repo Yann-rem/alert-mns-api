@@ -1,7 +1,7 @@
 package com.alertmns.iam.domain.event;
 
 import com.alertmns.iam.domain.model.Email;
-import com.alertmns.iam.domain.model.UserId;
+import com.alertmns.shared.UserId;
 import com.alertmns.iam.domain.model.UserRole;
 import com.alertmns.shared.DomainEvent;
 import com.alertmns.shared.OrganisationId;

@@ -4,7 +4,7 @@ import com.alertmns.iam.domain.exception.UserNotFoundException;
 import com.alertmns.iam.domain.model.FirstName;
 import com.alertmns.iam.domain.model.LastName;
 import com.alertmns.iam.domain.model.User;
-import com.alertmns.iam.domain.model.UserId;
+import com.alertmns.shared.UserId;
 import com.alertmns.iam.domain.port.incoming.UpdateProfileUseCase;
 import com.alertmns.iam.domain.port.incoming.command.UpdateProfileCommand;
 import com.alertmns.iam.domain.port.outgoing.UserRepository;

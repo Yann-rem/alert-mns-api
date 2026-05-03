@@ -9,6 +9,7 @@ import com.alertmns.iam.domain.event.UserSuspended;
 import com.alertmns.iam.domain.exception.BannedUserCannotBeReactivatedException;
 import com.alertmns.shared.DomainEvent;
 import com.alertmns.shared.OrganisationId;
+import com.alertmns.shared.UserId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

@@ -1,4 +1,4 @@
-package com.alertmns.iam.domain.model;
+package com.alertmns.shared;
 
 import java.util.Objects;
 import java.util.UUID;

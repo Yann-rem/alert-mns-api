@@ -2,7 +2,7 @@ package com.alertmns.iam.application;
 
 import com.alertmns.iam.domain.exception.UserNotFoundException;
 import com.alertmns.iam.domain.model.User;
-import com.alertmns.iam.domain.model.UserId;
+import com.alertmns.shared.UserId;
 import com.alertmns.iam.domain.port.incoming.ActivateUserUseCase;
 import com.alertmns.iam.domain.port.incoming.command.ActivateUserCommand;
 import com.alertmns.iam.domain.port.outgoing.UserRepository;

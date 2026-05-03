@@ -1,6 +1,6 @@
 package com.alertmns.iam.domain.exception;
 
-import com.alertmns.iam.domain.model.UserId;
+import com.alertmns.shared.UserId;
 
 /**
  * Exception de domaine représentant le refus de réactiver un utilisateur banni.

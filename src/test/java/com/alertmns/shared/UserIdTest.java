@@ -1,4 +1,4 @@
-package com.alertmns.iam.domain.model;
+package com.alertmns.shared;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
