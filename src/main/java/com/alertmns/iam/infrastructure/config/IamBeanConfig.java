@@ -9,9 +9,11 @@ import com.alertmns.iam.application.UpdateProfileService;
 import com.alertmns.iam.domain.port.outgoing.AuthenticationPort;
 import com.alertmns.iam.domain.port.outgoing.UserRepository;
 import com.alertmns.iam.infrastructure.adapter.incoming.web.security.DomainUserDetailsService;
+import com.alertmns.iam.infrastructure.adapter.incoming.web.security.SpringSecurityCurrentUserAdapter;
 import com.alertmns.iam.infrastructure.adapter.outgoing.persistence.UserJpaRepository;
 import com.alertmns.iam.infrastructure.adapter.outgoing.persistence.UserPersistenceAdapter;
 import com.alertmns.iam.infrastructure.adapter.outgoing.security.SpringSecurityAdapter;
+import com.alertmns.shared.CurrentUserPort;
 import com.alertmns.shared.EventPublisher;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
@@ -49,6 +51,11 @@ public class IamBeanConfig {
     @Bean
     public DomainUserDetailsService domainUserDetailsService(UserRepository userRepository) {
         return new DomainUserDetailsService(userRepository);
+    }
+
+    @Bean
+    public CurrentUserPort currentUserPort() {
+        return new SpringSecurityCurrentUserAdapter();
     }
 
     // --- Services ---
