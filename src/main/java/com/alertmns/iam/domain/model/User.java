@@ -6,6 +6,7 @@ import com.alertmns.iam.domain.event.UserActivated;
 import com.alertmns.iam.domain.event.UserReactivated;
 import com.alertmns.iam.domain.event.UserRegistered;
 import com.alertmns.iam.domain.event.UserSuspended;
+import com.alertmns.iam.domain.exception.BannedUserCannotBeReactivatedException;
 import com.alertmns.shared.AggregateRoot;
 import com.alertmns.shared.OrganisationId;
 
@@ -164,11 +165,17 @@ public final class User extends AggregateRoot {
     /**
      * Réactive un compte suspendu (SUSPENDED → ACTIVE).
      *
+     * <p>Le statut {@link UserStatus#BANNED} est terminal : la réactivation y est refusée via une exception métier nommée.</p>
+     *
      * <p>Émet {@link UserReactivated}.</p>
      *
-     * @throws IllegalStateException si le statut n'est pas {@link UserStatus#SUSPENDED}
+     * @throws BannedUserCannotBeReactivatedException si le statut est {@link UserStatus#BANNED}
+     * @throws IllegalStateException                  si le statut n'est ni {@link UserStatus#SUSPENDED} ni {@link UserStatus#BANNED}
      */
     public void reactivate() {
+        if (status == UserStatus.BANNED) {
+            throw new BannedUserCannotBeReactivatedException(id);
+        }
         requireStatus(UserStatus.SUSPENDED, "reactivate");
         status = UserStatus.ACTIVE;
         registerEvent(new UserReactivated(id));

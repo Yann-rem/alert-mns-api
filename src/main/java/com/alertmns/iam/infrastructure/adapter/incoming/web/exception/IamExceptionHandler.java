@@ -1,5 +1,6 @@
 package com.alertmns.iam.infrastructure.adapter.incoming.web.exception;
 
+import com.alertmns.iam.domain.exception.BannedUserCannotBeReactivatedException;
 import com.alertmns.iam.domain.exception.EmailAlreadyExistsException;
 import com.alertmns.iam.domain.exception.UserNotFoundException;
 import org.springframework.http.HttpStatus;
@@ -18,5 +19,10 @@ public class IamExceptionHandler {
     @ExceptionHandler(UserNotFoundException.class)
     public ProblemDetail handleUserNotFound(UserNotFoundException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(BannedUserCannotBeReactivatedException.class)
+    public ProblemDetail handleBannedUserCannotBeReactivated(BannedUserCannotBeReactivatedException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
     }
 }

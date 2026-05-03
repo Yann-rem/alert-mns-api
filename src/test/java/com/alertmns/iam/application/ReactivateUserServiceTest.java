@@ -1,6 +1,7 @@
 package com.alertmns.iam.application;
 
 import com.alertmns.iam.domain.event.UserReactivated;
+import com.alertmns.iam.domain.exception.BannedUserCannotBeReactivatedException;
 import com.alertmns.iam.domain.exception.UserNotFoundException;
 import com.alertmns.iam.domain.model.Email;
 import com.alertmns.iam.domain.model.FirstName;
@@ -135,6 +136,27 @@ class ReactivateUserServiceTest {
             when(repository.findById(any())).thenReturn(Optional.of(activeUser));
             ReactivateUserCommand command = new ReactivateUserCommand(id.value().toString());
             assertThrows(IllegalStateException.class, () -> service.reactivate(command));
+            verify(repository, never()).save(any());
+            verify(publisher, never()).publish(anyList());
+        }
+
+        @Test
+        @DisplayName("should propagate BannedUserCannotBeReactivatedException when user is BANNED")
+        void shouldPropagateBannedUserCannotBeReactivatedExceptionWhenUserIsBANNED() {
+            User bannedUser = User.reconstitute(
+                    suspendedUser.id(),
+                    suspendedUser.organisationId(),
+                    suspendedUser.email(),
+                    suspendedUser.hashedPassword(),
+                    suspendedUser.profile(),
+                    suspendedUser.role(),
+                    UserStatus.BANNED,
+                    Instant.now()
+            );
+
+            when(repository.findById(any())).thenReturn(Optional.of(bannedUser));
+            ReactivateUserCommand command = new ReactivateUserCommand(id.value().toString());
+            assertThrows(BannedUserCannotBeReactivatedException.class, () -> service.reactivate(command));
             verify(repository, never()).save(any());
             verify(publisher, never()).publish(anyList());
         }
