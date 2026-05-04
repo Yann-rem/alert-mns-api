@@ -4,6 +4,7 @@ import com.alertmns.iam.infrastructure.adapter.incoming.web.auth.dto.LoginReques
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -57,5 +58,19 @@ public class AuthController {
         context.setAuthentication(authentication);
         SecurityContextHolder.setContext(context);
         securityContextRepository.saveContext(context, httpRequest, httpResponse);
+    }
+
+    @Operation(
+            summary = "Déconnecter l'utilisateur courant",
+            description = "Invalide la session côté serveur et supprime le cookie JSESSIONID. " +
+                    "Idempotent : retourne 204 même sans session active.",
+            responses = {
+                    @ApiResponse(responseCode = "204", description = "Session invalidée")
+            }
+    )
+    @PostMapping("/logout")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void logout(HttpServletRequest httpRequest) throws ServletException {
+        httpRequest.logout();
     }
 }
