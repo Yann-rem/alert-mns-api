@@ -32,7 +32,7 @@ public class SecurityConfig {
 
                 // Règles d'autorisation
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/login", "/auth/logout", "/auth/register").permitAll()
+                        .requestMatchers("/api/auth/login", "/api/auth/logout", "/api/auth/register").permitAll()
                         .requestMatchers("/error").permitAll()
                         .anyRequest().authenticated()
                 )
