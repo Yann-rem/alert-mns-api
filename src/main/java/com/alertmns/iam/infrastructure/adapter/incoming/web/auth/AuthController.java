@@ -1,6 +1,13 @@
 package com.alertmns.iam.infrastructure.adapter.incoming.web.auth;
 
+import com.alertmns.iam.domain.exception.UserNotFoundException;
+import com.alertmns.iam.domain.model.User;
+import com.alertmns.iam.domain.port.outgoing.UserRepository;
 import com.alertmns.iam.infrastructure.adapter.incoming.web.auth.dto.LoginRequest;
+import com.alertmns.iam.infrastructure.adapter.incoming.web.auth.dto.MeResponse;
+import com.alertmns.iam.infrastructure.adapter.incoming.web.auth.mapper.AuthWebMapper;
+import com.alertmns.shared.AuthenticatedUser;
+import com.alertmns.shared.CurrentUserPort;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -16,6 +23,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.context.SecurityContextRepository;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -30,6 +38,8 @@ public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private final SecurityContextRepository securityContextRepository;
+    private final CurrentUserPort currentUserPort;
+    private final UserRepository userRepository;
 
     @Operation(
             summary = "Authentifier un utilisateur",
@@ -72,5 +82,25 @@ public class AuthController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void logout(HttpServletRequest httpRequest) throws ServletException {
         httpRequest.logout();
+    }
+
+    @Operation(
+            summary = "Récupérer l'identité de l'utilisateur courant",
+            description = "Retourne les informations de l'utilisateur authentifié sur la base de la session courante.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Identité retournée"),
+                    @ApiResponse(responseCode = "401", description = "Non authentifié")
+            }
+    )
+    @GetMapping("/me")
+    public MeResponse me() {
+        AuthenticatedUser current = currentUserPort.currentUser()
+                .orElseThrow(() -> new IllegalStateException("No authenticated user in current context"));
+
+        User user = userRepository
+                .findById(current.userId())
+                .orElseThrow(() -> new UserNotFoundException(current.userId()));
+
+        return AuthWebMapper.toMeResponse(user);
     }
 }
