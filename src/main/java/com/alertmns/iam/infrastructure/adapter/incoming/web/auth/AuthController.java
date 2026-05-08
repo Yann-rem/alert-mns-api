@@ -17,6 +17,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -92,6 +93,7 @@ public class AuthController {
                     @ApiResponse(responseCode = "401", description = "Non authentifié")
             }
     )
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/me")
     public MeResponse me() {
         AuthenticatedUser current = currentUserPort.currentUser()
