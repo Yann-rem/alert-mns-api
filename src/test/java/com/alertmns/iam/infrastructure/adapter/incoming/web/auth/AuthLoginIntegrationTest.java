@@ -6,6 +6,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -28,11 +30,15 @@ class AuthLoginIntegrationTest extends AbstractAuthIntegrationTest {
         ResponseEntity<String> response = login(EMAIL, PASSWORD);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        String setCookie = response.getHeaders().getFirst(HttpHeaders.SET_COOKIE);
-        assertThat(setCookie).isNotNull();
-        assertThat(setCookie).contains("JSESSIONID=");
-        assertThat(setCookie).contains("HttpOnly");
-        assertThat(setCookie).contains("Path=/");
+        List<String> setCookies = response.getHeaders().get(HttpHeaders.SET_COOKIE);
+        assertThat(setCookies).isNotNull();
+        String jsessionId = setCookies.stream()
+                .filter(c -> c.startsWith("JSESSIONID="))
+                .findFirst()
+                .orElse(null);
+        assertThat(jsessionId).isNotNull();
+        assertThat(jsessionId).contains("HttpOnly");
+        assertThat(jsessionId).contains("Path=/");
     }
 
     @Test
@@ -49,8 +55,6 @@ class AuthLoginIntegrationTest extends AbstractAuthIntegrationTest {
     @Test
     @DisplayName("Scenario 4 — email inconnu retourne 401 + meme message (anti-enumeration)")
     void shouldReturn401WithSameMessageWhenEmailIsUnknown() {
-        // Pas de user en base.
-
         ResponseEntity<String> response = login("unknown@alertmns.local", PASSWORD);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);

@@ -8,6 +8,8 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 
 @Configuration
 public class SecurityConfig {
@@ -15,8 +17,13 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
-                // Désactivation temporaire CSRF — sera réactivé en phase 5 (cookie XSRF)
-                .csrf(AbstractHttpConfigurer::disable)
+                .csrf(csrf -> {
+                    CsrfTokenRequestAttributeHandler handler = new CsrfTokenRequestAttributeHandler();
+                    handler.setCsrfRequestAttributeName(null);
+                    csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                            .csrfTokenRequestHandler(handler)
+                            .ignoringRequestMatchers("/api/auth/login", "/api/auth/register");
+                })
 
                 // Pas de form-login HTML, pas de Basic Auth : on aura un endpoint JSON custom
                 .formLogin(AbstractHttpConfigurer::disable)

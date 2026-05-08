@@ -23,21 +23,24 @@ class AuthLogoutIntegrationTest extends AbstractAuthIntegrationTest {
     @DisplayName("Scenario 8 — login puis logout invalide la session (me retourne 401 ensuite)")
     void shouldInvalidateSessionAfterLogout() {
         userFactory.registerActive(EMAIL, PASSWORD);
-        ResponseEntity<String> loginResponse = login(EMAIL, PASSWORD);
-        String sessionCookie = extractSessionCookie(loginResponse);
-        assertThat(sessionCookie).isNotNull();
+        AuthCookies cookies = loginAndAcquireCookies(EMAIL, PASSWORD);
+        assertThat(cookies.session()).isNotNull();
+        assertThat(cookies.xsrfTokenValue()).isNotNull();
 
-        ResponseEntity<String> logoutResponse = logout(sessionCookie);
+        ResponseEntity<String> logoutResponse = logout(cookies);
         assertThat(logoutResponse.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
 
-        ResponseEntity<String> meAfterLogout = getMe(sessionCookie);
+        ResponseEntity<String> meAfterLogout = getMe(cookies.session());
         assertThat(meAfterLogout.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
 
     @Test
-    @DisplayName("Scenario 9 — logout sans session retourne 204 (idempotent)")
+    @DisplayName("Scenario 9 — logout sans session mais avec CSRF retourne 204 (idempotent)")
     void shouldReturn204WhenLogoutWithoutSession() {
-        ResponseEntity<String> response = logout(null);
+        String xsrfCookie = acquireXsrfCookieAnonymously();
+        assertThat(xsrfCookie).isNotNull();
+
+        ResponseEntity<String> response = logout(null, xsrfCookie, extractXsrfValue(xsrfCookie));
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
     }

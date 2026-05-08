@@ -20,6 +20,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.containers.PostgreSQLContainer;
 
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Stream;
+
 /**
  * Base commune pour les tests d'intégration de l'authentification.
  *
@@ -86,12 +90,58 @@ abstract class AbstractAuthIntegrationTest {
         return restTemplate.exchange("/api/auth/me", HttpMethod.GET, new HttpEntity<>(headers), String.class);
     }
 
-    protected ResponseEntity<String> logout(String sessionCookie) {
+    /**
+     * Variante "brute" du logout : permet d'envoyer arbitrairement un cookie de session et/ou un en-tête CSRF, ou de
+     * tout omettre. Utilisée par les tests CSRF qui valident explicitement les cas de rejet (403).
+     */
+    protected ResponseEntity<String> logout(String sessionCookie, String xsrfCookie, String xsrfHeaderValue) {
         HttpHeaders headers = new HttpHeaders();
-        if (sessionCookie != null) {
-            headers.add(HttpHeaders.COOKIE, sessionCookie);
+        String cookieHeader = joinCookies(sessionCookie, xsrfCookie);
+        if (!cookieHeader.isEmpty()) {
+            headers.add(HttpHeaders.COOKIE, cookieHeader);
+        }
+        if (xsrfHeaderValue != null) {
+            headers.add("X-XSRF-TOKEN", xsrfHeaderValue);
         }
         return restTemplate.exchange("/api/auth/logout", HttpMethod.POST, new HttpEntity<>(headers), String.class);
+    }
+
+    /**
+     * Variante "happy path" du logout : prend le bundle complet {@link AuthCookies} et envoie les deux cookies plus
+     * l'en-tête {@code X-XSRF-TOKEN}. Représente le comportement d'un client navigateur légitime.
+     */
+    protected ResponseEntity<String> logout(AuthCookies cookies) {
+        return logout(cookies.session(), cookies.xsrfCookie(), cookies.xsrfTokenValue());
+    }
+
+    /**
+     * Login + amorce du cookie {@code XSRF-TOKEN} via un {@code GET /api/auth/me}. Le filtre CSRF est exempté sur
+     * {@code /login}, donc le cookie n'est pas toujours posé par la réponse de login. Un GET subséquent garantit son
+     * acquisition. Retourne le bundle prêt à être utilisé sur les requêtes mutantes.
+     */
+    protected AuthCookies loginAndAcquireCookies(String email, String password) {
+        ResponseEntity<String> loginResponse = login(email, password);
+        String session = extractSessionCookie(loginResponse);
+        String xsrfCookie = extractXsrfCookie(loginResponse);
+        if (xsrfCookie == null && session != null) {
+            HttpHeaders h = new HttpHeaders();
+            h.add(HttpHeaders.COOKIE, session);
+            ResponseEntity<String> meResponse =
+                    restTemplate.exchange("/api/auth/me", HttpMethod.GET, new HttpEntity<>(h), String.class);
+            xsrfCookie = extractXsrfCookie(meResponse);
+        }
+        return new AuthCookies(session, xsrfCookie, extractXsrfValue(xsrfCookie));
+    }
+
+    /**
+     * Déclenche un {@code GET /api/auth/me} sans session (réponse 401 attendue) uniquement pour récupérer le cookie
+     * {@code XSRF-TOKEN}. Permet de tester le scénario "logout idempotent" en CSRF-compliant : un navigateur qui a
+     * visité le site possède le cookie XSRF même sans être connecté.
+     */
+    protected String acquireXsrfCookieAnonymously() {
+        ResponseEntity<String> response =
+                restTemplate.exchange("/api/auth/me", HttpMethod.GET, HttpEntity.EMPTY, String.class);
+        return extractXsrfCookie(response);
     }
 
     /**
@@ -99,11 +149,53 @@ abstract class AbstractAuthIntegrationTest {
      * réinjectée dans un header {@code Cookie}.
      */
     protected String extractSessionCookie(ResponseEntity<?> response) {
-        String setCookie = response.getHeaders().getFirst(HttpHeaders.SET_COOKIE);
-        if (setCookie == null) {
+        return extractCookie(response, "JSESSIONID");
+    }
+
+    /**
+     * Extrait la portion {@code XSRF-TOKEN=xxx} (sans les attributs Path, SameSite, etc.). Retourne {@code null} si
+     * aucun cookie XSRF n'est posé par la réponse.
+     */
+    protected String extractXsrfCookie(ResponseEntity<?> response) {
+        return extractCookie(response, "XSRF-TOKEN");
+    }
+
+    /**
+     * Extrait la valeur brute du cookie XSRF (sans le préfixe {@code XSRF-TOKEN=}). C'est cette valeur qui doit être
+     * réinjectée dans l'en-tête {@code X-XSRF-TOKEN} pour que le filtre CSRF accepte la requête.
+     */
+    protected String extractXsrfValue(String xsrfCookie) {
+        if (xsrfCookie == null) {
             return null;
         }
-        return setCookie.split(";", 2)[0];
+        return xsrfCookie.substring("XSRF-TOKEN=".length());
+    }
+
+    private String extractCookie(ResponseEntity<?> response, String cookieName) {
+        List<String> setCookies = response.getHeaders().get(HttpHeaders.SET_COOKIE);
+        if (setCookies == null) {
+            return null;
+        }
+        String prefix = cookieName + "=";
+        return setCookies.stream()
+                .filter(c -> c.startsWith(prefix))
+                .map(c -> c.split(";", 2)[0])
+                .findFirst()
+                .orElse(null);
+    }
+
+    private String joinCookies(String... cookies) {
+        return Stream.of(cookies)
+                .filter(Objects::nonNull)
+                .reduce((a, b) -> a + "; " + b)
+                .orElse("");
+    }
+
+    /**
+     * Bundle représentant l'état "client navigateur authentifié" : session + cookie XSRF + valeur du token CSRF
+     * extraite. Tous les champs peuvent être {@code null} pour modéliser des états partiels.
+     */
+    protected record AuthCookies(String session, String xsrfCookie, String xsrfTokenValue) {
     }
 
     /**
