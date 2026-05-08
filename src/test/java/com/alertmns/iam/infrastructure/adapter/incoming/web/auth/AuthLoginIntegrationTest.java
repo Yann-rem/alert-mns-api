@@ -22,8 +22,12 @@ class AuthLoginIntegrationTest extends AbstractAuthIntegrationTest {
     private static final String EMAIL = "alice@alertmns.local";
     private static final String PASSWORD = "secret123456";
 
+    /**
+     * Note : ce test prouve aussi implicitement l'exemption CSRF sur {@code /api/auth/login} — le helper
+     * {@code login(...)} envoie un POST sans header {@code X-XSRF-TOKEN}, donc un succès ici garantit l'exemption.
+     */
     @Test
-    @DisplayName("Scenario 2 — credentials valides retournent 200 + cookie JSESSIONID")
+    @DisplayName("Scenario 2 — valid credentials return 200 + JSESSIONID cookie")
     void shouldReturn200WithJSessionIdCookieWhenCredentialsAreValid() {
         userFactory.registerActive(EMAIL, PASSWORD);
 
@@ -42,7 +46,7 @@ class AuthLoginIntegrationTest extends AbstractAuthIntegrationTest {
     }
 
     @Test
-    @DisplayName("Scenario 3 — mauvais mot de passe retourne 401 + 'Invalid credentials'")
+    @DisplayName("Scenario 3 — wrong password returns 401 + 'Invalid credentials'")
     void shouldReturn401WithInvalidCredentialsMessageWhenPasswordIsWrong() {
         userFactory.registerActive(EMAIL, PASSWORD);
 
@@ -53,7 +57,7 @@ class AuthLoginIntegrationTest extends AbstractAuthIntegrationTest {
     }
 
     @Test
-    @DisplayName("Scenario 4 — email inconnu retourne 401 + meme message (anti-enumeration)")
+    @DisplayName("Scenario 4 — unknown email returns 401 + same message (anti-enumeration)")
     void shouldReturn401WithSameMessageWhenEmailIsUnknown() {
         ResponseEntity<String> response = login("unknown@alertmns.local", PASSWORD);
 
@@ -62,7 +66,7 @@ class AuthLoginIntegrationTest extends AbstractAuthIntegrationTest {
     }
 
     @Test
-    @DisplayName("Scenario 5 — compte SUSPENDED retourne 403 + 'Account is locked'")
+    @DisplayName("Scenario 5 — SUSPENDED account returns 403 + 'Account is locked'")
     void shouldReturn403WhenAccountIsSuspended() {
         userFactory.registerSuspended(EMAIL, PASSWORD);
 
@@ -73,7 +77,7 @@ class AuthLoginIntegrationTest extends AbstractAuthIntegrationTest {
     }
 
     @Test
-    @DisplayName("Scenario 6 — compte PENDING retourne 403 + 'Account is disabled'")
+    @DisplayName("Scenario 6 — PENDING account returns 403 + 'Account is disabled'")
     void shouldReturn403WhenAccountIsPending() {
         userFactory.registerPending(EMAIL, PASSWORD);
 
@@ -84,7 +88,7 @@ class AuthLoginIntegrationTest extends AbstractAuthIntegrationTest {
     }
 
     @Test
-    @DisplayName("Scenario 10 — body invalide (email vide) retourne 400")
+    @DisplayName("Scenario 10 — invalid body (blank email) returns 400")
     void shouldReturn400WhenEmailIsBlank() {
         ResponseEntity<String> response = loginRaw("{\"email\":\"\",\"password\":\"" + PASSWORD + "\"}");
 

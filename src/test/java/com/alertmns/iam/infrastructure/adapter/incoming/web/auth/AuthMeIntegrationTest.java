@@ -19,7 +19,7 @@ class AuthMeIntegrationTest extends AbstractAuthIntegrationTest {
     private static final String PASSWORD = "secret123456";
 
     @Test
-    @DisplayName("Scenario 1 — absence de session retourne 401")
+    @DisplayName("Scenario 1 — missing session returns 401")
     void shouldReturn401WhenNoSession() {
         ResponseEntity<String> response = getMe(null);
 
@@ -27,7 +27,7 @@ class AuthMeIntegrationTest extends AbstractAuthIntegrationTest {
     }
 
     @Test
-    @DisplayName("Scenario 7 — login puis me retourne 200 + JSON identite")
+    @DisplayName("Scenario 7 — login then me returns 200 + identity JSON")
     void shouldReturn200WithIdentityWhenAuthenticated() {
         userFactory.registerActive(EMAIL, PASSWORD);
         ResponseEntity<String> loginResponse = login(EMAIL, PASSWORD);

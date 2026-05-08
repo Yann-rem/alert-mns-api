@@ -192,7 +192,34 @@ abstract class AbstractAuthIntegrationTest {
     }
 
     /**
-     * Bundle représentant l'état "client navigateur authentifié" : session + cookie XSRF + valeur du token CSRF
+     * Helper générique pour les requêtes mutantes (POST/PUT/DELETE) avec session + CSRF. Renvoie la réponse brute.
+     * Utilise notamment par les tests d'autorisation pour cibler explicitement les endpoints proteges par
+     * {@code @PreAuthorize}.
+     *
+     * @param method   methode HTTP
+     * @param path     chemin (ex. {@code "/api/users/{id}/activate"})
+     * @param jsonBody corps JSON, ou {@code null} si pas de body
+     * @param cookies  bundle session + XSRF — si {@link AuthCookies#session()} est {@code null}, la requête part
+     *                 anonyme ; si {@link AuthCookies#xsrfTokenValue()} est {@code null}, le header CSRF est omis
+     */
+    protected ResponseEntity<String> mutate(HttpMethod method, String path, String jsonBody, AuthCookies cookies) {
+        HttpHeaders headers = new HttpHeaders();
+        if (jsonBody != null) {
+            headers.setContentType(MediaType.APPLICATION_JSON);
+        }
+        String cookieHeader = joinCookies(cookies.session(), cookies.xsrfCookie());
+        if (!cookieHeader.isEmpty()) {
+            headers.add(HttpHeaders.COOKIE, cookieHeader);
+        }
+        if (cookies.xsrfTokenValue() != null) {
+            headers.add("X-XSRF-TOKEN", cookies.xsrfTokenValue());
+        }
+        HttpEntity<String> entity = new HttpEntity<>(jsonBody, headers);
+        return restTemplate.exchange(path, method, entity, String.class);
+    }
+
+    /**
+     * Bundle représentant l'état "client navigateur authentifie" : session + cookie XSRF + valeur du token CSRF
      * extraite. Tous les champs peuvent être {@code null} pour modéliser des états partiels.
      */
     protected record AuthCookies(String session, String xsrfCookie, String xsrfTokenValue) {
@@ -210,9 +237,15 @@ abstract class AbstractAuthIntegrationTest {
         TestUserFactory testUserFactory(
                 RegisterUserService registerUserService,
                 ActivateUserService activateUserService,
-                SuspendUserService suspendUserService
+                SuspendUserService suspendUserService,
+                UserJpaRepository userJpaRepository
         ) {
-            return new TestUserFactory(registerUserService, activateUserService, suspendUserService);
+            return new TestUserFactory(
+                    registerUserService,
+                    activateUserService,
+                    suspendUserService,
+                    userJpaRepository
+            );
         }
     }
 }

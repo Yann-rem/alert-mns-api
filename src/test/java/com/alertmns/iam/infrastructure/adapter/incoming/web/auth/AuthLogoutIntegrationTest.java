@@ -20,7 +20,7 @@ class AuthLogoutIntegrationTest extends AbstractAuthIntegrationTest {
     private static final String PASSWORD = "secret123456";
 
     @Test
-    @DisplayName("Scenario 8 — login puis logout invalide la session (me retourne 401 ensuite)")
+    @DisplayName("Scenario 8 — login then logout invalidates the session (me returns 401 afterwards)")
     void shouldInvalidateSessionAfterLogout() {
         userFactory.registerActive(EMAIL, PASSWORD);
         AuthCookies cookies = loginAndAcquireCookies(EMAIL, PASSWORD);
@@ -35,7 +35,7 @@ class AuthLogoutIntegrationTest extends AbstractAuthIntegrationTest {
     }
 
     @Test
-    @DisplayName("Scenario 9 — logout sans session mais avec CSRF retourne 204 (idempotent)")
+    @DisplayName("Scenario 9 — logout without session but with CSRF returns 204 (idempotent)")
     void shouldReturn204WhenLogoutWithoutSession() {
         String xsrfCookie = acquireXsrfCookieAnonymously();
         assertThat(xsrfCookie).isNotNull();

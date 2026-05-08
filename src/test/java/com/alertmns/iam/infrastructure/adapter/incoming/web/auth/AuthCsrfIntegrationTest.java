@@ -20,8 +20,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  *   <li>présence et attributs du cookie {@code XSRF-TOKEN} (lisible par le JS, eager loading)</li>
  *   <li>rejet 403 sur {@code POST /api/auth/logout} sans en-tête {@code X-XSRF-TOKEN}</li>
  *   <li>rejet 403 sur {@code POST /api/auth/logout} avec en-tête de mauvaise valeur</li>
- *   <li>exemption du filtre CSRF sur {@code POST /api/auth/login}</li>
  * </ul>
+ *
+ * <p>L'exemption CSRF sur {@code POST /api/auth/login} est implicitement validée par
+ * {@code AuthLoginIntegrationTest} : le helper {@code login(...)} envoie un POST sans header {@code X-XSRF-TOKEN},
+ * donc tout login qui réussit prouve l'exemption.</p>
  * </p>
  *
  * <p>Stratégie retenue : double-submit cookie via {@code CookieCsrfTokenRepository.withHttpOnlyFalse()} — voir
@@ -34,7 +37,7 @@ class AuthCsrfIntegrationTest extends AbstractAuthIntegrationTest {
     private static final String PASSWORD = "secret123456";
 
     @Test
-    @DisplayName("Scenario CSRF-1 — cookie XSRF-TOKEN posé sur le premier GET et lisible par le JS")
+    @DisplayName("Scenario CSRF-1 — XSRF-TOKEN cookie set on the first GET and readable by JS")
     void shouldSetXsrfCookieReadableByJavascript() {
         ResponseEntity<String> response =
                 restTemplate.exchange("/api/auth/me", HttpMethod.GET, HttpEntity.EMPTY, String.class);
@@ -55,7 +58,7 @@ class AuthCsrfIntegrationTest extends AbstractAuthIntegrationTest {
     }
 
     @Test
-    @DisplayName("Scenario CSRF-2 — POST /logout sans header X-XSRF-TOKEN retourne 403")
+    @DisplayName("Scenario CSRF-2 — POST /logout without X-XSRF-TOKEN header returns 403")
     void shouldRejectLogoutWithoutCsrfHeader() {
         userFactory.registerActive(EMAIL, PASSWORD);
         AuthCookies cookies = loginAndAcquireCookies(EMAIL, PASSWORD);
@@ -68,7 +71,7 @@ class AuthCsrfIntegrationTest extends AbstractAuthIntegrationTest {
     }
 
     @Test
-    @DisplayName("Scenario CSRF-3 — POST /logout avec header X-XSRF-TOKEN différent du cookie retourne 403")
+    @DisplayName("Scenario CSRF-3 — POST /logout with X-XSRF-TOKEN header different from cookie returns 403")
     void shouldRejectLogoutWithMismatchedCsrfHeader() {
         userFactory.registerActive(EMAIL, PASSWORD);
         AuthCookies cookies = loginAndAcquireCookies(EMAIL, PASSWORD);
@@ -77,15 +80,5 @@ class AuthCsrfIntegrationTest extends AbstractAuthIntegrationTest {
                 logout(cookies.session(), cookies.xsrfCookie(), "this-is-not-the-real-token");
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
-    }
-
-    @Test
-    @DisplayName("Scenario CSRF-4 — POST /login fonctionne sans CSRF (endpoint exempté)")
-    void shouldAllowLoginWithoutCsrfToken() {
-        userFactory.registerActive(EMAIL, PASSWORD);
-
-        ResponseEntity<String> response = login(EMAIL, PASSWORD);
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 }
