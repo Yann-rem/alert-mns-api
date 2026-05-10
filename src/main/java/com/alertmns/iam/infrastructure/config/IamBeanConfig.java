@@ -6,13 +6,13 @@ import com.alertmns.iam.application.RegisterUserService;
 import com.alertmns.iam.application.SuspendUserService;
 import com.alertmns.iam.application.UpdateAbsenceMessageService;
 import com.alertmns.iam.application.UpdateProfileService;
-import com.alertmns.iam.domain.port.outgoing.AuthenticationPort;
+import com.alertmns.iam.domain.port.outgoing.PasswordHasher;
 import com.alertmns.iam.domain.port.outgoing.UserRepository;
 import com.alertmns.iam.infrastructure.adapter.incoming.web.security.DomainUserDetailsService;
 import com.alertmns.iam.infrastructure.adapter.incoming.web.security.SpringSecurityCurrentUserAdapter;
 import com.alertmns.iam.infrastructure.adapter.outgoing.persistence.UserJpaRepository;
 import com.alertmns.iam.infrastructure.adapter.outgoing.persistence.UserPersistenceAdapter;
-import com.alertmns.iam.infrastructure.adapter.outgoing.security.SpringSecurityAdapter;
+import com.alertmns.iam.infrastructure.adapter.outgoing.security.SpringSecurityPasswordHasher;
 import com.alertmns.shared.CurrentUserPort;
 import com.alertmns.shared.EventPublisher;
 import org.springframework.context.ApplicationEventPublisher;
@@ -37,8 +37,8 @@ public class IamBeanConfig {
     }
 
     @Bean
-    public AuthenticationPort authenticationPort(PasswordEncoder passwordEncoder) {
-        return new SpringSecurityAdapter(passwordEncoder);
+    public PasswordHasher passwordHasher(PasswordEncoder passwordEncoder) {
+        return new SpringSecurityPasswordHasher(passwordEncoder);
     }
 
     @Bean
@@ -99,10 +99,10 @@ public class IamBeanConfig {
     @Bean
     public RegisterUserService registerUserService(
             UserRepository repository,
-            AuthenticationPort authenticationPort,
+            PasswordHasher passwordHasher,
             EventPublisher publisher
     ) {
-        return new RegisterUserService(repository, authenticationPort, publisher);
+        return new RegisterUserService(repository, passwordHasher, publisher);
     }
 
     @Bean

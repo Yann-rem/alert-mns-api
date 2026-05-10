@@ -1,19 +1,18 @@
 package com.alertmns.iam.infrastructure.adapter.outgoing.security;
 
-import com.alertmns.iam.domain.port.outgoing.AuthenticationPort;
-
+import com.alertmns.iam.domain.port.outgoing.PasswordHasher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-public final class SpringSecurityAdapter implements AuthenticationPort {
+public final class SpringSecurityPasswordHasher implements PasswordHasher {
 
     private final PasswordEncoder passwordEncoder;
 
-    public SpringSecurityAdapter(PasswordEncoder passwordEncoder) {
+    public SpringSecurityPasswordHasher(PasswordEncoder passwordEncoder) {
         this.passwordEncoder = passwordEncoder;
     }
 
     @Override
-    public String hashPassword(String rawPassword) {
+    public String hash(String rawPassword) {
         return passwordEncoder.encode(rawPassword);
     }
 }

@@ -9,7 +9,7 @@ import com.alertmns.iam.domain.model.User;
 import com.alertmns.iam.domain.model.UserRole;
 import com.alertmns.iam.domain.model.UserStatus;
 import com.alertmns.iam.domain.port.incoming.command.RegisterUserCommand;
-import com.alertmns.iam.domain.port.outgoing.AuthenticationPort;
+import com.alertmns.iam.domain.port.outgoing.PasswordHasher;
 import com.alertmns.iam.domain.port.outgoing.UserRepository;
 import com.alertmns.shared.DomainEvent;
 import com.alertmns.shared.EventPublisher;
@@ -50,7 +50,7 @@ class RegisterUserServiceTest {
     UserRepository repository;
 
     @Mock
-    AuthenticationPort authentication;
+    PasswordHasher passwordHasher;
 
     @Mock
     EventPublisher publisher;
@@ -66,7 +66,7 @@ class RegisterUserServiceTest {
         @DisplayName("should save the user with email, profile, role USER, status PENDING and organisationId")
         void shouldSaveTheUserWithAllFields() {
             when(repository.existsByEmail(any())).thenReturn(false);
-            when(authentication.hashPassword(any())).thenReturn(HASHED_PASSWORD);
+            when(passwordHasher.hash(any())).thenReturn(HASHED_PASSWORD);
 
             RegisterUserCommand command = new RegisterUserCommand(
                     EMAIL, RAW_PASSWORD, FIRST_NAME, LAST_NAME, ORGANISATION_ID
@@ -89,7 +89,7 @@ class RegisterUserServiceTest {
         @DisplayName("should publish UserRegistered event with the saved user id")
         void shouldPublishUserRegisteredEvent() {
             when(repository.existsByEmail(any())).thenReturn(false);
-            when(authentication.hashPassword(any())).thenReturn(HASHED_PASSWORD);
+            when(passwordHasher.hash(any())).thenReturn(HASHED_PASSWORD);
 
             RegisterUserCommand command = new RegisterUserCommand(
                     EMAIL, RAW_PASSWORD, FIRST_NAME, LAST_NAME, ORGANISATION_ID
@@ -119,7 +119,7 @@ class RegisterUserServiceTest {
             );
 
             assertThrows(EmailAlreadyExistsException.class, () -> service.register(command));
-            verify(authentication, never()).hashPassword(any());
+            verify(passwordHasher, never()).hash(any());
             verify(repository, never()).save(any());
             verify(publisher, never()).publish(anyList());
         }
@@ -133,7 +133,7 @@ class RegisterUserServiceTest {
 
             assertThrows(IllegalArgumentException.class, () -> service.register(command));
             verify(repository, never()).existsByEmail(any());
-            verify(authentication, never()).hashPassword(any());
+            verify(passwordHasher, never()).hash(any());
             verify(repository, never()).save(any());
             verify(publisher, never()).publish(anyList());
         }
@@ -147,12 +147,12 @@ class RegisterUserServiceTest {
         @DisplayName("should reject null repository")
         void shouldRejectNullRepository() {
             assertThrows(NullPointerException.class,
-                    () -> new RegisterUserService(null, authentication, publisher));
+                    () -> new RegisterUserService(null, passwordHasher, publisher));
         }
 
         @Test
-        @DisplayName("should reject null authentication")
-        void shouldRejectNullAuthentication() {
+        @DisplayName("should reject null passwordHasher")
+        void shouldRejectNullPasswordHasher() {
             assertThrows(NullPointerException.class,
                     () -> new RegisterUserService(repository, null, publisher));
         }
@@ -161,7 +161,7 @@ class RegisterUserServiceTest {
         @DisplayName("should reject null publisher")
         void shouldRejectNullPublisher() {
             assertThrows(NullPointerException.class,
-                    () -> new RegisterUserService(repository, authentication, null));
+                    () -> new RegisterUserService(repository, passwordHasher, null));
         }
 
         @Test

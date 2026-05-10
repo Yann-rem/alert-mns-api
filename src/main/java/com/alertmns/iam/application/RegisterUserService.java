@@ -7,13 +7,13 @@ import com.alertmns.iam.domain.model.HashedPassword;
 import com.alertmns.iam.domain.model.LastName;
 import com.alertmns.iam.domain.model.Profile;
 import com.alertmns.iam.domain.model.User;
-import com.alertmns.shared.UserId;
 import com.alertmns.iam.domain.port.incoming.RegisterUserUseCase;
 import com.alertmns.iam.domain.port.incoming.command.RegisterUserCommand;
-import com.alertmns.iam.domain.port.outgoing.AuthenticationPort;
+import com.alertmns.iam.domain.port.outgoing.PasswordHasher;
 import com.alertmns.iam.domain.port.outgoing.UserRepository;
 import com.alertmns.shared.EventPublisher;
 import com.alertmns.shared.OrganisationId;
+import com.alertmns.shared.UserId;
 
 import java.util.Objects;
 
@@ -25,16 +25,16 @@ import java.util.Objects;
 public final class RegisterUserService implements RegisterUserUseCase {
 
     private final UserRepository repository;
-    private final AuthenticationPort authentication;
+    private final PasswordHasher passwordHasher;
     private final EventPublisher publisher;
 
     public RegisterUserService(
             UserRepository repository,
-            AuthenticationPort authentication,
+            PasswordHasher passwordHasher,
             EventPublisher publisher
     ) {
         this.repository = Objects.requireNonNull(repository, "repository must not be null");
-        this.authentication = Objects.requireNonNull(authentication, "authentication must not be null");
+        this.passwordHasher = Objects.requireNonNull(passwordHasher, "passwordHasher must not be null");
         this.publisher = Objects.requireNonNull(publisher, "publisher must not be null");
     }
 
@@ -50,7 +50,7 @@ public final class RegisterUserService implements RegisterUserUseCase {
             throw new EmailAlreadyExistsException(email);
         }
 
-        HashedPassword hashedPassword = HashedPassword.of(authentication.hashPassword(command.rawPassword()));
+        HashedPassword hashedPassword = HashedPassword.of(passwordHasher.hash(command.rawPassword()));
 
         User user = User.register(organisationId, email, hashedPassword, profile);
         repository.save(user);

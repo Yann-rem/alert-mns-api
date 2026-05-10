@@ -5,7 +5,7 @@ package com.alertmns.iam.domain.port.outgoing;
  *
  * <p>Implémenté par Spring Security dans l'infrastructure.</p>
  */
-public interface AuthenticationPort {
+public interface PasswordHasher {
 
     /**
      * Hache un mot de passe brut.
@@ -13,5 +13,5 @@ public interface AuthenticationPort {
      * @param rawPassword le mot de passe en clair
      * @return le hash du mot de passe
      */
-    String hashPassword(String rawPassword);
+    String hash(String rawPassword);
 }
