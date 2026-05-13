@@ -205,6 +205,38 @@ class UserTest {
         }
 
         @Test
+        @DisplayName("activateWithPassword should transition PENDING to ACTIVE")
+        void activateWithPasswordShouldTransitionPENDINGToACTIVE() {
+            user.activateWithPassword(HashedPassword.of(BCRYPT_HASH));
+            assertEquals(UserStatus.ACTIVE, user.status());
+        }
+
+        @Test
+        @DisplayName("activateWithPassword should replace the hashed password")
+        void activateWithPasswordShouldReplaceTheHashedPassword() {
+            String newHash = "$2a$10$zzzzzzzzzzzzzzzzzzzzzzZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ987654";
+            HashedPassword newHashedPassword = HashedPassword.of(newHash);
+
+            user.activateWithPassword(newHashedPassword);
+
+            assertEquals(newHashedPassword, user.hashedPassword());
+        }
+
+        @Test
+        @DisplayName("activateWithPassword should reject null hashedPassword")
+        void activateWithPasswordShouldRejectNullHashedPassword() {
+            assertThrows(NullPointerException.class, () -> user.activateWithPassword(null));
+        }
+
+        @Test
+        @DisplayName("activateWithPassword should reject non-PENDING account")
+        void activateWithPasswordShouldRejectNonPENDINGAccount() {
+            user.activate();
+            assertThrows(IllegalStateException.class,
+                    () -> user.activateWithPassword(HashedPassword.of(BCRYPT_HASH)));
+        }
+
+        @Test
         @DisplayName("suspend should transition ACTIVE to SUSPENDED")
         void suspendShouldTransitionACTIVEToSUSPENDED() {
             user.activate();
@@ -319,6 +351,17 @@ class UserTest {
         void activateShouldEmitUserActivated() {
             user.pullDomainEvents();
             user.activate();
+            List<DomainEvent> events = user.pullDomainEvents();
+            assertEquals(1, events.size());
+            UserActivated event = assertInstanceOf(UserActivated.class, events.getFirst());
+            assertEquals(user.id(), event.userId());
+        }
+
+        @Test
+        @DisplayName("activateWithPassword should emit UserActivated")
+        void activateWithPasswordShouldEmitUserActivated() {
+            user.pullDomainEvents();
+            user.activateWithPassword(HashedPassword.of(BCRYPT_HASH));
             List<DomainEvent> events = user.pullDomainEvents();
             assertEquals(1, events.size());
             UserActivated event = assertInstanceOf(UserActivated.class, events.getFirst());
