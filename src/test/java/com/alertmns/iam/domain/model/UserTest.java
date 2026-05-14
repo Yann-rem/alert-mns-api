@@ -152,7 +152,7 @@ class UserTest {
         @Test
         @DisplayName("updateProfile should update the user profile")
         void updateProfileShouldUpdateTheUserProfile() {
-            user.activate();
+            user.activateWithPassword(HashedPassword.of(BCRYPT_HASH));
             FirstName newFirstName = FirstName.of("Jane");
             LastName newLastName = LastName.of("Smith");
             String newAvatar = "https://cdn.example.com/avatar.jpg";
@@ -166,7 +166,7 @@ class UserTest {
         @Test
         @DisplayName("updateAbsenceMessage should update the absence message")
         void updateAbsenceMessageShouldUpdateTheAbsenceMessage() {
-            user.activate();
+            user.activateWithPassword(HashedPassword.of(BCRYPT_HASH));
             AbsenceMessage absenceMessage = AbsenceMessage.of(
                     "Je ne suis pas disponible pour le moment", true
             );
@@ -188,20 +188,6 @@ class UserTest {
         void updateAbsenceMessageShouldRejectNonACTIVEAccount() {
             assertThrows(IllegalStateException.class,
                     () -> user.updateAbsenceMessage(AbsenceMessage.of("Absent", true)));
-        }
-
-        @Test
-        @DisplayName("activate should transition PENDING to ACTIVE")
-        void activateShouldTransitionPENDINGToACTIVE() {
-            user.activate();
-            assertEquals(UserStatus.ACTIVE, user.status());
-        }
-
-        @Test
-        @DisplayName("activate should reject non-PENDING account")
-        void activateShouldRejectNonPENDINGAccount() {
-            user.activate();
-            assertThrows(IllegalStateException.class, () -> user.activate());
         }
 
         @Test
@@ -231,7 +217,7 @@ class UserTest {
         @Test
         @DisplayName("activateWithPassword should reject non-PENDING account")
         void activateWithPasswordShouldRejectNonPENDINGAccount() {
-            user.activate();
+            user.activateWithPassword(HashedPassword.of(BCRYPT_HASH));
             assertThrows(IllegalStateException.class,
                     () -> user.activateWithPassword(HashedPassword.of(BCRYPT_HASH)));
         }
@@ -239,7 +225,7 @@ class UserTest {
         @Test
         @DisplayName("suspend should transition ACTIVE to SUSPENDED")
         void suspendShouldTransitionACTIVEToSUSPENDED() {
-            user.activate();
+            user.activateWithPassword(HashedPassword.of(BCRYPT_HASH));
             user.suspend();
             assertEquals(UserStatus.SUSPENDED, user.status());
         }
@@ -253,7 +239,7 @@ class UserTest {
         @Test
         @DisplayName("reactivate should transition SUSPENDED to ACTIVE")
         void reactivateShouldTransitionSUSPENDEDToACTIVE() {
-            user.activate();
+            user.activateWithPassword(HashedPassword.of(BCRYPT_HASH));
             user.suspend();
             user.reactivate();
             assertEquals(UserStatus.ACTIVE, user.status());
@@ -314,7 +300,7 @@ class UserTest {
         @Test
         @DisplayName("updateProfile should emit ProfileUpdated")
         void updateProfileShouldEmitUpdateProfile() {
-            user.activate();
+            user.activateWithPassword(HashedPassword.of(BCRYPT_HASH));
             user.pullDomainEvents();
 
             user.updateProfile(
@@ -332,7 +318,7 @@ class UserTest {
         @Test
         @DisplayName("updateAbsenceMessage should emit AbsenceMessageUpdated")
         void updateAbsenceMessageShouldEmitUpdateAbsenceMessage() {
-            user.activate();
+            user.activateWithPassword(HashedPassword.of(BCRYPT_HASH));
             user.pullDomainEvents();
 
             user.updateAbsenceMessage(AbsenceMessage.of(
@@ -343,17 +329,6 @@ class UserTest {
             List<DomainEvent> events = user.pullDomainEvents();
             assertEquals(1, events.size());
             AbsenceMessageUpdated event = assertInstanceOf(AbsenceMessageUpdated.class, events.getFirst());
-            assertEquals(user.id(), event.userId());
-        }
-
-        @Test
-        @DisplayName("activate should emit UserActivated")
-        void activateShouldEmitUserActivated() {
-            user.pullDomainEvents();
-            user.activate();
-            List<DomainEvent> events = user.pullDomainEvents();
-            assertEquals(1, events.size());
-            UserActivated event = assertInstanceOf(UserActivated.class, events.getFirst());
             assertEquals(user.id(), event.userId());
         }
 
@@ -372,7 +347,7 @@ class UserTest {
         @DisplayName("suspend should emit UserSuspended")
         void suspendShouldEmitUserSuspended() {
             user.pullDomainEvents();
-            user.activate();
+            user.activateWithPassword(HashedPassword.of(BCRYPT_HASH));
             user.pullDomainEvents();
             user.suspend();
             List<DomainEvent> events = user.pullDomainEvents();
@@ -385,7 +360,7 @@ class UserTest {
         @DisplayName("reactivate should emit UserReactivated")
         void reactivateShouldEmitUserReactivated() {
             user.pullDomainEvents();
-            user.activate();
+            user.activateWithPassword(HashedPassword.of(BCRYPT_HASH));
             user.pullDomainEvents();
             user.suspend();
             user.pullDomainEvents();

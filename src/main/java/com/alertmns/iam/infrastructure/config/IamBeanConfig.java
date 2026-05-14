@@ -1,6 +1,5 @@
 package com.alertmns.iam.infrastructure.config;
 
-import com.alertmns.iam.application.ActivateUserService;
 import com.alertmns.iam.application.ReactivateUserService;
 import com.alertmns.iam.application.RegisterUserService;
 import com.alertmns.iam.application.SuspendUserService;
@@ -80,11 +79,6 @@ public class IamBeanConfig {
     }
 
     // --- Services ---
-
-    @Bean
-    public ActivateUserService activateUserService(UserRepository repository, EventPublisher publisher) {
-        return new ActivateUserService(repository, publisher);
-    }
 
     @Bean
     public SuspendUserService suspendUserServiceUserService(UserRepository repository, EventPublisher publisher) {

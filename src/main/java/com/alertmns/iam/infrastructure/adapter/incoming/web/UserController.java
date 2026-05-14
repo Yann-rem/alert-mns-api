@@ -1,11 +1,9 @@
 package com.alertmns.iam.infrastructure.adapter.incoming.web;
 
-import com.alertmns.iam.domain.port.incoming.ActivateUserUseCase;
 import com.alertmns.iam.domain.port.incoming.ReactivateUserUseCase;
 import com.alertmns.iam.domain.port.incoming.SuspendUserUseCase;
 import com.alertmns.iam.domain.port.incoming.UpdateAbsenceMessageUseCase;
 import com.alertmns.iam.domain.port.incoming.UpdateProfileUseCase;
-import com.alertmns.iam.domain.port.incoming.command.ActivateUserCommand;
 import com.alertmns.iam.domain.port.incoming.command.ReactivateUserCommand;
 import com.alertmns.iam.domain.port.incoming.command.SuspendUserCommand;
 import com.alertmns.iam.infrastructure.adapter.incoming.web.dto.UpdateAbsenceMessageRequest;
@@ -35,26 +33,10 @@ import java.util.UUID;
 @Tag(name = "Users", description = "Gestion des utilisateurs")
 public class UserController {
 
-    private final ActivateUserUseCase activateUserUseCase;
     private final SuspendUserUseCase suspendUserUseCase;
     private final ReactivateUserUseCase reactivateUserUseCase;
     private final UpdateProfileUseCase updateProfileUseCase;
     private final UpdateAbsenceMessageUseCase updateAbsenceMessageUseCase;
-
-    @Operation(
-            summary = "Activer un utilisateur",
-            description = "Passe le statut d'un utilisateur de PENDING à ACTIVE.",
-            responses = {
-                    @ApiResponse(responseCode = "204", description = "Utilisateur activé avec succès"),
-                    @ApiResponse(responseCode = "404", description = "Utilisateur introuvable")
-            }
-    )
-    @PreAuthorize("hasRole('ADMIN')")
-    @PostMapping("/{id}/activate")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void activate(@Parameter(description = "Identifiant de l'utilisateur") @PathVariable UUID id) {
-        activateUserUseCase.activate(new ActivateUserCommand(id.toString()));
-    }
 
     @Operation(
             summary = "Suspendre un utilisateur",

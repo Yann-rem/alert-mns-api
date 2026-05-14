@@ -1,8 +1,9 @@
 package com.alertmns.iam.infrastructure.adapter.incoming.web.auth;
 
-import com.alertmns.iam.application.ActivateUserService;
 import com.alertmns.iam.application.RegisterUserService;
 import com.alertmns.iam.application.SuspendUserService;
+import com.alertmns.iam.domain.port.outgoing.PasswordHasher;
+import com.alertmns.iam.domain.port.outgoing.UserRepository;
 import com.alertmns.iam.infrastructure.adapter.outgoing.persistence.UserJpaRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -197,7 +198,7 @@ abstract class AbstractAuthIntegrationTest {
      * {@code @PreAuthorize}.
      *
      * @param method   methode HTTP
-     * @param path     chemin (ex. {@code "/api/users/{id}/activate"})
+     * @param path     chemin (ex. {@code "/api/users/{id}/reactivate"})
      * @param jsonBody corps JSON, ou {@code null} si pas de body
      * @param cookies  bundle session + XSRF — si {@link AuthCookies#session()} est {@code null}, la requête part
      *                 anonyme ; si {@link AuthCookies#xsrfTokenValue()} est {@code null}, le header CSRF est omis
@@ -236,14 +237,16 @@ abstract class AbstractAuthIntegrationTest {
         @Bean
         TestUserFactory testUserFactory(
                 RegisterUserService registerUserService,
-                ActivateUserService activateUserService,
                 SuspendUserService suspendUserService,
+                UserRepository userRepository,
+                PasswordHasher passwordHasher,
                 UserJpaRepository userJpaRepository
         ) {
             return new TestUserFactory(
                     registerUserService,
-                    activateUserService,
                     suspendUserService,
+                    userRepository,
+                    passwordHasher,
                     userJpaRepository
             );
         }

@@ -163,19 +163,6 @@ public final class User extends AggregateRoot {
     }
 
     /**
-     * Active un compte en attente (PENDING → ACTIVE).
-     *
-     * <p>Émet {@link UserActivated}.</p>
-     *
-     * @throws IllegalStateException si le statut n'est pas {@link UserStatus#PENDING}
-     */
-    public void activate() {
-        requireStatus(UserStatus.PENDING, "activate");
-        status = UserStatus.ACTIVE;
-        registerEvent(new UserActivated(id));
-    }
-
-    /**
      * Active un compte en attente en définissant son mot de passe.
      *
      * <p>Remplace le mot de passe initial (généré à l'inscription) par celui choisi par l'utilisateur via le lien

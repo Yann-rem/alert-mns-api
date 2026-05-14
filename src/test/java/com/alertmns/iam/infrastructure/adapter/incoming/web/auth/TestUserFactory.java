@@ -1,12 +1,14 @@
 package com.alertmns.iam.infrastructure.adapter.incoming.web.auth;
 
-import com.alertmns.iam.application.ActivateUserService;
 import com.alertmns.iam.application.RegisterUserService;
 import com.alertmns.iam.application.SuspendUserService;
+import com.alertmns.iam.domain.model.HashedPassword;
+import com.alertmns.iam.domain.model.User;
 import com.alertmns.iam.domain.model.UserRole;
-import com.alertmns.iam.domain.port.incoming.command.ActivateUserCommand;
 import com.alertmns.iam.domain.port.incoming.command.RegisterUserCommand;
 import com.alertmns.iam.domain.port.incoming.command.SuspendUserCommand;
+import com.alertmns.iam.domain.port.outgoing.PasswordHasher;
+import com.alertmns.iam.domain.port.outgoing.UserRepository;
 import com.alertmns.iam.infrastructure.adapter.outgoing.persistence.UserJpaEntity;
 import com.alertmns.iam.infrastructure.adapter.outgoing.persistence.UserJpaRepository;
 import com.alertmns.shared.UserId;
@@ -30,19 +32,22 @@ public final class TestUserFactory {
     private static final String DEFAULT_LAST_NAME = "User";
 
     private final RegisterUserService registerUserService;
-    private final ActivateUserService activateUserService;
     private final SuspendUserService suspendUserService;
+    private final UserRepository userRepository;
+    private final PasswordHasher passwordHasher;
     private final UserJpaRepository userJpaRepository;
 
     public TestUserFactory(
             RegisterUserService registerUserService,
-            ActivateUserService activateUserService,
             SuspendUserService suspendUserService,
+            UserRepository userRepository,
+            PasswordHasher passwordHasher,
             UserJpaRepository userJpaRepository
     ) {
         this.registerUserService = registerUserService;
-        this.activateUserService = activateUserService;
         this.suspendUserService = suspendUserService;
+        this.userRepository = userRepository;
+        this.passwordHasher = passwordHasher;
         this.userJpaRepository = userJpaRepository;
     }
 
@@ -60,16 +65,23 @@ public final class TestUserFactory {
     }
 
     /**
-     * Crée un utilisateur en état ACTIVE (PENDING -> activate).
+     * Crée un utilisateur en état ACTIVE en simulant le redeem du magic-link (PENDING -> activateWithPassword).
+     *
+     * <p>Le mot de passe persisté final est le re-hash de {@code rawPassword}, de sorte que l'utilisateur peut
+     * s'authentifier avec celui-ci (bcrypt produit un hash différent à chaque appel mais {@code matches()} reste
+     * vrai).</p>
      */
     public UserId registerActive(String email, String rawPassword) {
         UserId id = registerPending(email, rawPassword);
-        activateUserService.activate(new ActivateUserCommand(id.value().toString()));
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalStateException("User just registered should exist in DB: " + id));
+        user.activateWithPassword(HashedPassword.of(passwordHasher.hash(rawPassword)));
+        userRepository.save(user);
         return id;
     }
 
     /**
-     * Crée un utilisateur en état SUSPENDED (PENDING -> activate -> suspend).
+     * Crée un utilisateur en état SUSPENDED (PENDING -> activateWithPassword -> suspend).
      */
     public UserId registerSuspended(String email, String rawPassword) {
         UserId id = registerActive(email, rawPassword);

@@ -51,7 +51,7 @@ public class DevSeedConfig {
                     HashedPassword.of(passwordEncoder.encode(DEV_PASSWORD)),
                     Profile.of(FirstName.of("Dev"), LastName.of("User"))
             );
-            user.activate();
+            user.activateWithPassword(HashedPassword.of(passwordEncoder.encode(DEV_PASSWORD)));
 
             userRepository.save(user);
             eventPublisher.publish(user.pullDomainEvents());
