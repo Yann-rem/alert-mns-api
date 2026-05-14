@@ -4,6 +4,7 @@ import com.alertmns.iam.domain.event.UserRegistered;
 import com.alertmns.iam.domain.exception.EmailAlreadyExistsException;
 import com.alertmns.iam.domain.model.Email;
 import com.alertmns.iam.domain.model.FirstName;
+import com.alertmns.iam.domain.model.HashedPassword;
 import com.alertmns.iam.domain.model.LastName;
 import com.alertmns.iam.domain.model.User;
 import com.alertmns.iam.domain.model.UserRole;
@@ -39,12 +40,12 @@ import static org.mockito.Mockito.when;
 class RegisterUserServiceTest {
 
     static final String EMAIL = "johndoe@example.com";
-    static final String RAW_PASSWORD = "changeme";
+    static final String RAW_PASSWORD = "changeme1234";
+    static final HashedPassword HASHED_PASSWORD = HashedPassword.of(
+            "$2a$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012345");
     static final String FIRST_NAME = "John";
     static final String LAST_NAME = "Doe";
     static final String ORGANISATION_ID = "550e8400-e29b-41d4-a716-446655440000";
-    static final String HASHED_PASSWORD =
-            "$2a$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012345";
 
     @Mock
     UserRepository repository;

@@ -1,5 +1,8 @@
 package com.alertmns.iam.domain.port.outgoing;
 
+import com.alertmns.iam.domain.model.HashedPassword;
+import com.alertmns.iam.domain.model.RawPassword;
+
 /**
  * Port sortant pour le hachage du mot de passe.
  *
@@ -13,5 +16,5 @@ public interface PasswordHasher {
      * @param rawPassword le mot de passe en clair
      * @return le hash du mot de passe
      */
-    String hash(String rawPassword);
+    HashedPassword hash(RawPassword rawPassword);
 }

@@ -6,6 +6,7 @@ import com.alertmns.iam.domain.model.FirstName;
 import com.alertmns.iam.domain.model.HashedPassword;
 import com.alertmns.iam.domain.model.LastName;
 import com.alertmns.iam.domain.model.Profile;
+import com.alertmns.iam.domain.model.RawPassword;
 import com.alertmns.iam.domain.model.User;
 import com.alertmns.iam.domain.port.incoming.RegisterUserUseCase;
 import com.alertmns.iam.domain.port.incoming.command.RegisterUserCommand;
@@ -42,6 +43,7 @@ public final class RegisterUserService implements RegisterUserUseCase {
     public UserId register(RegisterUserCommand command) {
         OrganisationId organisationId = OrganisationId.from(command.organisationId());
         Email email = Email.of(command.email());
+        RawPassword rawPassword = RawPassword.of(command.rawPassword());
         FirstName firstName = FirstName.of(command.firstName());
         LastName lastName = LastName.of(command.lastName());
         Profile profile = Profile.of(firstName, lastName);
@@ -50,7 +52,7 @@ public final class RegisterUserService implements RegisterUserUseCase {
             throw new EmailAlreadyExistsException(email);
         }
 
-        HashedPassword hashedPassword = HashedPassword.of(passwordHasher.hash(command.rawPassword()));
+        HashedPassword hashedPassword = passwordHasher.hash(rawPassword);
 
         User user = User.register(organisationId, email, hashedPassword, profile);
         repository.save(user);

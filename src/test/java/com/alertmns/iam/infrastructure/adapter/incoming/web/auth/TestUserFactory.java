@@ -2,7 +2,7 @@ package com.alertmns.iam.infrastructure.adapter.incoming.web.auth;
 
 import com.alertmns.iam.application.RegisterUserService;
 import com.alertmns.iam.application.SuspendUserService;
-import com.alertmns.iam.domain.model.HashedPassword;
+import com.alertmns.iam.domain.model.RawPassword;
 import com.alertmns.iam.domain.model.User;
 import com.alertmns.iam.domain.model.UserRole;
 import com.alertmns.iam.domain.port.incoming.command.RegisterUserCommand;
@@ -75,7 +75,7 @@ public final class TestUserFactory {
         UserId id = registerPending(email, rawPassword);
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalStateException("User just registered should exist in DB: " + id));
-        user.activateWithPassword(HashedPassword.of(passwordHasher.hash(rawPassword)));
+        user.activateWithPassword(passwordHasher.hash(RawPassword.of(rawPassword)));
         userRepository.save(user);
         return id;
     }

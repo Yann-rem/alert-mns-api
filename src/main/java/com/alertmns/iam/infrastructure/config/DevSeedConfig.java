@@ -29,7 +29,7 @@ public class DevSeedConfig {
     private static final Logger log = LoggerFactory.getLogger(DevSeedConfig.class);
 
     private static final String DEV_EMAIL = "dev@alertmns.local";
-    private static final String DEV_PASSWORD = "dev123456";
+    private static final String DEV_PASSWORD = "dev123456789";
     private static final String DEV_ORGANISATION_ID = "00000000-0000-0000-0000-000000000001";
 
     @Bean

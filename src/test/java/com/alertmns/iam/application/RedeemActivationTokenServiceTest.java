@@ -10,6 +10,7 @@ import com.alertmns.iam.domain.model.FirstName;
 import com.alertmns.iam.domain.model.HashedPassword;
 import com.alertmns.iam.domain.model.LastName;
 import com.alertmns.iam.domain.model.Profile;
+import com.alertmns.iam.domain.model.RawPassword;
 import com.alertmns.iam.domain.model.RawToken;
 import com.alertmns.iam.domain.model.TokenHash;
 import com.alertmns.iam.domain.model.User;
@@ -51,8 +52,8 @@ class RedeemActivationTokenServiceTest {
     static final String LAST_NAME = "Doe";
     static final String INITIAL_BCRYPT_HASH =
             "$2a$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012345";
-    static final String NEW_BCRYPT_HASH =
-            "$2a$10$zzzzzzzzzzzzzzzzzzzzzzZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ987654";
+    static final HashedPassword NEW_HASHED_PASSWORD = HashedPassword.of(
+            "$2a$10$zzzzzzzzzzzzzzzzzzzzzzZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ987654");
     static final String RAW_TOKEN = "any-raw-token-value";
     static final String NEW_RAW_PASSWORD = "my-chosen-password";
     static final Duration TTL = Duration.ofHours(48);
@@ -92,7 +93,7 @@ class RedeemActivationTokenServiceTest {
             TokenHash hash = TokenHash.of(RawToken.of(RAW_TOKEN));
             when(tokenRepository.findByTokenHash(hash)).thenReturn(Optional.of(validToken));
             when(userRepository.findById(pendingUser.id())).thenReturn(Optional.of(pendingUser));
-            when(passwordHasher.hash(NEW_RAW_PASSWORD)).thenReturn(NEW_BCRYPT_HASH);
+            when(passwordHasher.hash(RawPassword.of(NEW_RAW_PASSWORD))).thenReturn(NEW_HASHED_PASSWORD);
 
             service.redeem(new RedeemActivationTokenCommand(RAW_TOKEN, NEW_RAW_PASSWORD));
 
@@ -100,7 +101,7 @@ class RedeemActivationTokenServiceTest {
             verify(userRepository).save(userCaptor.capture());
             User saved = userCaptor.getValue();
             assertEquals(UserStatus.ACTIVE, saved.status());
-            assertEquals(HashedPassword.of(NEW_BCRYPT_HASH), saved.hashedPassword());
+            assertEquals(NEW_HASHED_PASSWORD, saved.hashedPassword());
         }
 
         @Test
@@ -109,7 +110,7 @@ class RedeemActivationTokenServiceTest {
             TokenHash hash = TokenHash.of(RawToken.of(RAW_TOKEN));
             when(tokenRepository.findByTokenHash(hash)).thenReturn(Optional.of(validToken));
             when(userRepository.findById(pendingUser.id())).thenReturn(Optional.of(pendingUser));
-            when(passwordHasher.hash(NEW_RAW_PASSWORD)).thenReturn(NEW_BCRYPT_HASH);
+            when(passwordHasher.hash(RawPassword.of(NEW_RAW_PASSWORD))).thenReturn(NEW_HASHED_PASSWORD);
 
             service.redeem(new RedeemActivationTokenCommand(RAW_TOKEN, NEW_RAW_PASSWORD));
 
@@ -124,11 +125,11 @@ class RedeemActivationTokenServiceTest {
             TokenHash hash = TokenHash.of(RawToken.of(RAW_TOKEN));
             when(tokenRepository.findByTokenHash(hash)).thenReturn(Optional.of(validToken));
             when(userRepository.findById(pendingUser.id())).thenReturn(Optional.of(pendingUser));
-            when(passwordHasher.hash(NEW_RAW_PASSWORD)).thenReturn(NEW_BCRYPT_HASH);
+            when(passwordHasher.hash(RawPassword.of(NEW_RAW_PASSWORD))).thenReturn(NEW_HASHED_PASSWORD);
 
             service.redeem(new RedeemActivationTokenCommand(RAW_TOKEN, NEW_RAW_PASSWORD));
 
-            verify(passwordHasher).hash(NEW_RAW_PASSWORD);
+            verify(passwordHasher).hash(RawPassword.of(NEW_RAW_PASSWORD));
         }
 
         @Test
@@ -196,7 +197,7 @@ class RedeemActivationTokenServiceTest {
             TokenHash hash = TokenHash.of(RawToken.of(RAW_TOKEN));
             when(tokenRepository.findByTokenHash(hash)).thenReturn(Optional.of(validToken));
             when(userRepository.findById(pendingUser.id())).thenReturn(Optional.of(active));
-            when(passwordHasher.hash(NEW_RAW_PASSWORD)).thenReturn(NEW_BCRYPT_HASH);
+            when(passwordHasher.hash(RawPassword.of(NEW_RAW_PASSWORD))).thenReturn(NEW_HASHED_PASSWORD);
 
             assertThrows(IllegalStateException.class,
                     () -> service.redeem(new RedeemActivationTokenCommand(RAW_TOKEN, NEW_RAW_PASSWORD)));

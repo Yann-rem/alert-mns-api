@@ -5,6 +5,7 @@ import com.alertmns.iam.domain.exception.ActivationTokenNotFoundException;
 import com.alertmns.iam.domain.exception.UserNotFoundException;
 import com.alertmns.iam.domain.model.ActivationToken;
 import com.alertmns.iam.domain.model.HashedPassword;
+import com.alertmns.iam.domain.model.RawPassword;
 import com.alertmns.iam.domain.model.RawToken;
 import com.alertmns.iam.domain.model.TokenHash;
 import com.alertmns.iam.domain.model.User;
@@ -53,6 +54,7 @@ public final class RedeemActivationTokenService implements RedeemActivationToken
     public void redeem(RedeemActivationTokenCommand command) {
         RawToken raw = RawToken.of(command.rawToken());
         TokenHash hash = TokenHash.of(raw);
+        RawPassword rawPassword = RawPassword.of(command.rawPassword());
 
         ActivationToken token = tokenRepository.findByTokenHash(hash).orElseThrow(
                 () -> new ActivationTokenNotFoundException(hash));
@@ -61,7 +63,7 @@ public final class RedeemActivationTokenService implements RedeemActivationToken
         User user = userRepository.findById(token.userId())
                 .orElseThrow(() -> new UserNotFoundException(token.userId()));
 
-        HashedPassword hashedPassword = HashedPassword.of(passwordHasher.hash(command.rawPassword()));
+        HashedPassword hashedPassword = passwordHasher.hash(rawPassword);
         user.activateWithPassword(hashedPassword);
         userRepository.save(user);
         tokenRepository.deleteByUserId(user.id());

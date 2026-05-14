@@ -1,5 +1,7 @@
 package com.alertmns.iam.infrastructure.adapter.outgoing.security;
 
+import com.alertmns.iam.domain.model.HashedPassword;
+import com.alertmns.iam.domain.model.RawPassword;
 import com.alertmns.iam.domain.port.outgoing.PasswordHasher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -12,7 +14,7 @@ public final class SpringSecurityPasswordHasher implements PasswordHasher {
     }
 
     @Override
-    public String hash(String rawPassword) {
-        return passwordEncoder.encode(rawPassword);
+    public HashedPassword hash(RawPassword rawPassword) {
+        return HashedPassword.of(passwordEncoder.encode(rawPassword.value()));
     }
 }
