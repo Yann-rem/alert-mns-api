@@ -8,11 +8,11 @@ import com.alertmns.iam.domain.model.ActivationTokenId;
 import com.alertmns.iam.domain.model.Email;
 import com.alertmns.iam.domain.model.FirstName;
 import com.alertmns.iam.domain.model.HashedPassword;
+import com.alertmns.iam.domain.model.HashedToken;
 import com.alertmns.iam.domain.model.LastName;
 import com.alertmns.iam.domain.model.Profile;
 import com.alertmns.iam.domain.model.RawPassword;
 import com.alertmns.iam.domain.model.RawToken;
-import com.alertmns.iam.domain.model.TokenHash;
 import com.alertmns.iam.domain.model.User;
 import com.alertmns.iam.domain.model.UserStatus;
 import com.alertmns.iam.domain.port.incoming.command.RedeemActivationTokenCommand;
@@ -90,8 +90,8 @@ class RedeemActivationTokenServiceTest {
         @Test
         @DisplayName("should activate the user and set the chosen password")
         void shouldActivateUserAndSetChosenPassword() {
-            TokenHash hash = TokenHash.of(RawToken.of(RAW_TOKEN));
-            when(tokenRepository.findByTokenHash(hash)).thenReturn(Optional.of(validToken));
+            HashedToken hash = HashedToken.of(RawToken.of(RAW_TOKEN));
+            when(tokenRepository.findByHash(hash)).thenReturn(Optional.of(validToken));
             when(userRepository.findById(pendingUser.id())).thenReturn(Optional.of(pendingUser));
             when(passwordHasher.hash(RawPassword.of(NEW_RAW_PASSWORD))).thenReturn(NEW_HASHED_PASSWORD);
 
@@ -107,8 +107,8 @@ class RedeemActivationTokenServiceTest {
         @Test
         @DisplayName("should delete the consumed token after saving the user")
         void shouldDeleteConsumedTokenAfterSavingUser() {
-            TokenHash hash = TokenHash.of(RawToken.of(RAW_TOKEN));
-            when(tokenRepository.findByTokenHash(hash)).thenReturn(Optional.of(validToken));
+            HashedToken hash = HashedToken.of(RawToken.of(RAW_TOKEN));
+            when(tokenRepository.findByHash(hash)).thenReturn(Optional.of(validToken));
             when(userRepository.findById(pendingUser.id())).thenReturn(Optional.of(pendingUser));
             when(passwordHasher.hash(RawPassword.of(NEW_RAW_PASSWORD))).thenReturn(NEW_HASHED_PASSWORD);
 
@@ -122,8 +122,8 @@ class RedeemActivationTokenServiceTest {
         @Test
         @DisplayName("should hash the raw password via the PasswordHasher port")
         void shouldHashRawPasswordViaPort() {
-            TokenHash hash = TokenHash.of(RawToken.of(RAW_TOKEN));
-            when(tokenRepository.findByTokenHash(hash)).thenReturn(Optional.of(validToken));
+            HashedToken hash = HashedToken.of(RawToken.of(RAW_TOKEN));
+            when(tokenRepository.findByHash(hash)).thenReturn(Optional.of(validToken));
             when(userRepository.findById(pendingUser.id())).thenReturn(Optional.of(pendingUser));
             when(passwordHasher.hash(RawPassword.of(NEW_RAW_PASSWORD))).thenReturn(NEW_HASHED_PASSWORD);
 
@@ -135,8 +135,8 @@ class RedeemActivationTokenServiceTest {
         @Test
         @DisplayName("should throw ActivationTokenNotFoundException when token is unknown")
         void shouldThrowWhenTokenNotFound() {
-            TokenHash hash = TokenHash.of(RawToken.of(RAW_TOKEN));
-            when(tokenRepository.findByTokenHash(hash)).thenReturn(Optional.empty());
+            HashedToken hash = HashedToken.of(RawToken.of(RAW_TOKEN));
+            when(tokenRepository.findByHash(hash)).thenReturn(Optional.empty());
 
             assertThrows(ActivationTokenNotFoundException.class,
                     () -> service.redeem(new RedeemActivationTokenCommand(RAW_TOKEN, NEW_RAW_PASSWORD)));
@@ -151,12 +151,12 @@ class RedeemActivationTokenServiceTest {
             ActivationToken expired = ActivationToken.reconstitute(
                     ActivationTokenId.generate(),
                     pendingUser.id(),
-                    TokenHash.of(RawToken.of(RAW_TOKEN)),
+                    HashedToken.of(RawToken.of(RAW_TOKEN)),
                     Instant.now().minus(Duration.ofHours(49)),
                     Instant.now().minus(Duration.ofHours(1))
             );
-            TokenHash hash = TokenHash.of(RawToken.of(RAW_TOKEN));
-            when(tokenRepository.findByTokenHash(hash)).thenReturn(Optional.of(expired));
+            HashedToken hash = HashedToken.of(RawToken.of(RAW_TOKEN));
+            when(tokenRepository.findByHash(hash)).thenReturn(Optional.of(expired));
 
             assertThrows(ActivationTokenExpiredException.class,
                     () -> service.redeem(new RedeemActivationTokenCommand(RAW_TOKEN, NEW_RAW_PASSWORD)));
@@ -168,8 +168,8 @@ class RedeemActivationTokenServiceTest {
         @Test
         @DisplayName("should throw UserNotFoundException when token references a missing user (orphan)")
         void shouldThrowWhenUserOrphan() {
-            TokenHash hash = TokenHash.of(RawToken.of(RAW_TOKEN));
-            when(tokenRepository.findByTokenHash(hash)).thenReturn(Optional.of(validToken));
+            HashedToken hash = HashedToken.of(RawToken.of(RAW_TOKEN));
+            when(tokenRepository.findByHash(hash)).thenReturn(Optional.of(validToken));
             when(userRepository.findById(pendingUser.id())).thenReturn(Optional.empty());
 
             assertThrows(UserNotFoundException.class,
@@ -194,8 +194,8 @@ class RedeemActivationTokenServiceTest {
                     false,
                     Instant.now()
             );
-            TokenHash hash = TokenHash.of(RawToken.of(RAW_TOKEN));
-            when(tokenRepository.findByTokenHash(hash)).thenReturn(Optional.of(validToken));
+            HashedToken hash = HashedToken.of(RawToken.of(RAW_TOKEN));
+            when(tokenRepository.findByHash(hash)).thenReturn(Optional.of(validToken));
             when(userRepository.findById(pendingUser.id())).thenReturn(Optional.of(active));
             when(passwordHasher.hash(RawPassword.of(NEW_RAW_PASSWORD))).thenReturn(NEW_HASHED_PASSWORD);
 

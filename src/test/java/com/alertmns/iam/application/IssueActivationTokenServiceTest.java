@@ -5,10 +5,10 @@ import com.alertmns.iam.domain.model.ActivationToken;
 import com.alertmns.iam.domain.model.Email;
 import com.alertmns.iam.domain.model.FirstName;
 import com.alertmns.iam.domain.model.HashedPassword;
+import com.alertmns.iam.domain.model.HashedToken;
 import com.alertmns.iam.domain.model.LastName;
 import com.alertmns.iam.domain.model.Profile;
 import com.alertmns.iam.domain.model.RawToken;
-import com.alertmns.iam.domain.model.TokenHash;
 import com.alertmns.iam.domain.model.User;
 import com.alertmns.iam.domain.port.incoming.command.IssueActivationTokenCommand;
 import com.alertmns.iam.domain.port.outgoing.ActivationTokenRepository;
@@ -139,7 +139,7 @@ class IssueActivationTokenServiceTest {
 
         @Test
         @DisplayName("the saved token hash should match the raw token in the magic link")
-        void savedTokenHashShouldMatchRawTokenInLink() {
+        void savedHashShouldMatchRawTokenInLink() {
             when(userRepository.findById(user.id())).thenReturn(Optional.of(user));
 
             service.issue(new IssueActivationTokenCommand(user.id().value().toString()));
@@ -150,8 +150,8 @@ class IssueActivationTokenServiceTest {
             verify(tokenRepository).save(tokenCaptor.capture());
 
             String rawTokenValue = linkCaptor.getValue().getQuery().substring("token=".length());
-            TokenHash expected = TokenHash.of(RawToken.of(rawTokenValue));
-            assertEquals(expected, tokenCaptor.getValue().tokenHash());
+            HashedToken expected = HashedToken.of(RawToken.of(rawTokenValue));
+            assertEquals(expected, tokenCaptor.getValue().hash());
         }
 
         @Test

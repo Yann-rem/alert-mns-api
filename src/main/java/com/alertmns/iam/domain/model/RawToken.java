@@ -6,7 +6,7 @@ import java.util.Objects;
  * Value Object représentant un jeton d'activation brut (non haché).
  *
  * <p>Le token est généré aléatoirement côté application puis transmis à l'utilisateur via le lien magique. Il n'est
- * jamais persisté : seul son hash ({@link TokenHash}) est stocké.</p>
+ * jamais persisté : seul son hash ({@link HashedToken}) est stocké.</p>
  */
 public record RawToken(String value) {
 

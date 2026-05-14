@@ -1,7 +1,7 @@
 package com.alertmns.iam.domain.port.outgoing;
 
 import com.alertmns.iam.domain.model.ActivationToken;
-import com.alertmns.iam.domain.model.TokenHash;
+import com.alertmns.iam.domain.model.HashedToken;
 import com.alertmns.shared.UserId;
 
 import java.util.Optional;
@@ -24,7 +24,7 @@ public interface ActivationTokenRepository {
      * @param hash le hash recherché
      * @return le token trouvé, ou vide
      */
-    Optional<ActivationToken> findByTokenHash(TokenHash hash);
+    Optional<ActivationToken> findByHash(HashedToken hash);
 
     /**
      * Supprime tous les tokens associés à un utilisateur.

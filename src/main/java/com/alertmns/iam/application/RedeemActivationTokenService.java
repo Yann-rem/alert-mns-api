@@ -5,9 +5,9 @@ import com.alertmns.iam.domain.exception.ActivationTokenNotFoundException;
 import com.alertmns.iam.domain.exception.UserNotFoundException;
 import com.alertmns.iam.domain.model.ActivationToken;
 import com.alertmns.iam.domain.model.HashedPassword;
+import com.alertmns.iam.domain.model.HashedToken;
 import com.alertmns.iam.domain.model.RawPassword;
 import com.alertmns.iam.domain.model.RawToken;
-import com.alertmns.iam.domain.model.TokenHash;
 import com.alertmns.iam.domain.model.User;
 import com.alertmns.iam.domain.port.incoming.RedeemActivationTokenUseCase;
 import com.alertmns.iam.domain.port.incoming.command.RedeemActivationTokenCommand;
@@ -53,10 +53,10 @@ public final class RedeemActivationTokenService implements RedeemActivationToken
     @Override
     public void redeem(RedeemActivationTokenCommand command) {
         RawToken raw = RawToken.of(command.rawToken());
-        TokenHash hash = TokenHash.of(raw);
+        HashedToken hash = HashedToken.of(raw);
         RawPassword rawPassword = RawPassword.of(command.rawPassword());
 
-        ActivationToken token = tokenRepository.findByTokenHash(hash).orElseThrow(
+        ActivationToken token = tokenRepository.findByHash(hash).orElseThrow(
                 () -> new ActivationTokenNotFoundException(hash));
         token.verifyUsable();
 

@@ -32,7 +32,7 @@ class ActivationTokenTest {
         void shouldIssueATokenWithHashedRawToken() {
             ActivationToken.IssuedToken issued = ActivationToken.issue(USER_ID, RAW_TOKEN, TTL);
 
-            assertEquals(TokenHash.of(RAW_TOKEN), issued.activationToken().tokenHash());
+            assertEquals(HashedToken.of(RAW_TOKEN), issued.activationToken().hash());
         }
 
         @Test
@@ -89,7 +89,7 @@ class ActivationTokenTest {
             ActivationToken token = ActivationToken.reconstitute(
                     ActivationTokenId.generate(),
                     USER_ID,
-                    TokenHash.of(RAW_TOKEN),
+                    HashedToken.of(RAW_TOKEN),
                     Instant.now().minus(Duration.ofHours(49)),
                     Instant.now().minus(Duration.ofHours(1))
             );
@@ -103,7 +103,7 @@ class ActivationTokenTest {
             ActivationToken token = ActivationToken.reconstitute(
                     ActivationTokenId.generate(),
                     USER_ID,
-                    TokenHash.of(RAW_TOKEN),
+                    HashedToken.of(RAW_TOKEN),
                     Instant.now().minus(Duration.ofHours(49)),
                     Instant.now().minus(Duration.ofHours(1))
             );

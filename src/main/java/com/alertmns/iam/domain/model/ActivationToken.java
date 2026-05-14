@@ -14,27 +14,27 @@ import java.util.Objects;
  * <p>Émis par le BC IAM lors de l'inscription, transmis à l'utilisateur via un lien magique, puis consommé pour la
  * transition {@code PENDING → ACTIVE} de l'utilisateur cible.</p>
  *
- * <p>Le raw token n'est jamais persisté : seul son {@link TokenHash} est stocké. Le token est supprimé après
+ * <p>Le raw token n'est jamais persisté : seul son {@link HashedToken} est stocké. Le token est supprimé après
  * consommation (pas de soft-delete).</p>
  */
 public final class ActivationToken extends AggregateRoot {
 
     private final ActivationTokenId id;
     private final UserId userId;
-    private final TokenHash tokenHash;
+    private final HashedToken hash;
     private final Instant createdAt;
     private final Instant expiresAt;
 
     private ActivationToken(
             ActivationTokenId id,
             UserId userId,
-            TokenHash tokenHash,
+            HashedToken hash,
             Instant createdAt,
             Instant expiresAt
     ) {
         this.id = Objects.requireNonNull(id, "id must not be null");
         this.userId = Objects.requireNonNull(userId, "userId must not be null");
-        this.tokenHash = Objects.requireNonNull(tokenHash, "tokenHash must not be null");
+        this.hash = Objects.requireNonNull(hash, "hash must not be null");
         this.createdAt = Objects.requireNonNull(createdAt, "createdAt must not be null");
         this.expiresAt = Objects.requireNonNull(expiresAt, "expiresAt must not be null");
     }
@@ -55,7 +55,7 @@ public final class ActivationToken extends AggregateRoot {
         ActivationToken activationToken = new ActivationToken(
                 ActivationTokenId.generate(),
                 userId,
-                TokenHash.of(rawToken),
+                HashedToken.of(rawToken),
                 now,
                 now.plus(ttl)
         );
@@ -71,11 +71,11 @@ public final class ActivationToken extends AggregateRoot {
     public static ActivationToken reconstitute(
             ActivationTokenId id,
             UserId userId,
-            TokenHash tokenHash,
+            HashedToken hash,
             Instant createdAt,
             Instant expiresAt
     ) {
-        return new ActivationToken(id, userId, tokenHash, createdAt, expiresAt);
+        return new ActivationToken(id, userId, hash, createdAt, expiresAt);
     }
 
     /**
@@ -106,8 +106,8 @@ public final class ActivationToken extends AggregateRoot {
         return userId;
     }
 
-    public TokenHash tokenHash() {
-        return tokenHash;
+    public HashedToken hash() {
+        return hash;
     }
 
     public Instant createdAt() {

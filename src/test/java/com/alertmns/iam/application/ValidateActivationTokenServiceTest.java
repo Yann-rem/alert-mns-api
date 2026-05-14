@@ -8,10 +8,10 @@ import com.alertmns.iam.domain.model.ActivationTokenId;
 import com.alertmns.iam.domain.model.Email;
 import com.alertmns.iam.domain.model.FirstName;
 import com.alertmns.iam.domain.model.HashedPassword;
+import com.alertmns.iam.domain.model.HashedToken;
 import com.alertmns.iam.domain.model.LastName;
 import com.alertmns.iam.domain.model.Profile;
 import com.alertmns.iam.domain.model.RawToken;
-import com.alertmns.iam.domain.model.TokenHash;
 import com.alertmns.iam.domain.model.User;
 import com.alertmns.iam.domain.port.incoming.query.ValidateActivationTokenQuery;
 import com.alertmns.iam.domain.port.incoming.result.ActivationTokenContext;
@@ -79,8 +79,8 @@ class ValidateActivationTokenServiceTest {
         @Test
         @DisplayName("should return context with user's email, firstName and lastName")
         void shouldReturnContextWithUserIdentity() {
-            TokenHash hash = TokenHash.of(RawToken.of(RAW_TOKEN));
-            when(tokenRepository.findByTokenHash(hash)).thenReturn(Optional.of(validToken));
+            HashedToken hash = HashedToken.of(RawToken.of(RAW_TOKEN));
+            when(tokenRepository.findByHash(hash)).thenReturn(Optional.of(validToken));
             when(userRepository.findById(user.id())).thenReturn(Optional.of(user));
 
             ActivationTokenContext context = service.validate(new ValidateActivationTokenQuery(RAW_TOKEN));
@@ -93,20 +93,20 @@ class ValidateActivationTokenServiceTest {
         @Test
         @DisplayName("should look up the token by SHA-256 hash of the raw token")
         void shouldLookUpTokenByHash() {
-            TokenHash expectedHash = TokenHash.of(RawToken.of(RAW_TOKEN));
-            when(tokenRepository.findByTokenHash(expectedHash)).thenReturn(Optional.of(validToken));
+            HashedToken expectedHash = HashedToken.of(RawToken.of(RAW_TOKEN));
+            when(tokenRepository.findByHash(expectedHash)).thenReturn(Optional.of(validToken));
             when(userRepository.findById(user.id())).thenReturn(Optional.of(user));
 
             service.validate(new ValidateActivationTokenQuery(RAW_TOKEN));
 
-            verify(tokenRepository).findByTokenHash(expectedHash);
+            verify(tokenRepository).findByHash(expectedHash);
         }
 
         @Test
         @DisplayName("should not mutate any aggregate (read-only)")
         void shouldNotMutateAnyAggregate() {
-            TokenHash hash = TokenHash.of(RawToken.of(RAW_TOKEN));
-            when(tokenRepository.findByTokenHash(hash)).thenReturn(Optional.of(validToken));
+            HashedToken hash = HashedToken.of(RawToken.of(RAW_TOKEN));
+            when(tokenRepository.findByHash(hash)).thenReturn(Optional.of(validToken));
             when(userRepository.findById(user.id())).thenReturn(Optional.of(user));
 
             service.validate(new ValidateActivationTokenQuery(RAW_TOKEN));
@@ -119,8 +119,8 @@ class ValidateActivationTokenServiceTest {
         @Test
         @DisplayName("should throw ActivationTokenNotFoundException when no token matches the hash")
         void shouldThrowWhenTokenNotFound() {
-            TokenHash hash = TokenHash.of(RawToken.of(RAW_TOKEN));
-            when(tokenRepository.findByTokenHash(hash)).thenReturn(Optional.empty());
+            HashedToken hash = HashedToken.of(RawToken.of(RAW_TOKEN));
+            when(tokenRepository.findByHash(hash)).thenReturn(Optional.empty());
 
             assertThrows(ActivationTokenNotFoundException.class,
                     () -> service.validate(new ValidateActivationTokenQuery(RAW_TOKEN)));
@@ -134,12 +134,12 @@ class ValidateActivationTokenServiceTest {
             ActivationToken expired = ActivationToken.reconstitute(
                     ActivationTokenId.generate(),
                     user.id(),
-                    TokenHash.of(RawToken.of(RAW_TOKEN)),
+                    HashedToken.of(RawToken.of(RAW_TOKEN)),
                     Instant.now().minus(Duration.ofHours(49)),
                     Instant.now().minus(Duration.ofHours(1))
             );
-            TokenHash hash = TokenHash.of(RawToken.of(RAW_TOKEN));
-            when(tokenRepository.findByTokenHash(hash)).thenReturn(Optional.of(expired));
+            HashedToken hash = HashedToken.of(RawToken.of(RAW_TOKEN));
+            when(tokenRepository.findByHash(hash)).thenReturn(Optional.of(expired));
 
             assertThrows(ActivationTokenExpiredException.class,
                     () -> service.validate(new ValidateActivationTokenQuery(RAW_TOKEN)));
@@ -150,8 +150,8 @@ class ValidateActivationTokenServiceTest {
         @Test
         @DisplayName("should throw UserNotFoundException when token references a missing user (orphan)")
         void shouldThrowWhenUserOrphan() {
-            TokenHash hash = TokenHash.of(RawToken.of(RAW_TOKEN));
-            when(tokenRepository.findByTokenHash(hash)).thenReturn(Optional.of(validToken));
+            HashedToken hash = HashedToken.of(RawToken.of(RAW_TOKEN));
+            when(tokenRepository.findByHash(hash)).thenReturn(Optional.of(validToken));
             when(userRepository.findById(user.id())).thenReturn(Optional.empty());
 
             assertThrows(UserNotFoundException.class,

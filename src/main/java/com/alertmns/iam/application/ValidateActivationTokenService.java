@@ -4,8 +4,8 @@ import com.alertmns.iam.domain.exception.ActivationTokenExpiredException;
 import com.alertmns.iam.domain.exception.ActivationTokenNotFoundException;
 import com.alertmns.iam.domain.exception.UserNotFoundException;
 import com.alertmns.iam.domain.model.ActivationToken;
+import com.alertmns.iam.domain.model.HashedToken;
 import com.alertmns.iam.domain.model.RawToken;
-import com.alertmns.iam.domain.model.TokenHash;
 import com.alertmns.iam.domain.model.User;
 import com.alertmns.iam.domain.port.incoming.ValidateActivationTokenUseCase;
 import com.alertmns.iam.domain.port.incoming.query.ValidateActivationTokenQuery;
@@ -43,9 +43,9 @@ public final class ValidateActivationTokenService implements ValidateActivationT
     @Override
     public ActivationTokenContext validate(ValidateActivationTokenQuery query) {
         RawToken raw = RawToken.of(query.rawToken());
-        TokenHash hash = TokenHash.of(raw);
+        HashedToken hash = HashedToken.of(raw);
 
-        ActivationToken token = tokenRepository.findByTokenHash(hash).orElseThrow(
+        ActivationToken token = tokenRepository.findByHash(hash).orElseThrow(
                 () -> new ActivationTokenNotFoundException(hash));
         token.verifyUsable();
 
