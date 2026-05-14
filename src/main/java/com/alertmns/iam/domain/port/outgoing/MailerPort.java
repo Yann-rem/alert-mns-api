@@ -1,0 +1,21 @@
+package com.alertmns.iam.domain.port.outgoing;
+
+import com.alertmns.iam.domain.model.Email;
+import com.alertmns.iam.domain.model.FirstName;
+
+import java.net.URI;
+
+/**
+ * Port sortant pour l'envoi de courriels transactionnels liés à l'identité.
+ */
+public interface MailerPort {
+
+    /**
+     * Envoie un e-mail d'activation contenant le lien magique à usage unique.
+     *
+     * @param recipient      l'adresse e-mail du destinataire
+     * @param firstName      le prénom du destinataire (pour personnaliser le contenu)
+     * @param activationLink le lien magique complet à inclure dans le corps du mail
+     */
+    void sendActivationEmail(Email recipient, FirstName firstName, URI activationLink);
+}
