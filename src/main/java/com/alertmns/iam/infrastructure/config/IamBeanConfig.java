@@ -1,19 +1,28 @@
 package com.alertmns.iam.infrastructure.config;
 
+import com.alertmns.iam.application.IssueActivationTokenService;
 import com.alertmns.iam.application.ReactivateUserService;
+import com.alertmns.iam.application.RedeemActivationTokenService;
 import com.alertmns.iam.application.RegisterUserService;
 import com.alertmns.iam.application.SuspendUserService;
 import com.alertmns.iam.application.UpdateAbsenceMessageService;
 import com.alertmns.iam.application.UpdateProfileService;
+import com.alertmns.iam.application.ValidateActivationTokenService;
+import com.alertmns.iam.domain.port.outgoing.ActivationTokenRepository;
+import com.alertmns.iam.domain.port.outgoing.MailerPort;
 import com.alertmns.iam.domain.port.outgoing.PasswordHasher;
 import com.alertmns.iam.domain.port.outgoing.UserRepository;
 import com.alertmns.iam.infrastructure.adapter.incoming.web.security.DomainUserDetailsService;
 import com.alertmns.iam.infrastructure.adapter.incoming.web.security.SpringSecurityCurrentUserAdapter;
+import com.alertmns.iam.infrastructure.adapter.outgoing.mailer.LoggingMailerAdapter;
+import com.alertmns.iam.infrastructure.adapter.outgoing.persistence.ActivationTokenJpaRepository;
+import com.alertmns.iam.infrastructure.adapter.outgoing.persistence.ActivationTokenPersistenceAdapter;
 import com.alertmns.iam.infrastructure.adapter.outgoing.persistence.UserJpaRepository;
 import com.alertmns.iam.infrastructure.adapter.outgoing.persistence.UserPersistenceAdapter;
 import com.alertmns.iam.infrastructure.adapter.outgoing.security.SpringSecurityPasswordHasher;
 import com.alertmns.shared.CurrentUserPort;
 import com.alertmns.shared.EventPublisher;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,6 +33,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
+
+import java.net.URI;
+import java.time.Duration;
 
 @Configuration
 public class IamBeanConfig {
@@ -43,6 +55,16 @@ public class IamBeanConfig {
     @Bean
     public UserRepository userRepository(UserJpaRepository jpaRepository) {
         return new UserPersistenceAdapter(jpaRepository);
+    }
+
+    @Bean
+    public ActivationTokenRepository activationTokenRepository(ActivationTokenJpaRepository jpaRepository) {
+        return new ActivationTokenPersistenceAdapter(jpaRepository);
+    }
+
+    @Bean
+    public MailerPort mailerPort() {
+        return new LoggingMailerAdapter();
     }
 
     @Bean
@@ -81,16 +103,6 @@ public class IamBeanConfig {
     // --- Services ---
 
     @Bean
-    public SuspendUserService suspendUserServiceUserService(UserRepository repository, EventPublisher publisher) {
-        return new SuspendUserService(repository, publisher);
-    }
-
-    @Bean
-    public ReactivateUserService reactivateUserService(UserRepository repository, EventPublisher publisher) {
-        return new ReactivateUserService(repository, publisher);
-    }
-
-    @Bean
     public RegisterUserService registerUserService(
             UserRepository repository,
             PasswordHasher passwordHasher,
@@ -100,12 +112,50 @@ public class IamBeanConfig {
     }
 
     @Bean
-    public UpdateAbsenceMessageService updateAbsenceMessageService(UserRepository repository, EventPublisher publisher) {
-        return new UpdateAbsenceMessageService(repository, publisher);
+    public IssueActivationTokenService issueActivationTokenService(
+            ActivationTokenRepository tokenRepository,
+            UserRepository userRepository,
+            MailerPort mailer,
+            @Value("${alertmns.iam.activation.ttl}") Duration ttl,
+            @Value("${alertmns.iam.activation.frontend-base-url}") URI frontendBaseUrl
+    ) {
+        return new IssueActivationTokenService(tokenRepository, userRepository, mailer, ttl, frontendBaseUrl);
+    }
+
+    @Bean
+    public ValidateActivationTokenService validateActivationTokenService(
+            ActivationTokenRepository tokenRepository,
+            UserRepository userRepository
+    ) {
+        return new ValidateActivationTokenService(tokenRepository, userRepository);
+    }
+
+    @Bean
+    public RedeemActivationTokenService redeemActivationTokenService(
+            ActivationTokenRepository tokenRepository,
+            UserRepository userRepository,
+            PasswordHasher passwordHasher
+    ) {
+        return new RedeemActivationTokenService(tokenRepository, userRepository, passwordHasher);
     }
 
     @Bean
     public UpdateProfileService updateProfileService(UserRepository repository, EventPublisher publisher) {
         return new UpdateProfileService(repository, publisher);
+    }
+
+    @Bean
+    public UpdateAbsenceMessageService updateAbsenceMessageService(UserRepository repository, EventPublisher publisher) {
+        return new UpdateAbsenceMessageService(repository, publisher);
+    }
+
+    @Bean
+    public SuspendUserService suspendUserService(UserRepository repository, EventPublisher publisher) {
+        return new SuspendUserService(repository, publisher);
+    }
+
+    @Bean
+    public ReactivateUserService reactivateUserService(UserRepository repository, EventPublisher publisher) {
+        return new ReactivateUserService(repository, publisher);
     }
 }
