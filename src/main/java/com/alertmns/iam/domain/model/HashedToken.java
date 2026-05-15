@@ -41,4 +41,15 @@ public record HashedToken(String hex) {
             throw new IllegalStateException("hash algorithm " + HASH_ALGORITHM + " must be available on every JVM", e);
         }
     }
+
+    /**
+     * Crée un hash SHA-256 à partir d'une valeur hex déjà calculée (typiquement lue depuis la persistence).
+     *
+     * @param hex la valeur hex (64 caractères) du hash
+     * @return le hash validé
+     * @throws IllegalArgumentException si la valeur ne fait pas exactement 64 caractères
+     */
+    public static HashedToken of(String hex) {
+        return new HashedToken(hex);
+    }
 }

@@ -53,7 +53,8 @@ class HashedTokenTest {
         @Test
         @DisplayName("should reject null raw token")
         void shouldRejectNullRawToken() {
-            assertThrows(NullPointerException.class, () -> HashedToken.of(null));
+            RawToken raw = null;
+            assertThrows(NullPointerException.class, () -> HashedToken.of(raw));
         }
     }
 
@@ -65,29 +66,50 @@ class HashedTokenTest {
         @DisplayName("should reject null hex")
         void shouldRejectNullHex() {
             String hex = null;
-            assertThrows(NullPointerException.class, () -> new HashedToken(hex));
+            assertThrows(NullPointerException.class, () -> HashedToken.of(hex));
         }
 
         @Test
         @DisplayName("should reject hex shorter than 64 characters")
         void shouldRejectHexShorterThan64() {
             String hex = "a".repeat(SHA256_HEX_LENGTH - 1);
-            assertThrows(IllegalArgumentException.class, () -> new HashedToken(hex));
+            assertThrows(IllegalArgumentException.class, () -> HashedToken.of(hex));
         }
 
         @Test
         @DisplayName("should reject hex longer than 64 characters")
         void shouldRejectHexLongerThan64() {
             String hex = "a".repeat(SHA256_HEX_LENGTH + 1);
-            assertThrows(IllegalArgumentException.class, () -> new HashedToken(hex));
+            assertThrows(IllegalArgumentException.class, () -> HashedToken.of(hex));
         }
 
         @Test
         @DisplayName("should accept hex of exactly 64 characters")
         void shouldAcceptHexOf64Chars() {
             String hex = "a".repeat(SHA256_HEX_LENGTH);
-            HashedToken hashedToken = new HashedToken(hex);
+            HashedToken hashedToken = HashedToken.of(hex);
             assertEquals(hex, hashedToken.hex());
+        }
+    }
+
+    @Nested
+    @DisplayName("Wrap from hex")
+    class WrapFromHex {
+
+        @Test
+        @DisplayName("should wrap a valid hex into a HashedToken")
+        void shouldWrapValidHex() {
+            String hex = HashedToken.of(RawToken.of("any-token")).hex();
+            HashedToken wrapped = HashedToken.of(hex);
+            assertEquals(hex, wrapped.hex());
+        }
+
+        @Test
+        @DisplayName("wrapped hex should equal the original computed hash")
+        void wrappedHexShouldEqualOriginalComputedHash() {
+            HashedToken computed = HashedToken.of(RawToken.of("any-token"));
+            HashedToken wrapped = HashedToken.of(computed.hex());
+            assertEquals(computed, wrapped);
         }
     }
 }
