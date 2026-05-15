@@ -1,5 +1,7 @@
 package com.alertmns.iam.infrastructure.adapter.incoming.web.exception;
 
+import com.alertmns.iam.domain.exception.ActivationTokenExpiredException;
+import com.alertmns.iam.domain.exception.ActivationTokenNotFoundException;
 import com.alertmns.iam.domain.exception.BannedUserCannotBeReactivatedException;
 import com.alertmns.iam.domain.exception.EmailAlreadyExistsException;
 import com.alertmns.iam.domain.exception.UserNotFoundException;
@@ -22,6 +24,16 @@ public class IamExceptionHandler {
     @ExceptionHandler(UserNotFoundException.class)
     public ProblemDetail handleUserNotFound(UserNotFoundException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(ActivationTokenNotFoundException.class)
+    public ProblemDetail handleActivationTokenNotFound(ActivationTokenNotFoundException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.GONE, "Activation link is no longer valid");
+    }
+
+    @ExceptionHandler(ActivationTokenExpiredException.class)
+    public ProblemDetail handleActivationTokenExpired(ActivationTokenExpiredException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.GONE, "Activation link is no longer valid");
     }
 
     @ExceptionHandler(BannedUserCannotBeReactivatedException.class)
