@@ -2,6 +2,7 @@ package com.alertmns.iam.infrastructure.adapter.incoming.web.auth;
 
 import com.alertmns.iam.domain.model.HashedToken;
 import com.alertmns.iam.domain.model.RawToken;
+import com.alertmns.iam.domain.model.UserStatus;
 import com.alertmns.iam.domain.port.incoming.IssueActivationTokenUseCase;
 import com.alertmns.iam.domain.port.incoming.command.IssueActivationTokenCommand;
 import com.alertmns.iam.domain.port.outgoing.MailerPort;
@@ -9,7 +10,6 @@ import com.alertmns.iam.infrastructure.adapter.outgoing.persistence.ActivationTo
 import com.alertmns.iam.infrastructure.adapter.outgoing.persistence.ActivationTokenJpaRepository;
 import com.alertmns.iam.infrastructure.adapter.outgoing.persistence.UserJpaEntity;
 import com.alertmns.iam.infrastructure.adapter.outgoing.persistence.UserJpaRepository;
-import com.alertmns.iam.domain.model.UserStatus;
 import com.alertmns.shared.UserId;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -63,10 +63,9 @@ class MagicLinkActivationIntegrationTest extends AbstractAuthIntegrationTest {
     @Test
     @DisplayName("GET /validate with valid token returns 200 and user context")
     void shouldReturnUserContextWhenTokenIsValid() {
-        UserId userId = userFactory.registerPending(EMAIL, DUMMY_PASSWORD);
-        String rawToken = issueTokenAndCaptureRawToken(userId);
+        PendingUser pending = registerPendingAndCaptureRawToken(EMAIL, DUMMY_PASSWORD);
 
-        ResponseEntity<String> response = validate(rawToken);
+        ResponseEntity<String> response = validate(pending.rawToken());
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody())
@@ -109,12 +108,11 @@ class MagicLinkActivationIntegrationTest extends AbstractAuthIntegrationTest {
     @Test
     @DisplayName("GET /validate is reachable anonymously (no session, no CSRF)")
     void shouldAllowAnonymousAccessToValidate() {
-        UserId userId = userFactory.registerPending(EMAIL, DUMMY_PASSWORD);
-        String rawToken = issueTokenAndCaptureRawToken(userId);
+        PendingUser pending = registerPendingAndCaptureRawToken(EMAIL, DUMMY_PASSWORD);
 
         // No cookies, no headers — fully anonymous client
         ResponseEntity<String> response = restTemplate.getForEntity(
-                "/api/auth/magic-link/validate?token={token}", String.class, rawToken);
+                "/api/auth/magic-link/validate?token={token}", String.class, pending.rawToken());
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
@@ -124,13 +122,12 @@ class MagicLinkActivationIntegrationTest extends AbstractAuthIntegrationTest {
     @Test
     @DisplayName("POST /redeem with valid token activates the user")
     void shouldActivateUserWhenRedeemingValidToken() {
-        UserId userId = userFactory.registerPending(EMAIL, DUMMY_PASSWORD);
-        String rawToken = issueTokenAndCaptureRawToken(userId);
+        PendingUser pending = registerPendingAndCaptureRawToken(EMAIL, DUMMY_PASSWORD);
 
-        ResponseEntity<String> response = redeem(rawToken, CHOSEN_PASSWORD);
+        ResponseEntity<String> response = redeem(pending.rawToken(), CHOSEN_PASSWORD);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
-        UserJpaEntity savedUser = userJpaRepository.findById(userId.value()).orElseThrow();
+        UserJpaEntity savedUser = userJpaRepository.findById(pending.userId().value()).orElseThrow();
         assertThat(savedUser.getStatus()).isEqualTo(UserStatus.ACTIVE);
         assertThat(activationTokenJpaRepository.findAll()).isEmpty();
     }
@@ -163,11 +160,10 @@ class MagicLinkActivationIntegrationTest extends AbstractAuthIntegrationTest {
     @Test
     @DisplayName("POST /redeem is reachable anonymously without CSRF token")
     void shouldAllowAnonymousRedeemWithoutCsrf() {
-        UserId userId = userFactory.registerPending(EMAIL, DUMMY_PASSWORD);
-        String rawToken = issueTokenAndCaptureRawToken(userId);
+        PendingUser pending = registerPendingAndCaptureRawToken(EMAIL, DUMMY_PASSWORD);
 
         // No cookies, no X-XSRF-TOKEN header — atteste l'exemption CSRF
-        ResponseEntity<String> response = redeem(rawToken, CHOSEN_PASSWORD);
+        ResponseEntity<String> response = redeem(pending.rawToken(), CHOSEN_PASSWORD);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
     }
@@ -177,9 +173,9 @@ class MagicLinkActivationIntegrationTest extends AbstractAuthIntegrationTest {
     @Test
     @DisplayName("Re-issuing invalidates the previous token")
     void shouldInvalidatePreviousTokenWhenReissued() {
-        UserId userId = userFactory.registerPending(EMAIL, DUMMY_PASSWORD);
-        String firstRawToken = issueTokenAndCaptureRawToken(userId);
-        String secondRawToken = issueTokenAndCaptureRawToken(userId);
+        PendingUser pending = registerPendingAndCaptureRawToken(EMAIL, DUMMY_PASSWORD);
+        String firstRawToken = pending.rawToken();
+        String secondRawToken = issueAdditionalTokenAndCaptureRawToken(pending.userId());
 
         assertThat(firstRawToken).isNotEqualTo(secondRawToken);
 
@@ -193,20 +189,19 @@ class MagicLinkActivationIntegrationTest extends AbstractAuthIntegrationTest {
     // --- End-to-end ---
 
     @Test
-    @DisplayName("End-to-end: register → issue → validate → redeem → login")
+    @DisplayName("End-to-end: register (auto-issue) → validate → redeem → login")
     void endToEndActivationFlow() {
-        UserId userId = userFactory.registerPending(EMAIL, DUMMY_PASSWORD);
-        String rawToken = issueTokenAndCaptureRawToken(userId);
+        PendingUser pending = registerPendingAndCaptureRawToken(EMAIL, DUMMY_PASSWORD);
 
-        ResponseEntity<String> validateResponse = validate(rawToken);
+        ResponseEntity<String> validateResponse = validate(pending.rawToken());
         assertThat(validateResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
 
-        ResponseEntity<String> redeemResponse = redeem(rawToken, CHOSEN_PASSWORD);
+        ResponseEntity<String> redeemResponse = redeem(pending.rawToken(), CHOSEN_PASSWORD);
         assertThat(redeemResponse.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
 
         // Token deleted, user ACTIVE
         assertThat(activationTokenJpaRepository.findAll()).isEmpty();
-        UserJpaEntity activated = userJpaRepository.findById(userId.value()).orElseThrow();
+        UserJpaEntity activated = userJpaRepository.findById(pending.userId().value()).orElseThrow();
         assertThat(activated.getStatus()).isEqualTo(UserStatus.ACTIVE);
 
         // The user can now log in with the password they chose at redeem
@@ -234,16 +229,36 @@ class MagicLinkActivationIntegrationTest extends AbstractAuthIntegrationTest {
     }
 
     /**
-     * Émet un token d'activation pour l'utilisateur cible et capture le raw token transmis au mailer (mocké).
+     * Crée un utilisateur PENDING et capture le raw token émis automatiquement via la cascade
+     * {@code UserRegistered → IssueActivationToken}. C'est le chemin nominal d'activation : un seul appel suffit pour
+     * obtenir un user et son magic-link.
      */
-    private String issueTokenAndCaptureRawToken(UserId userId) {
+    private PendingUser registerPendingAndCaptureRawToken(String email, String password) {
+        Mockito.clearInvocations(mailer);
+        UserId userId = userFactory.registerPending(email, password);
+
+        ArgumentCaptor<URI> linkCaptor = ArgumentCaptor.forClass(URI.class);
+        verify(mailer).sendActivationEmail(any(), any(), linkCaptor.capture());
+
+        return new PendingUser(userId, extractRawToken(linkCaptor.getValue()));
+    }
+
+    /**
+     * Émet un token d'activation supplémentaire pour un user existant et capture le raw token. Utilisé uniquement par
+     * le test de ré-émission, qui valide qu'un second issue invalide le premier token (cascade ou pas).
+     */
+    private String issueAdditionalTokenAndCaptureRawToken(UserId userId) {
         Mockito.clearInvocations(mailer);
         issueUseCase.issue(new IssueActivationTokenCommand(userId.value().toString()));
 
         ArgumentCaptor<URI> linkCaptor = ArgumentCaptor.forClass(URI.class);
         verify(mailer).sendActivationEmail(any(), any(), linkCaptor.capture());
 
-        String query = linkCaptor.getValue().getQuery();
+        return extractRawToken(linkCaptor.getValue());
+    }
+
+    private static String extractRawToken(URI link) {
+        String query = link.getQuery();
         return query.substring("token=".length());
     }
 
@@ -263,5 +278,8 @@ class MagicLinkActivationIntegrationTest extends AbstractAuthIntegrationTest {
                 expiredOneHourAgo
         );
         activationTokenJpaRepository.save(entity);
+    }
+
+    private record PendingUser(UserId userId, String rawToken) {
     }
 }
