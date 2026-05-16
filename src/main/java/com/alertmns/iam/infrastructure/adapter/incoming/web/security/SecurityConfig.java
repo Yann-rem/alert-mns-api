@@ -24,7 +24,7 @@ public class SecurityConfig {
                     handler.setCsrfRequestAttributeName(null);
                     csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                             .csrfTokenRequestHandler(handler)
-                            .ignoringRequestMatchers("/api/auth/login");
+                            .ignoringRequestMatchers("/api/auth/login", "/api/auth/magic-link/redeem");
                 })
 
                 // Pas de form-login HTML, pas de Basic Auth : on aura un endpoint JSON custom
@@ -42,6 +42,7 @@ public class SecurityConfig {
                 // Règles d'autorisation
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/login", "/api/auth/logout").permitAll()
+                        .requestMatchers("/api/auth/magic-link/validate", "/api/auth/magic-link/redeem").permitAll()
                         .requestMatchers("/error").permitAll()
                         .anyRequest().authenticated()
                 )
