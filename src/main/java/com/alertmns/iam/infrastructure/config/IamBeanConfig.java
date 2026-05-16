@@ -8,10 +8,12 @@ import com.alertmns.iam.application.SuspendUserService;
 import com.alertmns.iam.application.UpdateAbsenceMessageService;
 import com.alertmns.iam.application.UpdateProfileService;
 import com.alertmns.iam.application.ValidateActivationTokenService;
+import com.alertmns.iam.domain.port.incoming.IssueActivationTokenUseCase;
 import com.alertmns.iam.domain.port.outgoing.ActivationTokenRepository;
 import com.alertmns.iam.domain.port.outgoing.MailerPort;
 import com.alertmns.iam.domain.port.outgoing.PasswordHasher;
 import com.alertmns.iam.domain.port.outgoing.UserRepository;
+import com.alertmns.iam.infrastructure.adapter.incoming.event.IssueActivationTokenOnUserRegisteredListener;
 import com.alertmns.iam.infrastructure.adapter.incoming.web.security.DomainUserDetailsService;
 import com.alertmns.iam.infrastructure.adapter.incoming.web.security.SpringSecurityCurrentUserAdapter;
 import com.alertmns.iam.infrastructure.adapter.outgoing.mailer.LoggingMailerAdapter;
@@ -157,5 +159,14 @@ public class IamBeanConfig {
     @Bean
     public ReactivateUserService reactivateUserService(UserRepository repository, EventPublisher publisher) {
         return new ReactivateUserService(repository, publisher);
+    }
+
+    // --- Event listeners ---
+
+    @Bean
+    public IssueActivationTokenOnUserRegisteredListener issueActivationTokenOnUserRegisteredListener(
+            IssueActivationTokenUseCase issueActivationTokenUseCase
+    ) {
+        return new IssueActivationTokenOnUserRegisteredListener(issueActivationTokenUseCase);
     }
 }
