@@ -30,6 +30,6 @@ public final class SpringSecurityCurrentUserAdapter implements CurrentUserPort {
             return Optional.empty();
         }
 
-        return Optional.of(new AuthenticatedUser(details.userId(), details.organisationId()));
+        return Optional.of(new AuthenticatedUser(details.userId()));
     }
 }

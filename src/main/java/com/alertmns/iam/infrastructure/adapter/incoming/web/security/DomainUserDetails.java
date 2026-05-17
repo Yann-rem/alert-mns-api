@@ -2,7 +2,6 @@ package com.alertmns.iam.infrastructure.adapter.incoming.web.security;
 
 import com.alertmns.iam.domain.model.User;
 import com.alertmns.iam.domain.model.UserStatus;
-import com.alertmns.shared.OrganisationId;
 import com.alertmns.shared.UserId;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -15,7 +14,7 @@ import java.util.Objects;
 /**
  * Adapter exposant un {@link User} du domaine IAM sous la forme attendue par Spring Security.
  *
- * <p>Conserve une référence au {@link User} pour exposer {@link #userId()} et {@link #organisationId()}, que l'adapter
+ * <p>Conserve une référence au {@link User} pour exposer {@link #userId()}, que l'adapter
  * {@code SpringSecurityCurrentUserAdapter} lira depuis le {@code Principal} sans devoir recharger l'utilisateur.</p>
  *
  * <p>Mapping des statuts :
@@ -35,10 +34,6 @@ public final class DomainUserDetails implements UserDetails {
 
     public UserId userId() {
         return user.id();
-    }
-
-    public OrganisationId organisationId() {
-        return user.organisationId();
     }
 
     @Override

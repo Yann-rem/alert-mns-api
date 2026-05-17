@@ -8,7 +8,6 @@ import com.alertmns.iam.domain.event.UserRegistered;
 import com.alertmns.iam.domain.event.UserSuspended;
 import com.alertmns.iam.domain.exception.BannedUserCannotBeReactivatedException;
 import com.alertmns.shared.DomainEvent;
-import com.alertmns.shared.OrganisationId;
 import com.alertmns.shared.UserId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -29,7 +28,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @DisplayName("User")
 class UserTest {
 
-    static final OrganisationId ORGANISATION_ID = OrganisationId.generate();
     static final String BCRYPT_HASH = "$2a$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012345";
 
     @Nested
@@ -42,10 +40,9 @@ class UserTest {
             Email email = Email.of("johndoe@example.com");
             HashedPassword hashedPassword = HashedPassword.of(BCRYPT_HASH);
             Profile profile = Profile.of(FirstName.of("John"), LastName.of("Doe"));
-            User user = User.register(ORGANISATION_ID, email, hashedPassword, profile);
+            User user = User.register(email, hashedPassword, profile);
             assertEquals(UserStatus.PENDING, user.status());
             assertEquals(UserRole.USER, user.role());
-            assertEquals(ORGANISATION_ID, user.organisationId());
             assertNotNull(user.id());
             assertNotNull(user.createdAt());
         }
@@ -61,7 +58,6 @@ class UserTest {
 
             User user = User.reconstitute(
                     id,
-                    ORGANISATION_ID,
                     email,
                     hashedPassword,
                     profile,
@@ -77,7 +73,6 @@ class UserTest {
             assertEquals(profile, user.profile());
             assertEquals(UserRole.ADMIN, user.role());
             assertEquals(UserStatus.ACTIVE, user.status());
-            assertEquals(ORGANISATION_ID, user.organisationId());
             assertTrue(user.isAnonymized());
             assertEquals(createdAt, user.createdAt());
         }
@@ -88,7 +83,7 @@ class UserTest {
             Email email = Email.of("johndoe@example.com");
             HashedPassword hashedPassword = HashedPassword.of(BCRYPT_HASH);
             Profile profile = Profile.of(FirstName.of("John"), LastName.of("Doe"));
-            User user = User.register(ORGANISATION_ID, email, hashedPassword, profile);
+            User user = User.register(email, hashedPassword, profile);
             assertFalse(user.isAnonymized());
         }
     }
@@ -103,7 +98,7 @@ class UserTest {
             HashedPassword hashedPassword = HashedPassword.of(BCRYPT_HASH);
             Profile profile = Profile.of(FirstName.of("John"), LastName.of("Doe"));
             assertThrows(NullPointerException.class,
-                    () -> User.register(ORGANISATION_ID, null, hashedPassword, profile));
+                    () -> User.register(null, hashedPassword, profile));
         }
 
         @Test
@@ -112,7 +107,7 @@ class UserTest {
             Email email = Email.of("johndoe@example.com");
             Profile profile = Profile.of(FirstName.of("John"), LastName.of("Doe"));
             assertThrows(NullPointerException.class,
-                    () -> User.register(ORGANISATION_ID, email, null, profile));
+                    () -> User.register(email, null, profile));
         }
 
         @Test
@@ -121,17 +116,7 @@ class UserTest {
             Email email = Email.of("johndoe@example.com");
             HashedPassword hashedPassword = HashedPassword.of(BCRYPT_HASH);
             assertThrows(NullPointerException.class,
-                    () -> User.register(ORGANISATION_ID, email, hashedPassword, null));
-        }
-
-        @Test
-        @DisplayName("should reject null organisationId")
-        void shouldRejectNullOrganisationId() {
-            Email email = Email.of("johndoe@example.com");
-            HashedPassword hashedPassword = HashedPassword.of(BCRYPT_HASH);
-            Profile profile = Profile.of(FirstName.of("John"), LastName.of("Doe"));
-            assertThrows(NullPointerException.class,
-                    () -> User.register(null, email, hashedPassword, profile));
+                    () -> User.register(email, hashedPassword, null));
         }
     }
 
@@ -146,7 +131,7 @@ class UserTest {
             Email email = Email.of("johndoe@example.com");
             HashedPassword hashedPassword = HashedPassword.of(BCRYPT_HASH);
             Profile profile = Profile.of(FirstName.of("John"), LastName.of("Doe"));
-            user = User.register(ORGANISATION_ID, email, hashedPassword, profile);
+            user = User.register(email, hashedPassword, profile);
         }
 
         @Test
@@ -256,7 +241,6 @@ class UserTest {
         void reactivateShouldRejectBANNEDAccount() {
             User bannedUser = User.reconstitute(
                     UserId.generate(),
-                    ORGANISATION_ID,
                     Email.of("banned@example.com"),
                     HashedPassword.of(BCRYPT_HASH),
                     Profile.of(FirstName.of("John"), LastName.of("Doe")),
@@ -282,7 +266,7 @@ class UserTest {
             Email email = Email.of("johndoe@example.com");
             HashedPassword hashedPassword = HashedPassword.of(BCRYPT_HASH);
             Profile profile = Profile.of(FirstName.of("John"), LastName.of("Doe"));
-            user = User.register(ORGANISATION_ID, email, hashedPassword, profile);
+            user = User.register(email, hashedPassword, profile);
         }
 
         @Test
@@ -294,7 +278,6 @@ class UserTest {
             assertEquals(user.id(), event.userId());
             assertEquals(user.email(), event.email());
             assertEquals(UserRole.USER, event.role());
-            assertEquals(ORGANISATION_ID, event.organisationId());
         }
 
         @Test
@@ -376,7 +359,6 @@ class UserTest {
         void reactivateOnBANNEDShouldNotEmitAnyEvent() {
             User bannedUser = User.reconstitute(
                     UserId.generate(),
-                    ORGANISATION_ID,
                     Email.of("banned@example.com"),
                     HashedPassword.of(BCRYPT_HASH),
                     Profile.of(FirstName.of("John"), LastName.of("Doe")),
@@ -414,7 +396,6 @@ class UserTest {
 
             User user1 = User.reconstitute(
                     id,
-                    ORGANISATION_ID,
                     email,
                     hashedPassword,
                     profile,
@@ -426,7 +407,6 @@ class UserTest {
 
             User user2 = User.reconstitute(
                     id,
-                    ORGANISATION_ID,
                     email,
                     hashedPassword,
                     profile,
@@ -445,8 +425,8 @@ class UserTest {
             Email email = Email.of("johndoe@example.com");
             HashedPassword hashedPassword = HashedPassword.of(BCRYPT_HASH);
             Profile profile = Profile.of(FirstName.of("John"), LastName.of("Doe"));
-            User user1 = User.register(ORGANISATION_ID, email, hashedPassword, profile);
-            User user2 = User.register(ORGANISATION_ID, email, hashedPassword, profile);
+            User user1 = User.register(email, hashedPassword, profile);
+            User user2 = User.register(email, hashedPassword, profile);
             assertNotEquals(user1, user2);
         }
     }

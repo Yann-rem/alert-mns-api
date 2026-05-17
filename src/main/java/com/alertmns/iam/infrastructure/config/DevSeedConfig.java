@@ -8,7 +8,6 @@ import com.alertmns.iam.domain.model.Profile;
 import com.alertmns.iam.domain.model.User;
 import com.alertmns.iam.domain.port.outgoing.UserRepository;
 import com.alertmns.shared.EventPublisher;
-import com.alertmns.shared.OrganisationId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
@@ -30,7 +29,6 @@ public class DevSeedConfig {
 
     private static final String DEV_EMAIL = "dev@alertmns.local";
     private static final String DEV_PASSWORD = "dev123456789";
-    private static final String DEV_ORGANISATION_ID = "00000000-0000-0000-0000-000000000001";
 
     @Bean
     public CommandLineRunner seedDevUser(
@@ -46,7 +44,6 @@ public class DevSeedConfig {
             }
 
             User user = User.register(
-                    OrganisationId.from(DEV_ORGANISATION_ID),
                     email,
                     HashedPassword.of(passwordEncoder.encode(DEV_PASSWORD)),
                     Profile.of(FirstName.of("Dev"), LastName.of("User"))

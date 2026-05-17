@@ -13,7 +13,6 @@ import com.alertmns.iam.domain.port.incoming.command.RegisterUserCommand;
 import com.alertmns.iam.domain.port.outgoing.PasswordHasher;
 import com.alertmns.iam.domain.port.outgoing.UserRepository;
 import com.alertmns.shared.EventPublisher;
-import com.alertmns.shared.OrganisationId;
 import com.alertmns.shared.UserId;
 
 import java.util.Objects;
@@ -41,7 +40,6 @@ public final class RegisterUserService implements RegisterUserUseCase {
 
     @Override
     public UserId register(RegisterUserCommand command) {
-        OrganisationId organisationId = OrganisationId.from(command.organisationId());
         Email email = Email.of(command.email());
         RawPassword rawPassword = RawPassword.of(command.rawPassword());
         FirstName firstName = FirstName.of(command.firstName());
@@ -54,7 +52,7 @@ public final class RegisterUserService implements RegisterUserUseCase {
 
         HashedPassword hashedPassword = passwordHasher.hash(rawPassword);
 
-        User user = User.register(organisationId, email, hashedPassword, profile);
+        User user = User.register(email, hashedPassword, profile);
         repository.save(user);
         publisher.publish(user.pullDomainEvents());
         return user.id();

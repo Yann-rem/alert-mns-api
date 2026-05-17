@@ -1,10 +1,9 @@
 package com.alertmns.iam.domain.event;
 
 import com.alertmns.iam.domain.model.Email;
-import com.alertmns.shared.UserId;
 import com.alertmns.iam.domain.model.UserRole;
 import com.alertmns.shared.DomainEvent;
-import com.alertmns.shared.OrganisationId;
+import com.alertmns.shared.UserId;
 
 import java.time.Instant;
 
@@ -14,14 +13,13 @@ import java.time.Instant;
  * <p>Le compte est créé avec le statut PENDING, en attente d'activation par un administrateur.</p>
  */
 public record UserRegistered(
-        OrganisationId organisationId,
         UserId userId,
         Email email,
         UserRole role,
         Instant occurredOn
 ) implements DomainEvent {
 
-    public UserRegistered(OrganisationId organisationId, UserId userId, Email email, UserRole role) {
-        this(organisationId, userId, email, role, Instant.now());
+    public UserRegistered(UserId userId, Email email, UserRole role) {
+        this(userId, email, role, Instant.now());
     }
 }

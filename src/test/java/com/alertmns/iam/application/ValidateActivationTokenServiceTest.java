@@ -17,7 +17,6 @@ import com.alertmns.iam.domain.port.incoming.query.ValidateActivationTokenQuery;
 import com.alertmns.iam.domain.port.incoming.result.ActivationTokenContext;
 import com.alertmns.iam.domain.port.outgoing.ActivationTokenRepository;
 import com.alertmns.iam.domain.port.outgoing.UserRepository;
-import com.alertmns.shared.OrganisationId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -42,7 +41,6 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class ValidateActivationTokenServiceTest {
 
-    static final OrganisationId ORGANISATION_ID = OrganisationId.generate();
     static final String EMAIL = "johndoe@example.com";
     static final String FIRST_NAME = "John";
     static final String LAST_NAME = "Doe";
@@ -64,7 +62,6 @@ class ValidateActivationTokenServiceTest {
     void setUp() {
         service = new ValidateActivationTokenService(tokenRepository, userRepository);
         user = User.register(
-                ORGANISATION_ID,
                 Email.of(EMAIL),
                 HashedPassword.of(BCRYPT_HASH),
                 Profile.of(FirstName.of(FIRST_NAME), LastName.of(LAST_NAME))

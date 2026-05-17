@@ -8,7 +8,6 @@ import com.alertmns.iam.domain.model.Profile;
 import com.alertmns.iam.domain.model.User;
 import com.alertmns.iam.domain.model.UserRole;
 import com.alertmns.iam.domain.model.UserStatus;
-import com.alertmns.shared.OrganisationId;
 import com.alertmns.shared.UserId;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -26,14 +25,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @DisplayName("DomainUserDetails")
 class DomainUserDetailsTest {
 
-    static final OrganisationId ORGANISATION_ID = OrganisationId.generate();
     static final String EMAIL = "johndoe@example.com";
     static final String HASH = "$2a$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012345";
 
     static User userWith(UserStatus status, UserRole role, boolean isAnonymized) {
         return User.reconstitute(
                 UserId.generate(),
-                ORGANISATION_ID,
                 Email.of(EMAIL),
                 HashedPassword.of(HASH),
                 Profile.of(FirstName.of("John"), LastName.of("Doe")),
@@ -85,14 +82,6 @@ class DomainUserDetailsTest {
             assertEquals(user.id(), details.userId());
         }
 
-        @Test
-        @DisplayName("should expose organisationId from underlying user")
-        void shouldExposeOrganisationId() {
-            User user = userWith(UserStatus.ACTIVE, UserRole.USER, false);
-            DomainUserDetails details = new DomainUserDetails(user);
-
-            assertEquals(ORGANISATION_ID, details.organisationId());
-        }
     }
 
     @Nested

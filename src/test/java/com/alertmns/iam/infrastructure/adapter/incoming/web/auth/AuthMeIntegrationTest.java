@@ -44,6 +44,5 @@ class AuthMeIntegrationTest extends AbstractAuthIntegrationTest {
         assertThat(body).contains("\"lastName\":\"User\"");
         assertThat(body).contains("\"role\":\"USER\"");
         assertThat(body).contains("\"userId\":");
-        assertThat(body).contains("\"organisationId\":");
     }
 }

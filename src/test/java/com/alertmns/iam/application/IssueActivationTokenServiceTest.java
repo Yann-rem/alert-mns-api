@@ -14,7 +14,6 @@ import com.alertmns.iam.domain.port.incoming.command.IssueActivationTokenCommand
 import com.alertmns.iam.domain.port.outgoing.ActivationTokenRepository;
 import com.alertmns.iam.domain.port.outgoing.MailerPort;
 import com.alertmns.iam.domain.port.outgoing.UserRepository;
-import com.alertmns.shared.OrganisationId;
 import com.alertmns.shared.UserId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -45,7 +44,6 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class IssueActivationTokenServiceTest {
 
-    static final OrganisationId ORGANISATION_ID = OrganisationId.generate();
     static final String EMAIL = "johndoe@example.com";
     static final String FIRST_NAME = "John";
     static final String LAST_NAME = "Doe";
@@ -71,7 +69,6 @@ class IssueActivationTokenServiceTest {
                 tokenRepository, userRepository, mailer, TTL, FRONTEND_BASE_URL
         );
         user = User.register(
-                ORGANISATION_ID,
                 Email.of(EMAIL),
                 HashedPassword.of(BCRYPT_HASH),
                 Profile.of(FirstName.of(FIRST_NAME), LastName.of(LAST_NAME))

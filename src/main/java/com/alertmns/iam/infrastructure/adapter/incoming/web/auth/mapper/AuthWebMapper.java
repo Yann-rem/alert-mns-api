@@ -12,7 +12,6 @@ public final class AuthWebMapper {
     public static MeResponse toMeResponse(User user) {
         return new MeResponse(
                 user.id().value().toString(),
-                user.organisationId().value().toString(),
                 user.email().value(),
                 user.profile().firstName().value(),
                 user.profile().lastName().value(),

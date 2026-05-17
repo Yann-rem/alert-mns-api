@@ -7,9 +7,8 @@ import com.alertmns.iam.domain.model.HashedPassword;
 import com.alertmns.iam.domain.model.LastName;
 import com.alertmns.iam.domain.model.Profile;
 import com.alertmns.iam.domain.model.User;
-import com.alertmns.shared.UserId;
 import com.alertmns.iam.infrastructure.adapter.outgoing.persistence.UserJpaEntity;
-import com.alertmns.shared.OrganisationId;
+import com.alertmns.shared.UserId;
 
 public final class UserPersistenceMapper {
 
@@ -18,7 +17,6 @@ public final class UserPersistenceMapper {
     public static User toDomain(UserJpaEntity entity) {
         return User.reconstitute(
                 UserId.from(entity.getId()),
-                OrganisationId.from(entity.getOrganisationId()),
                 Email.of(entity.getEmail()),
                 HashedPassword.of(entity.getHashedPassword()),
                 buildProfile(entity),
@@ -47,7 +45,6 @@ public final class UserPersistenceMapper {
     public static UserJpaEntity toEntity(User domain) {
         return new UserJpaEntity(
                 domain.id().value(),
-                domain.organisationId().value(),
                 domain.email().value(),
                 domain.hashedPassword().value(),
                 domain.profile().firstName().value(),

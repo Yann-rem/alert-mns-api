@@ -27,7 +27,6 @@ import com.alertmns.shared.UserId;
  */
 public final class TestUserFactory {
 
-    private static final String DEFAULT_ORGANISATION_ID = "00000000-0000-0000-0000-000000000001";
     private static final String DEFAULT_FIRST_NAME = "Test";
     private static final String DEFAULT_LAST_NAME = "User";
 
@@ -59,8 +58,7 @@ public final class TestUserFactory {
                 email,
                 rawPassword,
                 DEFAULT_FIRST_NAME,
-                DEFAULT_LAST_NAME,
-                DEFAULT_ORGANISATION_ID
+                DEFAULT_LAST_NAME
         ));
     }
 
@@ -101,7 +99,6 @@ public final class TestUserFactory {
                 .orElseThrow(() -> new IllegalStateException("User just registered should exist in DB: " + id));
         UserJpaEntity promoted = new UserJpaEntity(
                 entity.getId(),
-                entity.getOrganisationId(),
                 entity.getEmail(),
                 entity.getHashedPassword(),
                 entity.getFirstName(),

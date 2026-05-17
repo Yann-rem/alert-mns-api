@@ -14,7 +14,6 @@ import com.alertmns.iam.domain.port.outgoing.PasswordHasher;
 import com.alertmns.iam.domain.port.outgoing.UserRepository;
 import com.alertmns.shared.DomainEvent;
 import com.alertmns.shared.EventPublisher;
-import com.alertmns.shared.OrganisationId;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -45,7 +44,6 @@ class RegisterUserServiceTest {
             "$2a$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012345");
     static final String FIRST_NAME = "John";
     static final String LAST_NAME = "Doe";
-    static final String ORGANISATION_ID = "550e8400-e29b-41d4-a716-446655440000";
 
     @Mock
     UserRepository repository;
@@ -64,13 +62,13 @@ class RegisterUserServiceTest {
     class Registration {
 
         @Test
-        @DisplayName("should save the user with email, profile, role USER, status PENDING and organisationId")
+        @DisplayName("should save the user with email, profile, role USER and status PENDING")
         void shouldSaveTheUserWithAllFields() {
             when(repository.existsByEmail(any())).thenReturn(false);
             when(passwordHasher.hash(any())).thenReturn(HASHED_PASSWORD);
 
             RegisterUserCommand command = new RegisterUserCommand(
-                    EMAIL, RAW_PASSWORD, FIRST_NAME, LAST_NAME, ORGANISATION_ID
+                    EMAIL, RAW_PASSWORD, FIRST_NAME, LAST_NAME
             );
 
             service.register(command);
@@ -83,7 +81,6 @@ class RegisterUserServiceTest {
             assertEquals(LastName.of(LAST_NAME), saved.profile().lastName());
             assertEquals(UserRole.USER, saved.role());
             assertEquals(UserStatus.PENDING, saved.status());
-            assertEquals(OrganisationId.from(ORGANISATION_ID), saved.organisationId());
         }
 
         @Test
@@ -93,7 +90,7 @@ class RegisterUserServiceTest {
             when(passwordHasher.hash(any())).thenReturn(HASHED_PASSWORD);
 
             RegisterUserCommand command = new RegisterUserCommand(
-                    EMAIL, RAW_PASSWORD, FIRST_NAME, LAST_NAME, ORGANISATION_ID
+                    EMAIL, RAW_PASSWORD, FIRST_NAME, LAST_NAME
             );
 
             service.register(command);
@@ -116,24 +113,10 @@ class RegisterUserServiceTest {
             when(repository.existsByEmail(any())).thenReturn(true);
 
             RegisterUserCommand command = new RegisterUserCommand(
-                    EMAIL, RAW_PASSWORD, FIRST_NAME, LAST_NAME, ORGANISATION_ID
+                    EMAIL, RAW_PASSWORD, FIRST_NAME, LAST_NAME
             );
 
             assertThrows(EmailAlreadyExistsException.class, () -> service.register(command));
-            verify(passwordHasher, never()).hash(any());
-            verify(repository, never()).save(any());
-            verify(publisher, never()).publish(anyList());
-        }
-
-        @Test
-        @DisplayName("should throw IllegalArgumentException when organisationId is not a valid UUID")
-        void shouldThrowWhenOrganisationIdIsInvalid() {
-            RegisterUserCommand command = new RegisterUserCommand(
-                    EMAIL, RAW_PASSWORD, FIRST_NAME, LAST_NAME, "invalid"
-            );
-
-            assertThrows(IllegalArgumentException.class, () -> service.register(command));
-            verify(repository, never()).existsByEmail(any());
             verify(passwordHasher, never()).hash(any());
             verify(repository, never()).save(any());
             verify(publisher, never()).publish(anyList());
@@ -170,7 +153,7 @@ class RegisterUserServiceTest {
         void shouldRejectNullCommandEmail() {
             assertThrows(NullPointerException.class,
                     () -> new RegisterUserCommand(
-                            null, RAW_PASSWORD, FIRST_NAME, LAST_NAME, ORGANISATION_ID));
+                            null, RAW_PASSWORD, FIRST_NAME, LAST_NAME));
         }
 
         @Test
@@ -178,7 +161,7 @@ class RegisterUserServiceTest {
         void shouldRejectNullCommandRawPassword() {
             assertThrows(NullPointerException.class,
                     () -> new RegisterUserCommand(
-                            EMAIL, null, FIRST_NAME, LAST_NAME, ORGANISATION_ID));
+                            EMAIL, null, FIRST_NAME, LAST_NAME));
         }
 
         @Test
@@ -186,7 +169,7 @@ class RegisterUserServiceTest {
         void shouldRejectNullCommandFirstName() {
             assertThrows(NullPointerException.class,
                     () -> new RegisterUserCommand(
-                            EMAIL, RAW_PASSWORD, null, LAST_NAME, ORGANISATION_ID));
+                            EMAIL, RAW_PASSWORD, null, LAST_NAME));
         }
 
         @Test
@@ -194,15 +177,7 @@ class RegisterUserServiceTest {
         void shouldRejectNullCommandLastName() {
             assertThrows(NullPointerException.class,
                     () -> new RegisterUserCommand(
-                            EMAIL, RAW_PASSWORD, FIRST_NAME, null, ORGANISATION_ID));
-        }
-
-        @Test
-        @DisplayName("should reject null command organisationId")
-        void shouldRejectNullCommandOrganisationId() {
-            assertThrows(NullPointerException.class,
-                    () -> new RegisterUserCommand(
-                            EMAIL, RAW_PASSWORD, FIRST_NAME, LAST_NAME, null));
+                            EMAIL, RAW_PASSWORD, FIRST_NAME, null));
         }
     }
 }

@@ -19,7 +19,6 @@ import com.alertmns.iam.domain.port.incoming.command.RedeemActivationTokenComman
 import com.alertmns.iam.domain.port.outgoing.ActivationTokenRepository;
 import com.alertmns.iam.domain.port.outgoing.PasswordHasher;
 import com.alertmns.iam.domain.port.outgoing.UserRepository;
-import com.alertmns.shared.OrganisationId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -46,7 +45,6 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class RedeemActivationTokenServiceTest {
 
-    static final OrganisationId ORGANISATION_ID = OrganisationId.generate();
     static final String EMAIL = "johndoe@example.com";
     static final String FIRST_NAME = "John";
     static final String LAST_NAME = "Doe";
@@ -75,7 +73,6 @@ class RedeemActivationTokenServiceTest {
     void setUp() {
         service = new RedeemActivationTokenService(tokenRepository, userRepository, passwordHasher);
         pendingUser = User.register(
-                ORGANISATION_ID,
                 Email.of(EMAIL),
                 HashedPassword.of(INITIAL_BCRYPT_HASH),
                 Profile.of(FirstName.of(FIRST_NAME), LastName.of(LAST_NAME))
@@ -185,7 +182,6 @@ class RedeemActivationTokenServiceTest {
         void shouldThrowWhenUserNotPending() {
             User active = User.reconstitute(
                     pendingUser.id(),
-                    ORGANISATION_ID,
                     Email.of(EMAIL),
                     HashedPassword.of(INITIAL_BCRYPT_HASH),
                     Profile.of(FirstName.of(FIRST_NAME), LastName.of(LAST_NAME)),

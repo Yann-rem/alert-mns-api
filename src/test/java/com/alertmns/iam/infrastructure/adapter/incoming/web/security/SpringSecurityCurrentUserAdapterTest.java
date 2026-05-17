@@ -9,7 +9,6 @@ import com.alertmns.iam.domain.model.User;
 import com.alertmns.iam.domain.model.UserRole;
 import com.alertmns.iam.domain.model.UserStatus;
 import com.alertmns.shared.AuthenticatedUser;
-import com.alertmns.shared.OrganisationId;
 import com.alertmns.shared.UserId;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,8 +31,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @DisplayName("SpringSecurityCurrentUserAdapter")
 class SpringSecurityCurrentUserAdapterTest {
 
-    static final OrganisationId ORGANISATION_ID = OrganisationId.generate();
-
     SpringSecurityCurrentUserAdapter adapter;
     User user;
     DomainUserDetails details;
@@ -44,7 +41,6 @@ class SpringSecurityCurrentUserAdapterTest {
 
         user = User.reconstitute(
                 UserId.generate(),
-                ORGANISATION_ID,
                 Email.of("johndoe@example.com"),
                 HashedPassword.of("$2a$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012345"),
                 Profile.of(FirstName.of("John"), LastName.of("Doe")),
@@ -77,7 +73,6 @@ class SpringSecurityCurrentUserAdapterTest {
 
             assertTrue(currentUser.isPresent());
             assertEquals(user.id(), currentUser.get().userId());
-            assertEquals(ORGANISATION_ID, currentUser.get().organisationId());
         }
 
         @Test

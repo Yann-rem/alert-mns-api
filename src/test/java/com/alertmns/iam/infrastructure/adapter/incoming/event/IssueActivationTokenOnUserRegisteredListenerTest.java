@@ -5,7 +5,6 @@ import com.alertmns.iam.domain.model.Email;
 import com.alertmns.iam.domain.model.UserRole;
 import com.alertmns.iam.domain.port.incoming.IssueActivationTokenUseCase;
 import com.alertmns.iam.domain.port.incoming.command.IssueActivationTokenCommand;
-import com.alertmns.shared.OrganisationId;
 import com.alertmns.shared.UserId;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -37,7 +36,6 @@ class IssueActivationTokenOnUserRegisteredListenerTest {
         void shouldIssueActivationTokenWhenUserRegisteredEventIsReceived() {
             UserId userId = UserId.generate();
             UserRegistered event = new UserRegistered(
-                    OrganisationId.generate(),
                     userId,
                     Email.of("johndoe@example.com"),
                     UserRole.USER

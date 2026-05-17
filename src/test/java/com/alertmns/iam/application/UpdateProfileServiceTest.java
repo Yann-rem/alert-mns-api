@@ -14,7 +14,6 @@ import com.alertmns.iam.domain.port.incoming.command.UpdateProfileCommand;
 import com.alertmns.iam.domain.port.outgoing.UserRepository;
 import com.alertmns.shared.DomainEvent;
 import com.alertmns.shared.EventPublisher;
-import com.alertmns.shared.OrganisationId;
 import com.alertmns.shared.UserId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -43,7 +42,6 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class UpdateProfileServiceTest {
 
-    static final OrganisationId ORGANISATION_ID = OrganisationId.generate();
     static final String NEW_FIRST_NAME = "Jane";
     static final String NEW_LAST_NAME = "Doe";
     static final String NEW_AVATAR = "https://cdn.example.com/avatar.jpg";
@@ -70,7 +68,6 @@ class UpdateProfileServiceTest {
 
             user = User.reconstitute(
                     id,
-                    ORGANISATION_ID,
                     Email.of("johndoe@example.com"),
                     HashedPassword.of("$2a$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012345"),
                     Profile.of(FirstName.of("John"), LastName.of("Doe")),

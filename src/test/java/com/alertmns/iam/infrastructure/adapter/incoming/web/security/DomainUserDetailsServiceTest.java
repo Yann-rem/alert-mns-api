@@ -9,7 +9,6 @@ import com.alertmns.iam.domain.model.User;
 import com.alertmns.iam.domain.model.UserRole;
 import com.alertmns.iam.domain.model.UserStatus;
 import com.alertmns.iam.domain.port.outgoing.UserRepository;
-import com.alertmns.shared.OrganisationId;
 import com.alertmns.shared.UserId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -35,7 +34,6 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class DomainUserDetailsServiceTest {
 
-    static final OrganisationId ORGANISATION_ID = OrganisationId.generate();
     static final String EMAIL = "johndoe@example.com";
 
     @Mock
@@ -50,7 +48,6 @@ class DomainUserDetailsServiceTest {
     void setUp() {
         user = User.reconstitute(
                 UserId.generate(),
-                ORGANISATION_ID,
                 Email.of(EMAIL),
                 HashedPassword.of("$2a$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012345"),
                 Profile.of(FirstName.of("John"), LastName.of("Doe")),
