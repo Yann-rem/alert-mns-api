@@ -9,10 +9,12 @@ import com.alertmns.organisation.application.ReactivateMemberService;
 import com.alertmns.organisation.application.RemoveMemberFromGroupService;
 import com.alertmns.organisation.application.RenameGroupService;
 import com.alertmns.organisation.application.SuspendMemberService;
+import com.alertmns.organisation.domain.port.incoming.ActivateMemberUseCase;
 import com.alertmns.organisation.domain.port.outgoing.GroupMembershipRepository;
 import com.alertmns.organisation.domain.port.outgoing.GroupRepository;
 import com.alertmns.organisation.domain.port.outgoing.MemberRepository;
 import com.alertmns.organisation.domain.port.outgoing.OrganisationRepository;
+import com.alertmns.organisation.infrastructure.adapter.incoming.event.ActivateMemberOnUserActivatedListener;
 import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.GroupJpaRepository;
 import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.GroupMembershipJpaRepository;
 import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.GroupMembershipPersistenceAdapter;
@@ -106,5 +108,15 @@ public class OrganisationBeanConfig {
             EventPublisher publisher
     ) {
         return new RemoveMemberFromGroupService(repository, publisher);
+    }
+
+    // --- Event listeners ---
+
+    @Bean
+    public ActivateMemberOnUserActivatedListener activateMemberOnUserActivatedListener(
+            MemberRepository memberRepository,
+            ActivateMemberUseCase activateMemberUseCase
+    ) {
+        return new ActivateMemberOnUserActivatedListener(memberRepository, activateMemberUseCase);
     }
 }

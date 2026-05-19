@@ -30,6 +30,13 @@ public final class MemberPersistenceAdapter implements MemberRepository {
     }
 
     @Override
+    public Optional<Member> findByUserId(UUID userId) {
+        return jpaRepository
+                .findByUserId(userId)
+                .map(MemberPersistenceMapper::toDomain);
+    }
+
+    @Override
     public boolean existsByOrganisationIdAndUserId(OrganisationId organisationId, UUID userId) {
         return jpaRepository.existsByOrganisationIdAndUserId(organisationId.value(), userId);
     }

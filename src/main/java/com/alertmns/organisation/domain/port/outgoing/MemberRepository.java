@@ -28,6 +28,14 @@ public interface MemberRepository {
     Optional<Member> findById(MemberId id);
 
     /**
+     * Recherche le membre rattaché à un utilisateur.
+     *
+     * @param userId l'identifiant de l'utilisateur
+     * @return le membre trouvé, ou vide
+     */
+    Optional<Member> findByUserId(UUID userId);
+
+    /**
      * Vérifie si un utilisateur est déjà membre d'une organisation.
      *
      * @param organisationId l'identifiant de l'organisation
