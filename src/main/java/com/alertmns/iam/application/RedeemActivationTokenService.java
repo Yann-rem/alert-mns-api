@@ -14,6 +14,7 @@ import com.alertmns.iam.domain.port.incoming.command.RedeemActivationTokenComman
 import com.alertmns.iam.domain.port.outgoing.ActivationTokenRepository;
 import com.alertmns.iam.domain.port.outgoing.PasswordHasher;
 import com.alertmns.iam.domain.port.outgoing.UserRepository;
+import com.alertmns.shared.EventPublisher;
 
 import java.util.Objects;
 
@@ -31,15 +32,18 @@ public final class RedeemActivationTokenService implements RedeemActivationToken
     private final ActivationTokenRepository tokenRepository;
     private final UserRepository userRepository;
     private final PasswordHasher passwordHasher;
+    private final EventPublisher publisher;
 
     public RedeemActivationTokenService(
             ActivationTokenRepository tokenRepository,
             UserRepository userRepository,
-            PasswordHasher passwordHasher
+            PasswordHasher passwordHasher,
+            EventPublisher publisher
     ) {
         this.tokenRepository = Objects.requireNonNull(tokenRepository, "tokenRepository must not be null");
         this.userRepository = Objects.requireNonNull(userRepository, "userRepository must not be null");
         this.passwordHasher = Objects.requireNonNull(passwordHasher, "passwordHasher must not be null");
+        this.publisher = Objects.requireNonNull(publisher, "publisher must not be null");
     }
 
     /**
@@ -67,5 +71,6 @@ public final class RedeemActivationTokenService implements RedeemActivationToken
         user.activateWithPassword(hashedPassword);
         userRepository.save(user);
         tokenRepository.deleteByUserId(user.id());
+        publisher.publish(user.pullDomainEvents());
     }
 }

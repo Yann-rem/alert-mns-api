@@ -136,9 +136,10 @@ public class IamBeanConfig {
     public RedeemActivationTokenService redeemActivationTokenService(
             ActivationTokenRepository tokenRepository,
             UserRepository userRepository,
-            PasswordHasher passwordHasher
+            PasswordHasher passwordHasher,
+            EventPublisher publisher
     ) {
-        return new RedeemActivationTokenService(tokenRepository, userRepository, passwordHasher);
+        return new RedeemActivationTokenService(tokenRepository, userRepository, passwordHasher, publisher);
     }
 
     @Bean
