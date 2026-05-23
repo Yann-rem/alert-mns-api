@@ -1,0 +1,3 @@
+alertmns:
+  bootstrap:
+    enabled: false

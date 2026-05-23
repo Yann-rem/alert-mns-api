@@ -1,0 +1,9 @@
+alertmns:
+  bootstrap:
+    enabled: true
+    organisation:
+      name: "Metz Numeric School"
+    admin:
+      email: "remyyannick@sfr.fr"
+      first-name: "Yannick"
+      last-name: "Remy"
