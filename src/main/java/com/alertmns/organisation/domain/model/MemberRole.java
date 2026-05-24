@@ -3,8 +3,8 @@ package com.alertmns.organisation.domain.model;
 /**
  * Rôle d'un membre au sein d'une organisation.
  *
- * <p>Distinct de {@link com.alertmns.iam.domain.model.UserRole} qui représente les droits
- * sur la plateforme. Un USER côté IAM peut être ADMIN côté Organisation.</p>
+ * <p>Source de vérité unique pour les rôles métier de la plateforme. Le BC IAM en dérive les autorités Spring
+ * Security via {@code UserAuthoritiesProvider}.</p>
  */
 public enum MemberRole {
     ADMIN,

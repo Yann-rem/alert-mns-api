@@ -2,7 +2,6 @@ package com.alertmns.iam.infrastructure.adapter.incoming.event;
 
 import com.alertmns.iam.domain.event.UserRegistered;
 import com.alertmns.iam.domain.model.Email;
-import com.alertmns.iam.domain.model.UserRole;
 import com.alertmns.iam.domain.port.incoming.IssueActivationTokenUseCase;
 import com.alertmns.iam.domain.port.incoming.command.IssueActivationTokenCommand;
 import com.alertmns.shared.UserId;
@@ -37,8 +36,7 @@ class IssueActivationTokenOnUserRegisteredListenerTest {
             UserId userId = UserId.generate();
             UserRegistered event = new UserRegistered(
                     userId,
-                    Email.of("johndoe@example.com"),
-                    UserRole.USER
+                    Email.of("johndoe@example.com")
             );
 
             listener.onUserRegistered(event);

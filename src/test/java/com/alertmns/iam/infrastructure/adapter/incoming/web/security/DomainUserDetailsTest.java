@@ -6,7 +6,6 @@ import com.alertmns.iam.domain.model.HashedPassword;
 import com.alertmns.iam.domain.model.LastName;
 import com.alertmns.iam.domain.model.Profile;
 import com.alertmns.iam.domain.model.User;
-import com.alertmns.iam.domain.model.UserRole;
 import com.alertmns.iam.domain.model.UserStatus;
 import com.alertmns.shared.UserId;
 import org.junit.jupiter.api.DisplayName;
@@ -38,7 +37,6 @@ class DomainUserDetailsTest {
                 Email.of(EMAIL),
                 HashedPassword.of(HASH),
                 Profile.of(FirstName.of("John"), LastName.of("Doe")),
-                UserRole.USER,
                 status,
                 isAnonymized,
                 Instant.now()

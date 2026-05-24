@@ -8,7 +8,6 @@ import com.alertmns.iam.domain.model.HashedPassword;
 import com.alertmns.iam.domain.model.LastName;
 import com.alertmns.iam.domain.model.Profile;
 import com.alertmns.iam.domain.model.User;
-import com.alertmns.iam.domain.model.UserRole;
 import com.alertmns.iam.domain.model.UserStatus;
 import com.alertmns.iam.domain.port.incoming.command.UpdateProfileCommand;
 import com.alertmns.iam.domain.port.outgoing.UserRepository;
@@ -71,7 +70,6 @@ class UpdateProfileServiceTest {
                     Email.of("johndoe@example.com"),
                     HashedPassword.of("$2a$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012345"),
                     Profile.of(FirstName.of("John"), LastName.of("Doe")),
-                    UserRole.USER,
                     UserStatus.ACTIVE,
                     false,
                     Instant.now()

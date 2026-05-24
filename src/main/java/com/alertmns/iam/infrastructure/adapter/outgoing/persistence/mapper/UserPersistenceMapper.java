@@ -20,7 +20,6 @@ public final class UserPersistenceMapper {
                 Email.of(entity.getEmail()),
                 HashedPassword.of(entity.getHashedPassword()),
                 buildProfile(entity),
-                entity.getRole(),
                 entity.getStatus(),
                 entity.isAnonymized(),
                 entity.getCreatedAt()
@@ -52,7 +51,6 @@ public final class UserPersistenceMapper {
                 domain.profile().avatar().orElse(null),
                 domain.profile().absenceMessage().map(AbsenceMessage::content).orElse(null),
                 domain.profile().absenceMessage().map(AbsenceMessage::active).orElse(null),
-                domain.role(),
                 domain.status(),
                 domain.isAnonymized(),
                 domain.createdAt()

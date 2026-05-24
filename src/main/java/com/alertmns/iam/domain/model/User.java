@@ -16,9 +16,8 @@ import java.util.Objects;
 /**
  * Agrégat racine représentant un utilisateur dans le BC IAM.
  *
- * <p>Représente un utilisateur avec son cycle de vie et ses règles métier.
- * Un utilisateur suit le cycle : PENDING → ACTIVE → SUSPENDED → ACTIVE (réactivation).
- * BANNED est terminal.</p>
+ * <p>Représente un utilisateur avec son cycle de vie et ses règles métier. Un utilisateur suit le cycle :
+ * PENDING → ACTIVE → SUSPENDED → ACTIVE (réactivation). BANNED est terminal.</p>
  *
  * <p>L'attribut {@code isAnonymized} est orthogonal au statut : il marque l'effacement effectif des PII pour
  * conformité RGPD.</p>
@@ -29,7 +28,6 @@ public final class User extends AggregateRoot {
     private final Email email;
     private HashedPassword hashedPassword;
     private Profile profile;
-    private final UserRole role;
     private UserStatus status;
     private boolean isAnonymized;
     private final Instant createdAt;
@@ -39,7 +37,6 @@ public final class User extends AggregateRoot {
             Email email,
             HashedPassword hashedPassword,
             Profile profile,
-            UserRole role,
             UserStatus status,
             boolean isAnonymized,
             Instant createdAt
@@ -48,7 +45,6 @@ public final class User extends AggregateRoot {
         this.email = Objects.requireNonNull(email, "email must not be null");
         this.hashedPassword = Objects.requireNonNull(hashedPassword, "hashedPassword must not be null");
         this.profile = Objects.requireNonNull(profile, "profile must not be null");
-        this.role = Objects.requireNonNull(role, "role must not be null");
         this.status = Objects.requireNonNull(status, "status must not be null");
         this.isAnonymized = isAnonymized;
         this.createdAt = Objects.requireNonNull(createdAt, "createdAt must not be null");
@@ -57,9 +53,10 @@ public final class User extends AggregateRoot {
     /**
      * Crée un nouvel utilisateur avec le statut {@link UserStatus#PENDING}.
      *
-     * <p>L'identifiant et la date de création sont générés automatiquement.
-     * Le rôle par défaut est {@link UserRole#USER}.
-     * Le drapeau {@code isAnonymized} est initialisé à {@code false}.</p>
+     * <p>L'identifiant et la date de création sont générés automatiquement. Le drapeau {@code isAnonymized} est
+     * initialisé à {@code false}.</p>
+     *
+     * <p>Le User n'a pas de rôle métier : ceux-ci vivent dans le BC Organisation via {@code Member.role}</p>
      *
      * <p>Émet {@link UserRegistered}.</p>
      *
@@ -78,13 +75,12 @@ public final class User extends AggregateRoot {
                 email,
                 hashedPassword,
                 profile,
-                UserRole.USER,
                 UserStatus.PENDING,
                 false,
                 Instant.now()
         );
 
-        user.registerEvent(new UserRegistered(user.id, user.email, user.role));
+        user.registerEvent(new UserRegistered(user.id, user.email));
         return user;
     }
 
@@ -101,7 +97,6 @@ public final class User extends AggregateRoot {
             Email email,
             HashedPassword hashedPassword,
             Profile profile,
-            UserRole role,
             UserStatus status,
             boolean isAnonymized,
             Instant createdAt
@@ -111,7 +106,6 @@ public final class User extends AggregateRoot {
                 email,
                 hashedPassword,
                 profile,
-                role,
                 status,
                 isAnonymized,
                 createdAt
@@ -229,10 +223,6 @@ public final class User extends AggregateRoot {
         return profile;
     }
 
-    public UserRole role() {
-        return role;
-    }
-
     public UserStatus status() {
         return status;
     }
@@ -262,7 +252,6 @@ public final class User extends AggregateRoot {
         return "User{" +
                 "id=" + id +
                 ", email=" + email +
-                ", role=" + role +
                 ", status=" + status +
                 ", isAnonymized=" + isAnonymized +
                 '}';

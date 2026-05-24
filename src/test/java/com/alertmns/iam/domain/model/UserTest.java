@@ -42,7 +42,6 @@ class UserTest {
             Profile profile = Profile.of(FirstName.of("John"), LastName.of("Doe"));
             User user = User.register(email, hashedPassword, profile);
             assertEquals(UserStatus.PENDING, user.status());
-            assertEquals(UserRole.USER, user.role());
             assertNotNull(user.id());
             assertNotNull(user.createdAt());
         }
@@ -61,7 +60,6 @@ class UserTest {
                     email,
                     hashedPassword,
                     profile,
-                    UserRole.ADMIN,
                     UserStatus.ACTIVE,
                     true,
                     createdAt
@@ -71,7 +69,6 @@ class UserTest {
             assertEquals(email, user.email());
             assertEquals(hashedPassword, user.hashedPassword());
             assertEquals(profile, user.profile());
-            assertEquals(UserRole.ADMIN, user.role());
             assertEquals(UserStatus.ACTIVE, user.status());
             assertTrue(user.isAnonymized());
             assertEquals(createdAt, user.createdAt());
@@ -244,7 +241,6 @@ class UserTest {
                     Email.of("banned@example.com"),
                     HashedPassword.of(BCRYPT_HASH),
                     Profile.of(FirstName.of("John"), LastName.of("Doe")),
-                    UserRole.USER,
                     UserStatus.BANNED,
                     false,
                     Instant.now()
@@ -277,7 +273,6 @@ class UserTest {
             UserRegistered event = assertInstanceOf(UserRegistered.class, events.getFirst());
             assertEquals(user.id(), event.userId());
             assertEquals(user.email(), event.email());
-            assertEquals(UserRole.USER, event.role());
         }
 
         @Test
@@ -362,7 +357,6 @@ class UserTest {
                     Email.of("banned@example.com"),
                     HashedPassword.of(BCRYPT_HASH),
                     Profile.of(FirstName.of("John"), LastName.of("Doe")),
-                    UserRole.USER,
                     UserStatus.BANNED,
                     false,
                     Instant.now()
@@ -399,7 +393,6 @@ class UserTest {
                     email,
                     hashedPassword,
                     profile,
-                    UserRole.ADMIN,
                     UserStatus.ACTIVE,
                     false,
                     createdAt
@@ -410,7 +403,6 @@ class UserTest {
                     email,
                     hashedPassword,
                     profile,
-                    UserRole.ADMIN,
                     UserStatus.ACTIVE,
                     false,
                     createdAt

@@ -14,8 +14,7 @@ public final class AuthWebMapper {
                 user.id().value().toString(),
                 user.email().value(),
                 user.profile().firstName().value(),
-                user.profile().lastName().value(),
-                user.role().name()
+                user.profile().lastName().value()
         );
     }
 

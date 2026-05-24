@@ -217,7 +217,6 @@ class RedeemActivationTokenServiceTest {
                     Email.of(EMAIL),
                     HashedPassword.of(INITIAL_BCRYPT_HASH),
                     Profile.of(FirstName.of(FIRST_NAME), LastName.of(LAST_NAME)),
-                    com.alertmns.iam.domain.model.UserRole.USER,
                     UserStatus.ACTIVE,
                     false,
                     Instant.now()

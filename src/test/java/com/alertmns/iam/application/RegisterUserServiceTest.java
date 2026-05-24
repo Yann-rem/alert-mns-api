@@ -7,7 +7,6 @@ import com.alertmns.iam.domain.model.FirstName;
 import com.alertmns.iam.domain.model.HashedPassword;
 import com.alertmns.iam.domain.model.LastName;
 import com.alertmns.iam.domain.model.User;
-import com.alertmns.iam.domain.model.UserRole;
 import com.alertmns.iam.domain.model.UserStatus;
 import com.alertmns.iam.domain.port.incoming.command.RegisterUserCommand;
 import com.alertmns.iam.domain.port.outgoing.PasswordHasher;
@@ -79,7 +78,6 @@ class RegisterUserServiceTest {
             assertEquals(Email.of(EMAIL), saved.email());
             assertEquals(FirstName.of(FIRST_NAME), saved.profile().firstName());
             assertEquals(LastName.of(LAST_NAME), saved.profile().lastName());
-            assertEquals(UserRole.USER, saved.role());
             assertEquals(UserStatus.PENDING, saved.status());
         }
 

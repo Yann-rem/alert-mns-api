@@ -6,7 +6,6 @@ import com.alertmns.iam.domain.model.HashedPassword;
 import com.alertmns.iam.domain.model.LastName;
 import com.alertmns.iam.domain.model.Profile;
 import com.alertmns.iam.domain.model.User;
-import com.alertmns.iam.domain.model.UserRole;
 import com.alertmns.iam.domain.model.UserStatus;
 import com.alertmns.shared.AuthenticatedUser;
 import com.alertmns.shared.UserId;
@@ -44,7 +43,6 @@ class SpringSecurityCurrentUserAdapterTest {
                 Email.of("johndoe@example.com"),
                 HashedPassword.of("$2a$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012345"),
                 Profile.of(FirstName.of("John"), LastName.of("Doe")),
-                UserRole.USER,
                 UserStatus.ACTIVE,
                 false,
                 Instant.now()
