@@ -65,10 +65,13 @@ class MagicLinkActivationIntegrationTest extends AbstractAuthIntegrationTest {
     @Autowired
     private MemberJpaRepository memberJpaRepository;
 
+    /**
+     * Nettoie les artefacts spécifiques à ce test (tokens). Les Members sont nettoyés par le parent
+     * {@link AbstractAuthIntegrationTest#cleanDatabase()} depuis D14.
+     */
     @AfterEach
-    void cleanCascadeData() {
+    void cleanActivationTokens() {
         activationTokenJpaRepository.deleteAll();
-        memberJpaRepository.deleteAll();
     }
 
     // --- /validate ---

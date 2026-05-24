@@ -12,6 +12,7 @@ import com.alertmns.iam.domain.port.incoming.IssueActivationTokenUseCase;
 import com.alertmns.iam.domain.port.outgoing.ActivationTokenRepository;
 import com.alertmns.iam.domain.port.outgoing.MailerPort;
 import com.alertmns.iam.domain.port.outgoing.PasswordHasher;
+import com.alertmns.iam.domain.port.outgoing.UserAuthoritiesProvider;
 import com.alertmns.iam.domain.port.outgoing.UserRepository;
 import com.alertmns.iam.infrastructure.adapter.incoming.event.IssueActivationTokenOnUserRegisteredListener;
 import com.alertmns.iam.infrastructure.adapter.incoming.web.security.DomainUserDetailsService;
@@ -22,6 +23,8 @@ import com.alertmns.iam.infrastructure.adapter.outgoing.persistence.ActivationTo
 import com.alertmns.iam.infrastructure.adapter.outgoing.persistence.UserJpaRepository;
 import com.alertmns.iam.infrastructure.adapter.outgoing.persistence.UserPersistenceAdapter;
 import com.alertmns.iam.infrastructure.adapter.outgoing.security.SpringSecurityPasswordHasher;
+import com.alertmns.organisation.domain.port.outgoing.MemberRepository;
+import com.alertmns.organisation.infrastructure.adapter.outgoing.authorities.MemberUserAuthoritiesAdapter;
 import com.alertmns.shared.CurrentUserPort;
 import com.alertmns.shared.EventPublisher;
 import org.springframework.beans.factory.annotation.Value;
@@ -74,11 +77,21 @@ public class IamBeanConfig {
         return events -> events.forEach(applicationEventPublisher::publishEvent);
     }
 
+    // --- Ports exposés vers d'autres BCs ---
+
+    @Bean
+    public UserAuthoritiesProvider userAuthoritiesProvider(MemberRepository memberRepository) {
+        return new MemberUserAuthoritiesAdapter(memberRepository);
+    }
+
     // --- Spring Security ---
 
     @Bean
-    public DomainUserDetailsService domainUserDetailsService(UserRepository userRepository) {
-        return new DomainUserDetailsService(userRepository);
+    public DomainUserDetailsService domainUserDetailsService(
+            UserRepository userRepository,
+            UserAuthoritiesProvider userAuthoritiesProvider
+    ) {
+        return new DomainUserDetailsService(userRepository, userAuthoritiesProvider);
     }
 
     @Bean

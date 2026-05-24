@@ -50,7 +50,7 @@ class SpringSecurityCurrentUserAdapterTest {
                 Instant.now()
         );
 
-        details = new DomainUserDetails(user);
+        details = new DomainUserDetails(user, List.of("ROLE_MEMBER"));
     }
 
     @AfterEach

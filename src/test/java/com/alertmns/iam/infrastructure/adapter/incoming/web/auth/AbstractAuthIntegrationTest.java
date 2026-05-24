@@ -5,6 +5,8 @@ import com.alertmns.iam.application.SuspendUserService;
 import com.alertmns.iam.domain.port.outgoing.PasswordHasher;
 import com.alertmns.iam.domain.port.outgoing.UserRepository;
 import com.alertmns.iam.infrastructure.adapter.outgoing.persistence.UserJpaRepository;
+import com.alertmns.organisation.domain.port.incoming.InviteMemberUseCase;
+import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.MemberJpaRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -63,8 +65,17 @@ abstract class AbstractAuthIntegrationTest {
     @Autowired
     private UserJpaRepository userJpaRepository;
 
+    @Autowired
+    private MemberJpaRepository memberJpaRepository;
+
+    /**
+     * Nettoie d'abord les Members (cross-BC dependency vers la table users via {@code userId}) puis les users.
+     * Depuis D14, {@link TestUserFactory#registerActive(String, String)} et {@code registerActiveAdmin} créent un
+     * Member pour le sourcing des autorités Spring Security : le cleanup est donc obligatoire entre tests.
+     */
     @AfterEach
     void cleanDatabase() {
+        memberJpaRepository.deleteAll();
         userJpaRepository.deleteAll();
     }
 
@@ -240,14 +251,14 @@ abstract class AbstractAuthIntegrationTest {
                 SuspendUserService suspendUserService,
                 UserRepository userRepository,
                 PasswordHasher passwordHasher,
-                UserJpaRepository userJpaRepository
+                InviteMemberUseCase inviteMemberUseCase
         ) {
             return new TestUserFactory(
                     registerUserService,
                     suspendUserService,
                     userRepository,
                     passwordHasher,
-                    userJpaRepository
+                    inviteMemberUseCase
             );
         }
     }

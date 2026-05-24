@@ -17,19 +17,26 @@ import java.util.Objects;
  * <p>Conserve une référence au {@link User} pour exposer {@link #userId()}, que l'adapter
  * {@code SpringSecurityCurrentUserAdapter} lira depuis le {@code Principal} sans devoir recharger l'utilisateur.</p>
  *
- * <p>Mapping des statuts :
+ * <p><b>Autorités</b> : injectées à la construction sous forme de noms résolus en amont par un
+ * {@code UserAuthoritiesProvider}. La source de vérité des rôles est le BC Organisation ({@code Member.role}).</p>
+ *
+ * <p>Mapping des statuts :</p>
  * <ul>
  *   <li>{@link #isEnabled()} : compte ACTIVE et non anonymisé</li>
  *   <li>{@link #isAccountNonLocked()} : compte ni SUSPENDED ni BANNED</li>
  * </ul>
- * </p>
  */
 public final class DomainUserDetails implements UserDetails {
 
     private final User user;
+    private final Collection<GrantedAuthority> authorities;
 
-    public DomainUserDetails(User user) {
+    public DomainUserDetails(User user, List<String> authorityNames) {
         this.user = Objects.requireNonNull(user, "user must not be null");
+        Objects.requireNonNull(authorityNames, "authorityNames must not be null");
+        this.authorities = authorityNames.stream()
+                .map(name -> (GrantedAuthority) new SimpleGrantedAuthority(name))
+                .toList();
     }
 
     public UserId userId() {
@@ -38,7 +45,7 @@ public final class DomainUserDetails implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_" + user.role().name()));
+        return authorities;
     }
 
     @Override

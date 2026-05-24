@@ -8,6 +8,7 @@ import com.alertmns.iam.domain.model.Profile;
 import com.alertmns.iam.domain.model.User;
 import com.alertmns.iam.domain.model.UserRole;
 import com.alertmns.iam.domain.model.UserStatus;
+import com.alertmns.iam.domain.port.outgoing.UserAuthoritiesProvider;
 import com.alertmns.iam.domain.port.outgoing.UserRepository;
 import com.alertmns.shared.UserId;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,12 +23,16 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @DisplayName("DomainUserDetailsService")
@@ -38,6 +43,9 @@ class DomainUserDetailsServiceTest {
 
     @Mock
     UserRepository userRepository;
+
+    @Mock
+    UserAuthoritiesProvider userAuthoritiesProvider;
 
     @InjectMocks
     DomainUserDetailsService service;
@@ -66,6 +74,7 @@ class DomainUserDetailsServiceTest {
         @DisplayName("should return DomainUserDetails when user is found")
         void shouldReturnDomainUserDetailsWhenUserIsFound() {
             when(userRepository.findByEmail(any())).thenReturn(Optional.of(user));
+            when(userAuthoritiesProvider.findAuthorities(user.id())).thenReturn(List.of());
 
             UserDetails details = service.loadUserByUsername(EMAIL);
 
@@ -78,9 +87,35 @@ class DomainUserDetailsServiceTest {
         @DisplayName("should query repository with the email VO")
         void shouldQueryRepositoryWithEmailVO() {
             when(userRepository.findByEmail(Email.of(EMAIL))).thenReturn(Optional.of(user));
+            when(userAuthoritiesProvider.findAuthorities(user.id())).thenReturn(List.of());
 
             service.loadUserByUsername(EMAIL);
             // verified by the strict stub matching above: if the email VO was wrong, the stub would not match
+        }
+
+        @Test
+        @DisplayName("should resolve authorities via the provider and expose them on the UserDetails")
+        void shouldResolveAuthoritiesViaProvider() {
+            when(userRepository.findByEmail(any())).thenReturn(Optional.of(user));
+            when(userAuthoritiesProvider.findAuthorities(user.id())).thenReturn(List.of("ROLE_ADMIN"));
+
+            UserDetails details = service.loadUserByUsername(EMAIL);
+
+            assertThat(details.getAuthorities())
+                    .extracting("authority")
+                    .containsExactly("ROLE_ADMIN");
+            verify(userAuthoritiesProvider).findAuthorities(user.id());
+        }
+
+        @Test
+        @DisplayName("should expose an empty authority collection when the provider returns none")
+        void shouldExposeEmptyAuthoritiesWhenProviderReturnsNone() {
+            when(userRepository.findByEmail(any())).thenReturn(Optional.of(user));
+            when(userAuthoritiesProvider.findAuthorities(user.id())).thenReturn(List.of());
+
+            UserDetails details = service.loadUserByUsername(EMAIL);
+
+            assertThat(details.getAuthorities()).isEmpty();
         }
 
         @Test
@@ -90,6 +125,7 @@ class DomainUserDetailsServiceTest {
 
             assertThrows(UsernameNotFoundException.class,
                     () -> service.loadUserByUsername(EMAIL));
+            verify(userAuthoritiesProvider, never()).findAuthorities(any());
         }
 
         @Test
@@ -106,10 +142,17 @@ class DomainUserDetailsServiceTest {
     class Invariants {
 
         @Test
-        @DisplayName("should reject null repository")
-        void shouldRejectNullRepository() {
+        @DisplayName("should reject null UserRepository")
+        void shouldRejectNullUserRepository() {
             assertThrows(NullPointerException.class,
-                    () -> new DomainUserDetailsService(null));
+                    () -> new DomainUserDetailsService(null, userAuthoritiesProvider));
+        }
+
+        @Test
+        @DisplayName("should reject null UserAuthoritiesProvider")
+        void shouldRejectNullUserAuthoritiesProvider() {
+            assertThrows(NullPointerException.class,
+                    () -> new DomainUserDetailsService(userRepository, null));
         }
     }
 }
