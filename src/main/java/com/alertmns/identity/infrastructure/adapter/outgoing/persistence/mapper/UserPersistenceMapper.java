@@ -1,7 +1,7 @@
 package com.alertmns.identity.infrastructure.adapter.outgoing.persistence.mapper;
 
 import com.alertmns.identity.domain.model.AbsenceMessage;
-import com.alertmns.identity.domain.model.Email;
+import com.alertmns.shared.Email;
 import com.alertmns.identity.domain.model.FirstName;
 import com.alertmns.identity.domain.model.HashedPassword;
 import com.alertmns.identity.domain.model.LastName;

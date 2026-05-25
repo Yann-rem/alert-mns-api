@@ -5,7 +5,7 @@ import com.alertmns.identity.domain.exception.ActivationTokenNotFoundException;
 import com.alertmns.identity.domain.exception.UserNotFoundException;
 import com.alertmns.identity.domain.model.ActivationToken;
 import com.alertmns.identity.domain.model.ActivationTokenId;
-import com.alertmns.identity.domain.model.Email;
+import com.alertmns.shared.Email;
 import com.alertmns.identity.domain.model.FirstName;
 import com.alertmns.identity.domain.model.HashedPassword;
 import com.alertmns.identity.domain.model.HashedToken;

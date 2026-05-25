@@ -1,6 +1,6 @@
 package com.alertmns.identity.infrastructure.adapter.outgoing.mailer;
 
-import com.alertmns.identity.domain.model.Email;
+import com.alertmns.shared.Email;
 import com.alertmns.identity.domain.model.FirstName;
 import com.alertmns.identity.domain.port.outgoing.MailerPort;
 import org.slf4j.Logger;

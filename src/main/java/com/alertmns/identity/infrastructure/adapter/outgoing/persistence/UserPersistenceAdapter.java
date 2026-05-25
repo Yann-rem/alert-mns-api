@@ -1,6 +1,6 @@
 package com.alertmns.identity.infrastructure.adapter.outgoing.persistence;
 
-import com.alertmns.identity.domain.model.Email;
+import com.alertmns.shared.Email;
 import com.alertmns.identity.domain.model.User;
 import com.alertmns.shared.UserId;
 import com.alertmns.identity.domain.port.outgoing.UserRepository;

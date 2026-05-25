@@ -1,6 +1,6 @@
 package com.alertmns.identity.domain.port.incoming.result;
 
-import com.alertmns.identity.domain.model.Email;
+import com.alertmns.shared.Email;
 import com.alertmns.identity.domain.model.FirstName;
 import com.alertmns.identity.domain.model.LastName;
 

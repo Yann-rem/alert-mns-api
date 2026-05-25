@@ -3,7 +3,7 @@ package com.alertmns.identity.application;
 import com.alertmns.identity.domain.event.UserReactivated;
 import com.alertmns.identity.domain.exception.BannedUserCannotBeReactivatedException;
 import com.alertmns.identity.domain.exception.UserNotFoundException;
-import com.alertmns.identity.domain.model.Email;
+import com.alertmns.shared.Email;
 import com.alertmns.identity.domain.model.FirstName;
 import com.alertmns.identity.domain.model.HashedPassword;
 import com.alertmns.identity.domain.model.LastName;

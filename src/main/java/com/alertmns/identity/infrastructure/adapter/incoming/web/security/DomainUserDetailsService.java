@@ -1,6 +1,6 @@
 package com.alertmns.identity.infrastructure.adapter.incoming.web.security;
 
-import com.alertmns.identity.domain.model.Email;
+import com.alertmns.shared.Email;
 import com.alertmns.identity.domain.model.User;
 import com.alertmns.identity.domain.port.outgoing.UserAuthoritiesProvider;
 import com.alertmns.identity.domain.port.outgoing.UserRepository;

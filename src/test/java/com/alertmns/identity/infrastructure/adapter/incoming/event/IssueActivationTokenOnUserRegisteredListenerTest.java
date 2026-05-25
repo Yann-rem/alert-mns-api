@@ -1,7 +1,7 @@
 package com.alertmns.identity.infrastructure.adapter.incoming.event;
 
 import com.alertmns.identity.domain.event.UserRegistered;
-import com.alertmns.identity.domain.model.Email;
+import com.alertmns.shared.Email;
 import com.alertmns.identity.domain.port.incoming.IssueActivationTokenUseCase;
 import com.alertmns.identity.domain.port.incoming.command.IssueActivationTokenCommand;
 import com.alertmns.shared.UserId;

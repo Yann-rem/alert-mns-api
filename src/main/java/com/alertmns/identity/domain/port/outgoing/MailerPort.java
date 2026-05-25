@@ -1,6 +1,6 @@
 package com.alertmns.identity.domain.port.outgoing;
 
-import com.alertmns.identity.domain.model.Email;
+import com.alertmns.shared.Email;
 import com.alertmns.identity.domain.model.FirstName;
 
 import java.net.URI;

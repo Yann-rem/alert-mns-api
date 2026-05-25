@@ -1,5 +1,6 @@
 package com.alertmns.identity.domain.model;
 
+import com.alertmns.shared.Email;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

@@ -1,6 +1,6 @@
 package com.alertmns.bootstrap;
 
-import com.alertmns.identity.domain.model.Email;
+import com.alertmns.shared.Email;
 import com.alertmns.identity.domain.model.RawPassword;
 import com.alertmns.identity.domain.model.User;
 import com.alertmns.identity.domain.model.UserStatus;

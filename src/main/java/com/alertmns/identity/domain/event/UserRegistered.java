@@ -1,6 +1,6 @@
 package com.alertmns.identity.domain.event;
 
-import com.alertmns.identity.domain.model.Email;
+import com.alertmns.shared.Email;
 import com.alertmns.shared.DomainEvent;
 import com.alertmns.shared.UserId;
 

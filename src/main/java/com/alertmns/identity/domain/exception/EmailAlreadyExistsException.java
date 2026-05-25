@@ -1,6 +1,6 @@
 package com.alertmns.identity.domain.exception;
 
-import com.alertmns.identity.domain.model.Email;
+import com.alertmns.shared.Email;
 
 /**
  * Exception de domaine représentant un conflit d'email déjà associé à un compte existant.
