@@ -1,6 +1,6 @@
 package com.alertmns.identity.infrastructure.adapter.incoming.web.auth;
 
-import com.alertmns.identity.application.RegisterUserService;
+import com.alertmns.identity.application.RegisterPendingUserService;
 import com.alertmns.identity.application.SuspendUserService;
 import com.alertmns.identity.domain.port.outgoing.PasswordHasher;
 import com.alertmns.identity.domain.port.outgoing.UserRepository;
@@ -247,14 +247,14 @@ abstract class AbstractAuthIntegrationTest {
     static class TestUserFactoryConfig {
         @Bean
         TestUserFactory testUserFactory(
-                RegisterUserService registerUserService,
+                RegisterPendingUserService registerPendingUserService,
                 SuspendUserService suspendUserService,
                 UserRepository userRepository,
                 PasswordHasher passwordHasher,
                 InviteMemberUseCase inviteMemberUseCase
         ) {
             return new TestUserFactory(
-                    registerUserService,
+                    registerPendingUserService,
                     suspendUserService,
                     userRepository,
                     passwordHasher,

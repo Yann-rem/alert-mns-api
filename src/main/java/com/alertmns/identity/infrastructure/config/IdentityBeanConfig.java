@@ -4,7 +4,6 @@ import com.alertmns.identity.application.IssueActivationTokenService;
 import com.alertmns.identity.application.ReactivateUserService;
 import com.alertmns.identity.application.RedeemActivationTokenService;
 import com.alertmns.identity.application.RegisterPendingUserService;
-import com.alertmns.identity.application.RegisterUserService;
 import com.alertmns.identity.application.SuspendUserService;
 import com.alertmns.identity.application.UpdateAbsenceMessageService;
 import com.alertmns.identity.application.UpdateProfileService;
@@ -117,15 +116,6 @@ public class IdentityBeanConfig {
     }
 
     // --- Services ---
-
-    @Bean
-    public RegisterUserService registerUserService(
-            UserRepository repository,
-            PasswordHasher passwordHasher,
-            EventPublisher publisher
-    ) {
-        return new RegisterUserService(repository, passwordHasher, publisher);
-    }
 
     @Bean
     public RegisterPendingUserService registerPendingUserService(UserRepository repository, EventPublisher publisher) {

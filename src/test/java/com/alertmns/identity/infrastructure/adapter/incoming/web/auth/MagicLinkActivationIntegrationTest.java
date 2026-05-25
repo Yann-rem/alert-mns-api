@@ -42,8 +42,12 @@ import static org.mockito.Mockito.verify;
 class MagicLinkActivationIntegrationTest extends AbstractAuthIntegrationTest {
 
     private static final String EMAIL = "magic.link@alertmns.local";
-    private static final String DUMMY_PASSWORD = "dummypass1234";
     private static final String CHOSEN_PASSWORD = "chosenpass5678";
+    /**
+     * Mot de passe arbitraire non-bcrypt utilisé pour vérifier qu'un login échoue avant le redeem du magic-link
+     * (le User a alors un {@code HashedPassword.unset()} en BD, donc aucune valeur ne peut matcher).
+     */
+    private static final String NEVER_SET_PASSWORD = "never-set-password-1234";
     private static final String UNKNOWN_RAW_TOKEN = "this-raw-token-was-never-issued";
     private static final String DEFAULT_ORGANISATION_ID = "00000000-0000-0000-0000-000000000001";
 
@@ -79,7 +83,7 @@ class MagicLinkActivationIntegrationTest extends AbstractAuthIntegrationTest {
     @Test
     @DisplayName("GET /validate with valid token returns 200 and user context")
     void shouldReturnUserContextWhenTokenIsValid() {
-        PendingUser pending = registerPendingAndCaptureRawToken(EMAIL, DUMMY_PASSWORD);
+        PendingUser pending = registerPendingAndCaptureRawToken(EMAIL);
 
         ResponseEntity<String> response = validate(pending.rawToken());
 
@@ -102,7 +106,7 @@ class MagicLinkActivationIntegrationTest extends AbstractAuthIntegrationTest {
     @Test
     @DisplayName("GET /validate with expired token returns 410 Gone")
     void shouldReturn410WhenValidateTokenIsExpired() {
-        UserId userId = userFactory.registerPending(EMAIL, DUMMY_PASSWORD);
+        UserId userId = userFactory.registerPending(EMAIL);
         String rawToken = "expired-raw-token-value";
         insertExpiredTokenFor(userId, rawToken);
 
@@ -124,7 +128,7 @@ class MagicLinkActivationIntegrationTest extends AbstractAuthIntegrationTest {
     @Test
     @DisplayName("GET /validate is reachable anonymously (no session, no CSRF)")
     void shouldAllowAnonymousAccessToValidate() {
-        PendingUser pending = registerPendingAndCaptureRawToken(EMAIL, DUMMY_PASSWORD);
+        PendingUser pending = registerPendingAndCaptureRawToken(EMAIL);
 
         // No cookies, no headers — fully anonymous client
         ResponseEntity<String> response = restTemplate.getForEntity(
@@ -138,7 +142,7 @@ class MagicLinkActivationIntegrationTest extends AbstractAuthIntegrationTest {
     @Test
     @DisplayName("POST /redeem with valid token activates the user and cascades to Member")
     void shouldActivateUserWhenRedeemingValidToken() {
-        PendingUser pending = registerPendingAndCaptureRawToken(EMAIL, DUMMY_PASSWORD);
+        PendingUser pending = registerPendingAndCaptureRawToken(EMAIL);
         inviteMemberFor(pending.userId());
 
         ResponseEntity<String> response = redeem(pending.rawToken(), CHOSEN_PASSWORD);
@@ -164,7 +168,7 @@ class MagicLinkActivationIntegrationTest extends AbstractAuthIntegrationTest {
     @Test
     @DisplayName("POST /redeem with expired token returns 410 Gone")
     void shouldReturn410WhenRedeemTokenIsExpired() {
-        UserId userId = userFactory.registerPending(EMAIL, DUMMY_PASSWORD);
+        UserId userId = userFactory.registerPending(EMAIL);
         String rawToken = "expired-raw-token-value";
         insertExpiredTokenFor(userId, rawToken);
 
@@ -180,7 +184,7 @@ class MagicLinkActivationIntegrationTest extends AbstractAuthIntegrationTest {
     @Test
     @DisplayName("POST /redeem is reachable anonymously without CSRF token")
     void shouldAllowAnonymousRedeemWithoutCsrf() {
-        PendingUser pending = registerPendingAndCaptureRawToken(EMAIL, DUMMY_PASSWORD);
+        PendingUser pending = registerPendingAndCaptureRawToken(EMAIL);
         inviteMemberFor(pending.userId());
 
         // No cookies, no X-XSRF-TOKEN header — atteste l'exemption CSRF
@@ -194,7 +198,7 @@ class MagicLinkActivationIntegrationTest extends AbstractAuthIntegrationTest {
     @Test
     @DisplayName("Re-issuing invalidates the previous token")
     void shouldInvalidatePreviousTokenWhenReissued() {
-        PendingUser pending = registerPendingAndCaptureRawToken(EMAIL, DUMMY_PASSWORD);
+        PendingUser pending = registerPendingAndCaptureRawToken(EMAIL);
         String firstRawToken = pending.rawToken();
         String secondRawToken = issueAdditionalTokenAndCaptureRawToken(pending.userId());
 
@@ -212,7 +216,7 @@ class MagicLinkActivationIntegrationTest extends AbstractAuthIntegrationTest {
     @Test
     @DisplayName("End-to-end: register (auto-issue) → invite Member → validate → redeem → cascade → login")
     void endToEndActivationFlow() {
-        PendingUser pending = registerPendingAndCaptureRawToken(EMAIL, DUMMY_PASSWORD);
+        PendingUser pending = registerPendingAndCaptureRawToken(EMAIL);
         inviteMemberFor(pending.userId());
 
         ResponseEntity<String> validateResponse = validate(pending.rawToken());
@@ -234,8 +238,9 @@ class MagicLinkActivationIntegrationTest extends AbstractAuthIntegrationTest {
         ResponseEntity<String> loginResponse = login(EMAIL, CHOSEN_PASSWORD);
         assertThat(loginResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
 
-        // And NOT with the throwaway password used at registration
-        ResponseEntity<String> badLogin = login(EMAIL, DUMMY_PASSWORD);
+        // Et NON avec une valeur arbitraire : le User a un HashedPassword.unset() en BD avant le redeem,
+        // remplacé par hash(CHOSEN_PASSWORD) après. Aucune autre valeur ne peut matcher.
+        ResponseEntity<String> badLogin = login(EMAIL, NEVER_SET_PASSWORD);
         assertThat(badLogin.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
 
@@ -255,13 +260,13 @@ class MagicLinkActivationIntegrationTest extends AbstractAuthIntegrationTest {
     }
 
     /**
-     * Crée un utilisateur PENDING et capture le raw token émis automatiquement via la cascade
-     * {@code UserRegistered → IssueActivationToken}. C'est le chemin nominal d'activation : un seul appel suffit pour
-     * obtenir un user et son magic-link.
+     * Crée un utilisateur PENDING (via {@code RegisterPendingUserUseCase}, sans mot de passe) et capture le raw
+     * token émis automatiquement via la cascade {@code UserRegistered → IssueActivationToken}. C'est le chemin
+     * nominal d'activation : un seul appel suffit pour obtenir un user et son magic-link.
      */
-    private PendingUser registerPendingAndCaptureRawToken(String email, String password) {
+    private PendingUser registerPendingAndCaptureRawToken(String email) {
         Mockito.clearInvocations(mailer);
-        UserId userId = userFactory.registerPending(email, password);
+        UserId userId = userFactory.registerPending(email);
 
         ArgumentCaptor<URI> linkCaptor = ArgumentCaptor.forClass(URI.class);
         verify(mailer).sendActivationEmail(any(), any(), linkCaptor.capture());

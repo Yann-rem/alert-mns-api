@@ -79,7 +79,7 @@ class AuthLoginIntegrationTest extends AbstractAuthIntegrationTest {
     @Test
     @DisplayName("Scenario 6 — PENDING account returns 403 + 'Account is disabled'")
     void shouldReturn403WhenAccountIsPending() {
-        userFactory.registerPending(EMAIL, PASSWORD);
+        userFactory.registerPending(EMAIL);
 
         ResponseEntity<String> response = login(EMAIL, PASSWORD);
 

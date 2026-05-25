@@ -1,10 +1,10 @@
 package com.alertmns.identity.infrastructure.adapter.incoming.web.auth;
 
-import com.alertmns.identity.application.RegisterUserService;
+import com.alertmns.identity.application.RegisterPendingUserService;
 import com.alertmns.identity.application.SuspendUserService;
 import com.alertmns.identity.domain.model.RawPassword;
 import com.alertmns.identity.domain.model.User;
-import com.alertmns.identity.domain.port.incoming.command.RegisterUserCommand;
+import com.alertmns.identity.domain.port.incoming.command.RegisterPendingUserCommand;
 import com.alertmns.identity.domain.port.incoming.command.SuspendUserCommand;
 import com.alertmns.identity.domain.port.outgoing.PasswordHasher;
 import com.alertmns.identity.domain.port.outgoing.UserRepository;
@@ -18,6 +18,10 @@ import com.alertmns.shared.UserId;
  *
  * <p>Reste DDD-pur autant que possible : on passe par les services applicatifs et les méthodes de l'agrégat. Si demain
  * les transitions d'état changent, les tests reflètent le vrai comportement métier.</p>
+ *
+ * <p><b>Création des Users</b> : passe exclusivement par {@link RegisterPendingUserService}, qui crée un User en
+ * statut {@code PENDING} avec un {@code HashedPassword.unset()} (sentinelle). Le mot de passe réel est posé à
+ * l'activation via {@link User#activateWithPassword(com.alertmns.identity.domain.model.HashedPassword)}.</p>
  *
  * <p><b>Sourcing des autorités Spring Security (D14)</b> : depuis ADR-0012, les rôles sont portés par le BC
  * Organisation via {@code Member.role}. Les méthodes {@link #registerActive(String, String)} et
@@ -37,20 +41,20 @@ public final class TestUserFactory {
     private static final String DEFAULT_FIRST_NAME = "Test";
     private static final String DEFAULT_LAST_NAME = "User";
 
-    private final RegisterUserService registerUserService;
+    private final RegisterPendingUserService registerPendingUserService;
     private final SuspendUserService suspendUserService;
     private final UserRepository userRepository;
     private final PasswordHasher passwordHasher;
     private final InviteMemberUseCase inviteMemberUseCase;
 
     public TestUserFactory(
-            RegisterUserService registerUserService,
+            RegisterPendingUserService registerPendingUserService,
             SuspendUserService suspendUserService,
             UserRepository userRepository,
             PasswordHasher passwordHasher,
             InviteMemberUseCase inviteMemberUseCase
     ) {
-        this.registerUserService = registerUserService;
+        this.registerPendingUserService = registerPendingUserService;
         this.suspendUserService = suspendUserService;
         this.userRepository = userRepository;
         this.passwordHasher = passwordHasher;
@@ -58,15 +62,14 @@ public final class TestUserFactory {
     }
 
     /**
-     * Crée un utilisateur en état PENDING (état initial apres register).
+     * Crée un utilisateur en état PENDING (état initial après register), avec un {@code HashedPassword.unset()}.
      *
-     * <p>Aucun {@code Member} n'est créé : utiliser cette méthode quand le test n'a pas besoin
-     * d'autorité Spring Security (ex. tests centrés sur le magic-link avant activation).</p>
+     * <p>Aucun {@code Member} n'est créé : utiliser cette méthode quand le test n'a pas besoin d'autorité
+     * Spring Security (ex. tests centrés sur le magic-link avant activation).</p>
      */
-    public UserId registerPending(String email, String rawPassword) {
-        return registerUserService.register(new RegisterUserCommand(
+    public UserId registerPending(String email) {
+        return registerPendingUserService.register(new RegisterPendingUserCommand(
                 email,
-                rawPassword,
                 DEFAULT_FIRST_NAME,
                 DEFAULT_LAST_NAME
         ));
@@ -75,15 +78,15 @@ public final class TestUserFactory {
     /**
      * Crée un utilisateur en état ACTIVE rattaché à un {@code Member} role {@code MEMBER}.
      *
-     * <p>Le mot de passe persisté final est le re-hash de {@code rawPassword}, de sorte que l'utilisateur peut
-     * s'authentifier avec celui-ci (bcrypt produit un hash différent à chaque appel mais {@code matches()} reste
-     * vrai).</p>
+     * <p>L'utilisateur est créé PENDING (mot de passe sentinelle), puis activé via
+     * {@code activateWithPassword(rawPassword)} : le hash final permet à l'utilisateur de s'authentifier avec
+     * {@code rawPassword}.</p>
      *
      * <p>Le {@code Member} est créé en état PENDING (pas de cascade {@code UserActivated} ici car on bypass le redeem
      * du magic-link). Le statut du Member n'impacte pas la résolution des autorités, seul son rôle compte.</p>
      */
     public UserId registerActive(String email, String rawPassword) {
-        UserId id = registerPending(email, rawPassword);
+        UserId id = registerPending(email);
         activateInPlace(id, rawPassword);
         inviteMember(id, MemberRole.MEMBER);
         return id;
@@ -103,11 +106,11 @@ public final class TestUserFactory {
     /**
      * Crée un utilisateur ACTIVE rattaché à un {@code Member} role {@code ADMIN}.
      *
-     * <p>Remplace l'ancien raccourci qui mutait {@code User.role} en base : depuis D14, les autorités Spring Security
-     * sont dérivées de {@code Member.role} via {@code MemberUserAuthoritiesAdapter}. Plus de hack JPA nécessaire.</p>
+     * <p>Depuis D14, les autorités Spring Security sont dérivées de {@code Member.role} via
+     * {@code MemberUserAuthoritiesAdapter}.</p>
      */
     public UserId registerActiveAdmin(String email, String rawPassword) {
-        UserId id = registerPending(email, rawPassword);
+        UserId id = registerPending(email);
         activateInPlace(id, rawPassword);
         inviteMember(id, MemberRole.ADMIN);
         return id;
