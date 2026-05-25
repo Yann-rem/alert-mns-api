@@ -5,8 +5,10 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DisplayName("HashedPassword")
 class HashedPasswordTest {
@@ -58,6 +60,54 @@ class HashedPasswordTest {
         void twoDifferentHashedPasswordsShouldNotBeEqual() {
             String otherHash = "$2a$10$zyxwvutsrqponmlkjihgffeZYXWVUTSRQPONMLKJIHGFEDCBA987654";
             assertNotEquals(HashedPassword.of(BCRYPT_HASH), HashedPassword.of(otherHash));
+        }
+    }
+
+    @Nested
+    @DisplayName("Unset sentinel")
+    class UnsetSentinel {
+
+        @Test
+        @DisplayName("unset() should return a non-null instance satisfying the invariants")
+        void unsetShouldReturnANonNullInstance() {
+            HashedPassword unset = HashedPassword.unset();
+            // L'invariant non-blank / max length doit être respecté par la sentinelle.
+            assertEquals("$unset$", unset.value());
+        }
+
+        @Test
+        @DisplayName("unset() should not look like a bcrypt hash")
+        void unsetShouldNotLookLikeABcryptHash() {
+            HashedPassword unset = HashedPassword.unset();
+            // Garantit que la sentinelle ne pourra jamais être matchée par BCryptPasswordEncoder.matches(),
+            // qui rejette tout encodedPassword ne correspondant pas au pattern bcrypt.
+            assertFalse(unset.value().startsWith("$2a$"));
+            assertFalse(unset.value().startsWith("$2b$"));
+            assertFalse(unset.value().startsWith("$2y$"));
+        }
+
+        @Test
+        @DisplayName("isUnset() should be true for the sentinel")
+        void isUnsetShouldBeTrueForTheSentinel() {
+            assertTrue(HashedPassword.unset().isUnset());
+        }
+
+        @Test
+        @DisplayName("isUnset() should be false for a real hash")
+        void isUnsetShouldBeFalseForARealHash() {
+            assertFalse(HashedPassword.of(BCRYPT_HASH).isUnset());
+        }
+
+        @Test
+        @DisplayName("two unset() instances should be equal")
+        void twoUnsetInstancesShouldBeEqual() {
+            assertEquals(HashedPassword.unset(), HashedPassword.unset());
+        }
+
+        @Test
+        @DisplayName("unset() should not be equal to a real hash")
+        void unsetShouldNotBeEqualToARealHash() {
+            assertNotEquals(HashedPassword.unset(), HashedPassword.of(BCRYPT_HASH));
         }
     }
 }

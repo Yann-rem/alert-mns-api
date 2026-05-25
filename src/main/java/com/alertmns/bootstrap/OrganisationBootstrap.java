@@ -1,11 +1,10 @@
 package com.alertmns.bootstrap;
 
-import com.alertmns.shared.Email;
 import com.alertmns.identity.domain.model.UserStatus;
 import com.alertmns.identity.domain.port.incoming.IssueActivationTokenUseCase;
-import com.alertmns.identity.domain.port.incoming.RegisterUserUseCase;
+import com.alertmns.identity.domain.port.incoming.RegisterPendingUserUseCase;
 import com.alertmns.identity.domain.port.incoming.command.IssueActivationTokenCommand;
-import com.alertmns.identity.domain.port.incoming.command.RegisterUserCommand;
+import com.alertmns.identity.domain.port.incoming.command.RegisterPendingUserCommand;
 import com.alertmns.identity.domain.port.outgoing.UserRepository;
 import com.alertmns.organisation.domain.exception.MemberAlreadyExistsException;
 import com.alertmns.organisation.domain.model.MemberRole;
@@ -15,13 +14,12 @@ import com.alertmns.organisation.domain.port.incoming.InviteMemberUseCase;
 import com.alertmns.organisation.domain.port.incoming.command.CreateOrganisationCommand;
 import com.alertmns.organisation.domain.port.incoming.command.InviteMemberCommand;
 import com.alertmns.organisation.domain.port.outgoing.OrganisationRepository;
+import com.alertmns.shared.Email;
 import com.alertmns.shared.OrganisationId;
 import com.alertmns.shared.UserId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.security.SecureRandom;
-import java.util.Base64;
 import java.util.Objects;
 
 /**
@@ -42,13 +40,11 @@ import java.util.Objects;
  * seules les vérifications passent ; la 4ᵉ étape ré-émet un token <em>tant que</em> l'admin n'est pas {@code ACTIVE},
  * puis devient no-op.</p>
  *
- * <p><b>Sécurité du mot de passe initial</b> : un mot de passe aléatoire jetable ({@value #RANDOM_PASSWORD_BYTES}
- * octets, encodé Base64Url) est généré pour la création du User. Il n'est jamais persisté en clair, jamais loggé,
- * jamais retourné. Il sera écrasé lors du redeem du magic-link par {@code User.activateWithPassword}.</p>
- *
- * <p><b>Dette explicite</b> : à l'occasion de l'introduction de {@code MembershipInvitation}, remplacer ce mécanisme
- * par un {@code RegisterPendingUserUseCase(email, profile)} qui ne prend pas de mot de passe. Le random password
- * ci-dessous est un contournement pragmatique du contrat actuel de {@link RegisterUserUseCase}.</p>
+ * <p><b>Création de l'admin</b> : passe par {@link RegisterPendingUserUseCase} qui crée un User en statut
+ * {@code PENDING} avec un {@code HashedPassword} sentinelle ({@code HashedPassword.unset()}). Aucun mot de passe réel
+ * n'est généré ni stocké. La sentinelle sera remplacée lors du redeem du magic-link par {@code activateWithPassword}.
+ * Le User PENDING ne peut pas s'authentifier (cf. {@code DomainUserDetails.isEnabled()}), donc la sentinelle n'est
+ * jamais comparée à un mot de passe utilisateur en pratique.</p>
  *
  * <p><b>Activation/désactivation</b> : via la propriété {@code alertmns.bootstrap.enabled}. Désactivé en environnement
  * de test via {@code application-test.yml}.</p>
@@ -56,14 +52,12 @@ import java.util.Objects;
 public final class OrganisationBootstrap {
 
     private static final Logger log = LoggerFactory.getLogger(OrganisationBootstrap.class);
-    private static final SecureRandom RANDOM = new SecureRandom();
-    private static final int RANDOM_PASSWORD_BYTES = 32;
 
     private final BootstrapProperties properties;
     private final OrganisationRepository organisationRepository;
     private final UserRepository userRepository;
     private final CreateOrganisationUseCase createOrganisation;
-    private final RegisterUserUseCase registerUser;
+    private final RegisterPendingUserUseCase registerPendingUser;
     private final InviteMemberUseCase inviteMember;
     private final IssueActivationTokenUseCase issueActivationToken;
 
@@ -72,7 +66,7 @@ public final class OrganisationBootstrap {
             OrganisationRepository organisationRepository,
             UserRepository userRepository,
             CreateOrganisationUseCase createOrganisation,
-            RegisterUserUseCase registerUser,
+            RegisterPendingUserUseCase registerPendingUser,
             InviteMemberUseCase inviteMember,
             IssueActivationTokenUseCase issueActivationToken
     ) {
@@ -81,7 +75,7 @@ public final class OrganisationBootstrap {
                 Objects.requireNonNull(organisationRepository, "organisationRepository must not be null");
         this.userRepository = Objects.requireNonNull(userRepository, "userRepository must not be null");
         this.createOrganisation = Objects.requireNonNull(createOrganisation, "createOrganisation must not be null");
-        this.registerUser = Objects.requireNonNull(registerUser, "registerUser must not be null");
+        this.registerPendingUser = Objects.requireNonNull(registerPendingUser, "registerPendingUser must not be null");
         this.inviteMember = Objects.requireNonNull(inviteMember, "inviteMember must not be null");
         this.issueActivationToken =
                 Objects.requireNonNull(issueActivationToken, "issueActivationToken must not be null");
@@ -121,9 +115,8 @@ public final class OrganisationBootstrap {
                 })
                 .orElseGet(() -> {
                     log.info("User created with email {}", email.value());
-                    return registerUser.register(new RegisterUserCommand(
+                    return registerPendingUser.register(new RegisterPendingUserCommand(
                             email.value(),
-                            generateRandomPassword(),
                             properties.admin().firstName(),
                             properties.admin().lastName()
                     ));
@@ -154,11 +147,5 @@ public final class OrganisationBootstrap {
         }
         log.info("Initial admin user is not ACTIVE yet; reissuing magic-link");
         issueActivationToken.issue(new IssueActivationTokenCommand(adminId.value().toString()));
-    }
-
-    private static String generateRandomPassword() {
-        byte[] bytes = new byte[RANDOM_PASSWORD_BYTES];
-        RANDOM.nextBytes(bytes);
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 }

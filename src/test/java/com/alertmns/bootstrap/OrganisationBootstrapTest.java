@@ -3,9 +3,9 @@ package com.alertmns.bootstrap;
 import com.alertmns.identity.domain.model.User;
 import com.alertmns.identity.domain.model.UserStatus;
 import com.alertmns.identity.domain.port.incoming.IssueActivationTokenUseCase;
-import com.alertmns.identity.domain.port.incoming.RegisterUserUseCase;
+import com.alertmns.identity.domain.port.incoming.RegisterPendingUserUseCase;
 import com.alertmns.identity.domain.port.incoming.command.IssueActivationTokenCommand;
-import com.alertmns.identity.domain.port.incoming.command.RegisterUserCommand;
+import com.alertmns.identity.domain.port.incoming.command.RegisterPendingUserCommand;
 import com.alertmns.identity.domain.port.outgoing.UserRepository;
 import com.alertmns.organisation.domain.exception.MemberAlreadyExistsException;
 import com.alertmns.organisation.domain.model.MemberId;
@@ -60,7 +60,7 @@ class OrganisationBootstrapTest {
     CreateOrganisationUseCase createOrganisation;
 
     @Mock
-    RegisterUserUseCase registerUser;
+    RegisterPendingUserUseCase registerPendingUser;
 
     @Mock
     InviteMemberUseCase inviteMember;
@@ -85,7 +85,7 @@ class OrganisationBootstrapTest {
                 organisationRepository,
                 userRepository,
                 createOrganisation,
-                registerUser,
+                registerPendingUser,
                 inviteMember,
                 issueActivationToken
         );
@@ -110,7 +110,7 @@ class OrganisationBootstrapTest {
                     organisationRepository,
                     userRepository,
                     createOrganisation,
-                    registerUser,
+                    registerPendingUser,
                     inviteMember,
                     issueActivationToken
             );
@@ -122,7 +122,7 @@ class OrganisationBootstrapTest {
     class FirstBoot {
 
         @Test
-        @DisplayName("should create the organisation, the admin user, the admin member, and rely on the listener for the magic-link")
+        @DisplayName("should create the organisation, the admin user (PENDING, no password), the admin member, and rely on the listener for the magic-link")
         void shouldProvisionAllAggregatesOnFirstBoot() {
             OrganisationId createdOrgId = OrganisationId.generate();
             UserId createdUserId = UserId.generate();
@@ -133,7 +133,7 @@ class OrganisationBootstrapTest {
             when(organisationRepository.findByName(any())).thenReturn(Optional.empty());
             when(createOrganisation.create(any())).thenReturn(createdOrgId);
             when(userRepository.findByEmail(any())).thenReturn(Optional.empty());
-            when(registerUser.register(any())).thenReturn(createdUserId);
+            when(registerPendingUser.register(any())).thenReturn(createdUserId);
             when(inviteMember.invite(any())).thenReturn(createdMemberId);
             when(userRepository.findById(createdUserId)).thenReturn(Optional.of(pendingAdmin));
 
@@ -143,14 +143,12 @@ class OrganisationBootstrapTest {
             verify(createOrganisation).create(orgCmd.capture());
             assertThat(orgCmd.getValue().name()).isEqualTo(ORG_NAME);
 
-            ArgumentCaptor<RegisterUserCommand> userCmd = ArgumentCaptor.forClass(RegisterUserCommand.class);
-            verify(registerUser).register(userCmd.capture());
+            ArgumentCaptor<RegisterPendingUserCommand> userCmd =
+                    ArgumentCaptor.forClass(RegisterPendingUserCommand.class);
+            verify(registerPendingUser).register(userCmd.capture());
             assertThat(userCmd.getValue().email()).isEqualTo(ADMIN_EMAIL);
             assertThat(userCmd.getValue().firstName()).isEqualTo(ADMIN_FIRST_NAME);
             assertThat(userCmd.getValue().lastName()).isEqualTo(ADMIN_LAST_NAME);
-            assertThat(userCmd.getValue().rawPassword())
-                    .as("Le mot de passe initial est généré aléatoirement, non vide, jamais en clair dans la config")
-                    .isNotBlank();
 
             ArgumentCaptor<InviteMemberCommand> inviteCmd = ArgumentCaptor.forClass(InviteMemberCommand.class);
             verify(inviteMember).invite(inviteCmd.capture());
@@ -170,7 +168,7 @@ class OrganisationBootstrapTest {
             when(organisationRepository.findByName(any())).thenReturn(Optional.empty());
             when(createOrganisation.create(any())).thenReturn(createdOrgId);
             when(userRepository.findByEmail(any())).thenReturn(Optional.empty());
-            when(registerUser.register(any())).thenReturn(createdUserId);
+            when(registerPendingUser.register(any())).thenReturn(createdUserId);
             when(inviteMember.invite(any())).thenReturn(MemberId.generate());
             when(userRepository.findById(createdUserId)).thenReturn(Optional.of(pendingAdmin));
 
@@ -193,15 +191,15 @@ class OrganisationBootstrapTest {
             when(organisationRepository.findByName(any())).thenReturn(Optional.empty());
             when(createOrganisation.create(any())).thenReturn(createdOrgId);
             when(userRepository.findByEmail(any())).thenReturn(Optional.empty());
-            when(registerUser.register(any())).thenReturn(createdUserId);
+            when(registerPendingUser.register(any())).thenReturn(createdUserId);
             when(inviteMember.invite(any())).thenReturn(MemberId.generate());
             when(userRepository.findById(createdUserId)).thenReturn(Optional.of(pendingAdmin));
 
             newBootstrap(enabledProperties).run();
 
-            InOrder inOrder = inOrder(createOrganisation, registerUser, inviteMember, issueActivationToken);
+            InOrder inOrder = inOrder(createOrganisation, registerPendingUser, inviteMember, issueActivationToken);
             inOrder.verify(createOrganisation).create(any());
-            inOrder.verify(registerUser).register(any());
+            inOrder.verify(registerPendingUser).register(any());
             inOrder.verify(inviteMember).invite(any());
             inOrder.verify(issueActivationToken).issue(any());
         }
@@ -248,7 +246,7 @@ class OrganisationBootstrapTest {
 
             newBootstrap(enabledProperties).run();
 
-            verify(registerUser, never()).register(any());
+            verify(registerPendingUser, never()).register(any());
         }
 
         @Test
@@ -324,7 +322,7 @@ class OrganisationBootstrapTest {
             newBootstrap(enabledProperties).run();
 
             verify(createOrganisation, never()).create(any());
-            verify(registerUser, never()).register(any());
+            verify(registerPendingUser, never()).register(any());
             verifyNoInteractions(issueActivationToken);
         }
     }
@@ -338,7 +336,7 @@ class OrganisationBootstrapTest {
         void shouldRejectNullProperties() {
             assertThrows(NullPointerException.class, () -> new OrganisationBootstrap(
                     null, organisationRepository, userRepository,
-                    createOrganisation, registerUser, inviteMember, issueActivationToken));
+                    createOrganisation, registerPendingUser, inviteMember, issueActivationToken));
         }
 
         @Test
@@ -346,7 +344,7 @@ class OrganisationBootstrapTest {
         void shouldRejectNullOrganisationRepository() {
             assertThrows(NullPointerException.class, () -> new OrganisationBootstrap(
                     enabledProperties, null, userRepository,
-                    createOrganisation, registerUser, inviteMember, issueActivationToken));
+                    createOrganisation, registerPendingUser, inviteMember, issueActivationToken));
         }
 
         @Test
@@ -354,7 +352,7 @@ class OrganisationBootstrapTest {
         void shouldRejectNullUserRepository() {
             assertThrows(NullPointerException.class, () -> new OrganisationBootstrap(
                     enabledProperties, organisationRepository, null,
-                    createOrganisation, registerUser, inviteMember, issueActivationToken));
+                    createOrganisation, registerPendingUser, inviteMember, issueActivationToken));
         }
 
         @Test
@@ -362,12 +360,12 @@ class OrganisationBootstrapTest {
         void shouldRejectNullCreateOrganisationUseCase() {
             assertThrows(NullPointerException.class, () -> new OrganisationBootstrap(
                     enabledProperties, organisationRepository, userRepository,
-                    null, registerUser, inviteMember, issueActivationToken));
+                    null, registerPendingUser, inviteMember, issueActivationToken));
         }
 
         @Test
-        @DisplayName("should reject null RegisterUserUseCase")
-        void shouldRejectNullRegisterUserUseCase() {
+        @DisplayName("should reject null RegisterPendingUserUseCase")
+        void shouldRejectNullRegisterPendingUserUseCase() {
             assertThrows(NullPointerException.class, () -> new OrganisationBootstrap(
                     enabledProperties, organisationRepository, userRepository,
                     createOrganisation, null, inviteMember, issueActivationToken));
@@ -378,7 +376,7 @@ class OrganisationBootstrapTest {
         void shouldRejectNullInviteMemberUseCase() {
             assertThrows(NullPointerException.class, () -> new OrganisationBootstrap(
                     enabledProperties, organisationRepository, userRepository,
-                    createOrganisation, registerUser, null, issueActivationToken));
+                    createOrganisation, registerPendingUser, null, issueActivationToken));
         }
 
         @Test
@@ -386,7 +384,7 @@ class OrganisationBootstrapTest {
         void shouldRejectNullIssueActivationTokenUseCase() {
             assertThrows(NullPointerException.class, () -> new OrganisationBootstrap(
                     enabledProperties, organisationRepository, userRepository,
-                    createOrganisation, registerUser, inviteMember, null));
+                    createOrganisation, registerPendingUser, inviteMember, null));
         }
     }
 }
