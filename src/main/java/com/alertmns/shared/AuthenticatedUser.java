@@ -8,7 +8,7 @@ import java.util.Objects;
  * <p>Exposé par {@link CurrentUserPort} aux Bounded Contexts qui ont besoin de connaître l'auteur d'une opération.</p>
  *
  * <p>Volontairement minimaliste : seul {@code userId} y figure. Le rattachement organisationnel est porté par
- * l'agrégat {@code Member} côté Organisation BC, pas par l'identité IAM.</p>
+ * l'agrégat {@code Member} côté Organisation BC, pas par l'agrégat {@code User} du BC Identity.</p>
  */
 public record AuthenticatedUser(UserId userId) {
 

@@ -1,12 +1,12 @@
 package com.alertmns.bootstrap;
 
-import com.alertmns.iam.domain.model.Email;
-import com.alertmns.iam.domain.model.UserStatus;
-import com.alertmns.iam.domain.port.incoming.IssueActivationTokenUseCase;
-import com.alertmns.iam.domain.port.incoming.RegisterUserUseCase;
-import com.alertmns.iam.domain.port.incoming.command.IssueActivationTokenCommand;
-import com.alertmns.iam.domain.port.incoming.command.RegisterUserCommand;
-import com.alertmns.iam.domain.port.outgoing.UserRepository;
+import com.alertmns.identity.domain.model.Email;
+import com.alertmns.identity.domain.model.UserStatus;
+import com.alertmns.identity.domain.port.incoming.IssueActivationTokenUseCase;
+import com.alertmns.identity.domain.port.incoming.RegisterUserUseCase;
+import com.alertmns.identity.domain.port.incoming.command.IssueActivationTokenCommand;
+import com.alertmns.identity.domain.port.incoming.command.RegisterUserCommand;
+import com.alertmns.identity.domain.port.outgoing.UserRepository;
 import com.alertmns.organisation.domain.exception.MemberAlreadyExistsException;
 import com.alertmns.organisation.domain.model.MemberRole;
 import com.alertmns.organisation.domain.model.OrganisationName;

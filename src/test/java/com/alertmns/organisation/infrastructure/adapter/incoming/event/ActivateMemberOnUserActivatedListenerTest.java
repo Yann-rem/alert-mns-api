@@ -1,6 +1,6 @@
 package com.alertmns.organisation.infrastructure.adapter.incoming.event;
 
-import com.alertmns.iam.domain.event.UserActivated;
+import com.alertmns.identity.domain.event.UserActivated;
 import com.alertmns.organisation.domain.model.Member;
 import com.alertmns.organisation.domain.model.MemberRole;
 import com.alertmns.organisation.domain.port.incoming.ActivateMemberUseCase;

@@ -1,6 +1,6 @@
 package com.alertmns.organisation.infrastructure.adapter.outgoing.authorities;
 
-import com.alertmns.iam.domain.port.outgoing.UserAuthoritiesProvider;
+import com.alertmns.identity.domain.port.outgoing.UserAuthoritiesProvider;
 import com.alertmns.organisation.domain.port.outgoing.MemberRepository;
 import com.alertmns.shared.UserId;
 

@@ -1,8 +1,8 @@
 package com.alertmns.bootstrap;
 
-import com.alertmns.iam.domain.port.incoming.IssueActivationTokenUseCase;
-import com.alertmns.iam.domain.port.incoming.RegisterUserUseCase;
-import com.alertmns.iam.domain.port.outgoing.UserRepository;
+import com.alertmns.identity.domain.port.incoming.IssueActivationTokenUseCase;
+import com.alertmns.identity.domain.port.incoming.RegisterUserUseCase;
+import com.alertmns.identity.domain.port.outgoing.UserRepository;
 import com.alertmns.organisation.domain.port.incoming.CreateOrganisationUseCase;
 import com.alertmns.organisation.domain.port.incoming.InviteMemberUseCase;
 import com.alertmns.organisation.domain.port.outgoing.OrganisationRepository;

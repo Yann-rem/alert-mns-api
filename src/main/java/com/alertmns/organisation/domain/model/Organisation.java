@@ -13,7 +13,7 @@ import java.util.Objects;
  * <p>Une organisation est l'unité de cloisonnement multi-tenant : membres et groupes
  * appartiennent à une seule organisation. Son identifiant {@link OrganisationId} fait
  * partie du <em>shared kernel</em> et est porté par les autres bounded contexts (notamment
- * IAM) comme simple référence, sans clé étrangère physique.</p>
+ * Identity) comme simple référence, sans clé étrangère physique.</p>
  *
  * <p>L'unicité du nom ({@link OrganisationName}) est un invariant <em>set-based</em> qui ne peut
  * pas être validé par l'agrégat seul : il est garanti au niveau de l'application service (via

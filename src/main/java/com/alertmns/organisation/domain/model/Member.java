@@ -15,10 +15,10 @@ import java.util.UUID;
  * Agrégat racine représentant un membre d'une organisation dans le BC Organisation.
  *
  * <p>Un membre matérialise l'appartenance d'un utilisateur (référencé par son {@code userId}
- * opaque, issu du BC IAM) à une organisation. Il possède son propre cycle de vie
+ * opaque, issu du BC Identity) à une organisation. Il possède son propre cycle de vie
  * (PENDING → ACTIVE → SUSPENDED → ACTIVE) indépendant de celui du compte utilisateur.</p>
  *
- * <p>Le {@code userId} est un simple {@link java.util.UUID} — aucun couplage vers le BC IAM
+ * <p>Le {@code userId} est un simple {@link java.util.UUID} — aucun couplage vers le BC Identity
  * n'est introduit dans le domaine Organisation.</p>
  */
 public final class Member extends AggregateRoot {

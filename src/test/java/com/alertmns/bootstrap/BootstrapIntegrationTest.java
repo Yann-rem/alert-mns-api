@@ -1,16 +1,16 @@
 package com.alertmns.bootstrap;
 
-import com.alertmns.iam.domain.model.Email;
-import com.alertmns.iam.domain.model.RawPassword;
-import com.alertmns.iam.domain.model.User;
-import com.alertmns.iam.domain.model.UserStatus;
-import com.alertmns.iam.domain.port.outgoing.MailerPort;
-import com.alertmns.iam.domain.port.outgoing.PasswordHasher;
-import com.alertmns.iam.domain.port.outgoing.UserRepository;
-import com.alertmns.iam.infrastructure.adapter.outgoing.persistence.ActivationTokenJpaEntity;
-import com.alertmns.iam.infrastructure.adapter.outgoing.persistence.ActivationTokenJpaRepository;
-import com.alertmns.iam.infrastructure.adapter.outgoing.persistence.UserJpaEntity;
-import com.alertmns.iam.infrastructure.adapter.outgoing.persistence.UserJpaRepository;
+import com.alertmns.identity.domain.model.Email;
+import com.alertmns.identity.domain.model.RawPassword;
+import com.alertmns.identity.domain.model.User;
+import com.alertmns.identity.domain.model.UserStatus;
+import com.alertmns.identity.domain.port.outgoing.MailerPort;
+import com.alertmns.identity.domain.port.outgoing.PasswordHasher;
+import com.alertmns.identity.domain.port.outgoing.UserRepository;
+import com.alertmns.identity.infrastructure.adapter.outgoing.persistence.ActivationTokenJpaEntity;
+import com.alertmns.identity.infrastructure.adapter.outgoing.persistence.ActivationTokenJpaRepository;
+import com.alertmns.identity.infrastructure.adapter.outgoing.persistence.UserJpaEntity;
+import com.alertmns.identity.infrastructure.adapter.outgoing.persistence.UserJpaRepository;
 import com.alertmns.organisation.domain.model.OrganisationName;
 import com.alertmns.organisation.domain.port.outgoing.OrganisationRepository;
 import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.MemberJpaRepository;
