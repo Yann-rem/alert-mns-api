@@ -1,7 +1,8 @@
 package com.alertmns.identity.domain.event;
 
-import com.alertmns.shared.UserId;
 import com.alertmns.shared.DomainEvent;
+import com.alertmns.shared.Email;
+import com.alertmns.shared.UserId;
 
 import java.time.Instant;
 
@@ -10,9 +11,9 @@ import java.time.Instant;
  *
  * <p>Le compte passe du statut PENDING à ACTIVE.</p>
  */
-public record UserActivated(UserId userId, Instant occurredOn) implements DomainEvent {
+public record UserActivated(UserId userId, Email email, Instant occurredOn) implements DomainEvent {
 
-    public UserActivated(UserId userId) {
-        this(userId, Instant.now());
+    public UserActivated(UserId userId, Email email) {
+        this(userId, email, Instant.now());
     }
 }

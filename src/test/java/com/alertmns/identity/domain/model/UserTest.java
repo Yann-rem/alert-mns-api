@@ -312,7 +312,7 @@ class UserTest {
         }
 
         @Test
-        @DisplayName("activateWithPassword should emit UserActivated")
+        @DisplayName("activateWithPassword should emit UserActivated with userId and email")
         void activateWithPasswordShouldEmitUserActivated() {
             user.pullDomainEvents();
             user.activateWithPassword(HashedPassword.of(BCRYPT_HASH));
@@ -320,6 +320,7 @@ class UserTest {
             assertEquals(1, events.size());
             UserActivated event = assertInstanceOf(UserActivated.class, events.getFirst());
             assertEquals(user.id(), event.userId());
+            assertEquals(user.email(), event.email());
         }
 
         @Test

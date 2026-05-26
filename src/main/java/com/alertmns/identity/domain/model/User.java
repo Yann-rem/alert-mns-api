@@ -165,7 +165,7 @@ public final class User extends AggregateRoot {
         Objects.requireNonNull(hashedPassword, "hashedPassword must not be null");
         this.hashedPassword = hashedPassword;
         this.status = UserStatus.ACTIVE;
-        registerEvent(new UserActivated(id));
+        registerEvent(new UserActivated(id, email));
     }
 
     /**

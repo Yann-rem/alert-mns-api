@@ -6,6 +6,7 @@ import com.alertmns.organisation.domain.model.MemberRole;
 import com.alertmns.organisation.domain.port.incoming.ActivateMemberUseCase;
 import com.alertmns.organisation.domain.port.incoming.command.ActivateMemberCommand;
 import com.alertmns.organisation.domain.port.outgoing.MemberRepository;
+import com.alertmns.shared.Email;
 import com.alertmns.shared.OrganisationId;
 import com.alertmns.shared.UserId;
 import org.junit.jupiter.api.DisplayName;
@@ -29,6 +30,8 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class ActivateMemberOnUserActivatedListenerTest {
 
+    private static final Email EMAIL = Email.of("activated@example.com");
+
     @Mock
     MemberRepository memberRepository;
 
@@ -50,7 +53,7 @@ class ActivateMemberOnUserActivatedListenerTest {
             Member member = Member.invite(organisationId, userId.value(), MemberRole.MEMBER);
             when(memberRepository.findByUserId(userId.value())).thenReturn(Optional.of(member));
 
-            listener.onUserActivated(new UserActivated(userId));
+            listener.onUserActivated(new UserActivated(userId, EMAIL));
 
             verify(activateMemberUseCase).activate(new ActivateMemberCommand(
                     organisationId.value().toString(),
@@ -65,7 +68,7 @@ class ActivateMemberOnUserActivatedListenerTest {
             when(memberRepository.findByUserId(userId.value())).thenReturn(Optional.empty());
 
             assertThrows(IllegalStateException.class,
-                    () -> listener.onUserActivated(new UserActivated(userId)));
+                    () -> listener.onUserActivated(new UserActivated(userId, EMAIL)));
 
             verify(activateMemberUseCase, never()).activate(any());
         }
@@ -79,7 +82,7 @@ class ActivateMemberOnUserActivatedListenerTest {
                     OrganisationId.generate(), expectedRawUserId, MemberRole.MEMBER);
             when(memberRepository.findByUserId(expectedRawUserId)).thenReturn(Optional.of(member));
 
-            listener.onUserActivated(new UserActivated(userId));
+            listener.onUserActivated(new UserActivated(userId, EMAIL));
 
             verify(memberRepository).findByUserId(expectedRawUserId);
         }
