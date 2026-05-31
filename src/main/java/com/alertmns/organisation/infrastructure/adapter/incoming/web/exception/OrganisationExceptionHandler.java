@@ -3,7 +3,6 @@ package com.alertmns.organisation.infrastructure.adapter.incoming.web.exception;
 import com.alertmns.organisation.domain.exception.GroupMembershipNotFoundException;
 import com.alertmns.organisation.domain.exception.GroupNameAlreadyExistsException;
 import com.alertmns.organisation.domain.exception.GroupNotFoundException;
-import com.alertmns.organisation.domain.exception.MemberAlreadyExistsException;
 import com.alertmns.organisation.domain.exception.MemberNotFoundException;
 import com.alertmns.organisation.domain.exception.OrganisationMismatchException;
 import com.alertmns.organisation.domain.exception.OrganisationNameAlreadyExistsException;
@@ -47,11 +46,6 @@ public class OrganisationExceptionHandler {
 
     @ExceptionHandler(GroupNameAlreadyExistsException.class)
     public ProblemDetail handleGroupNameAlreadyExists(GroupNameAlreadyExistsException ex) {
-        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
-    }
-
-    @ExceptionHandler(MemberAlreadyExistsException.class)
-    public ProblemDetail handleMemberAlreadyExists(MemberAlreadyExistsException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
     }
 

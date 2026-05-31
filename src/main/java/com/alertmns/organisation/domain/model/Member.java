@@ -1,7 +1,5 @@
 package com.alertmns.organisation.domain.model;
 
-import com.alertmns.organisation.domain.event.MemberActivated;
-import com.alertmns.organisation.domain.event.MemberInvited;
 import com.alertmns.organisation.domain.event.MemberJoined;
 import com.alertmns.organisation.domain.event.MemberReactivated;
 import com.alertmns.organisation.domain.event.MemberSuspended;
@@ -75,36 +73,6 @@ public final class Member extends AggregateRoot {
     }
 
     /**
-     * Invite un nouveau membre dans une organisation avec le statut {@link MemberStatus#PENDING}.
-     *
-     * <p>L'identifiant et la date d'adhésion sont générés automatiquement.</p>
-     *
-     * <p>Émet {@link MemberInvited}.</p>
-     *
-     * @param organisationId l'identifiant de l'organisation de rattachement
-     * @param userId         l'identifiant du compte utilisateur (référence cross-BC)
-     * @param role           le rôle attribué au sein de l'organisation
-     * @return le nouveau membre créé
-     */
-    public static Member invite(
-            OrganisationId organisationId,
-            UUID userId,
-            MemberRole role
-    ) {
-        Member member = new Member(
-                MemberId.generate(),
-                organisationId,
-                userId,
-                role,
-                MemberStatus.PENDING,
-                Instant.now()
-        );
-
-        member.registerEvent(new MemberInvited(member.organisationId, member.id));
-        return member;
-    }
-
-    /**
      * Reconstruit un membre existant depuis la persistence.
      *
      * <p>Aucun événement de domaine n'est émis.</p>
@@ -127,19 +95,6 @@ public final class Member extends AggregateRoot {
                 status,
                 joinedAt
         );
-    }
-
-    /**
-     * Active un membre en attente (PENDING → ACTIVE).
-     *
-     * <p>Émet {@link MemberActivated}.</p>
-     *
-     * @throws IllegalStateException si le statut n'est pas {@link MemberStatus#PENDING}
-     */
-    public void activate() {
-        requireStatus(MemberStatus.PENDING, "activate");
-        status = MemberStatus.ACTIVE;
-        registerEvent(new MemberActivated(organisationId, id));
     }
 
     /**

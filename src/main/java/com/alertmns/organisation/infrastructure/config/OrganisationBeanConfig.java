@@ -3,11 +3,9 @@ package com.alertmns.organisation.infrastructure.config;
 import com.alertmns.identity.domain.port.incoming.RegisterPendingUserUseCase;
 import com.alertmns.identity.domain.port.outgoing.UserRepository;
 import com.alertmns.organisation.application.AcceptMembershipInvitationService;
-import com.alertmns.organisation.application.ActivateMemberService;
 import com.alertmns.organisation.application.AddMemberToGroupService;
 import com.alertmns.organisation.application.CreateGroupService;
 import com.alertmns.organisation.application.CreateOrganisationService;
-import com.alertmns.organisation.application.InviteMemberService;
 import com.alertmns.organisation.application.IssueMembershipInvitationService;
 import com.alertmns.organisation.application.ReactivateMemberService;
 import com.alertmns.organisation.application.RemoveMemberFromGroupService;
@@ -87,16 +85,6 @@ public class OrganisationBeanConfig {
     @Bean
     public RenameGroupService renameGroupService(GroupRepository repository, EventPublisher publisher) {
         return new RenameGroupService(repository, publisher);
-    }
-
-    @Bean
-    public ActivateMemberService activateMemberService(MemberRepository repository, EventPublisher publisher) {
-        return new ActivateMemberService(repository, publisher);
-    }
-
-    @Bean
-    public InviteMemberService inviteMemberService(MemberRepository repository, EventPublisher publisher) {
-        return new InviteMemberService(repository, publisher);
     }
 
     @Bean

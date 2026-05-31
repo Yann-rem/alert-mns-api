@@ -136,16 +136,16 @@ class SuspendMemberServiceTest {
         @Test
         @DisplayName("should throw IllegalStateException when member is not ACTIVE")
         void shouldThrowIllegalStateExceptionWhenMemberIsNotACTIVE() {
-            Member pendingMember = Member.reconstitute(
+            Member suspendedMember = Member.reconstitute(
                     activeMember.id(),
                     activeMember.organisationId(),
                     activeMember.userId(),
                     activeMember.role(),
-                    MemberStatus.PENDING,
+                    MemberStatus.SUSPENDED,
                     activeMember.joinedAt()
             );
 
-            when(repository.findById(any())).thenReturn(Optional.of(pendingMember));
+            when(repository.findById(any())).thenReturn(Optional.of(suspendedMember));
             SuspendMemberCommand command = new SuspendMemberCommand(
                     ORGANISATION_ID.value().toString(), id.value().toString()
             );

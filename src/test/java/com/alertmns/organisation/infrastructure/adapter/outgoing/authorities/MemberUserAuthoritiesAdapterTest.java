@@ -38,7 +38,7 @@ class MemberUserAuthoritiesAdapterTest {
         @DisplayName("should return ROLE_ADMIN when Member role is ADMIN")
         void shouldReturnRoleAdminWhenMemberRoleIsAdmin() {
             UserId userId = UserId.generate();
-            Member adminMember = Member.invite(OrganisationId.generate(), userId.value(), MemberRole.ADMIN);
+            Member adminMember = Member.createActive(OrganisationId.generate(), userId.value(), MemberRole.ADMIN);
             when(memberRepository.findByUserId(userId.value())).thenReturn(Optional.of(adminMember));
 
             List<String> authorities = adapter.findAuthorities(userId);
@@ -50,7 +50,7 @@ class MemberUserAuthoritiesAdapterTest {
         @DisplayName("should return ROLE_MEMBER when Member role is MEMBER")
         void shouldReturnRoleMemberWhenMemberRoleIsMember() {
             UserId userId = UserId.generate();
-            Member regularMember = Member.invite(OrganisationId.generate(), userId.value(), MemberRole.MEMBER);
+            Member regularMember = Member.createActive(OrganisationId.generate(), userId.value(), MemberRole.MEMBER);
             when(memberRepository.findByUserId(userId.value())).thenReturn(Optional.of(regularMember));
 
             List<String> authorities = adapter.findAuthorities(userId);
@@ -73,7 +73,7 @@ class MemberUserAuthoritiesAdapterTest {
         @DisplayName("should query the repository with the raw userId UUID")
         void shouldQueryRepositoryWithRawUserId() {
             UserId userId = UserId.generate();
-            Member member = Member.invite(OrganisationId.generate(), userId.value(), MemberRole.MEMBER);
+            Member member = Member.createActive(OrganisationId.generate(), userId.value(), MemberRole.MEMBER);
             when(memberRepository.findByUserId(userId.value())).thenReturn(Optional.of(member));
 
             adapter.findAuthorities(userId);
