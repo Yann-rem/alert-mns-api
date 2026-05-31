@@ -1,31 +1,41 @@
 package com.alertmns.organisation.infrastructure.config;
 
+import com.alertmns.identity.domain.port.incoming.RegisterPendingUserUseCase;
+import com.alertmns.identity.domain.port.outgoing.UserRepository;
+import com.alertmns.organisation.application.AcceptMembershipInvitationService;
 import com.alertmns.organisation.application.ActivateMemberService;
 import com.alertmns.organisation.application.AddMemberToGroupService;
 import com.alertmns.organisation.application.CreateGroupService;
 import com.alertmns.organisation.application.CreateOrganisationService;
 import com.alertmns.organisation.application.InviteMemberService;
+import com.alertmns.organisation.application.IssueMembershipInvitationService;
 import com.alertmns.organisation.application.ReactivateMemberService;
 import com.alertmns.organisation.application.RemoveMemberFromGroupService;
 import com.alertmns.organisation.application.RenameGroupService;
 import com.alertmns.organisation.application.SuspendMemberService;
-import com.alertmns.organisation.domain.port.incoming.ActivateMemberUseCase;
+import com.alertmns.organisation.domain.port.incoming.AcceptMembershipInvitationUseCase;
 import com.alertmns.organisation.domain.port.outgoing.GroupMembershipRepository;
 import com.alertmns.organisation.domain.port.outgoing.GroupRepository;
 import com.alertmns.organisation.domain.port.outgoing.MemberRepository;
+import com.alertmns.organisation.domain.port.outgoing.MembershipInvitationRepository;
 import com.alertmns.organisation.domain.port.outgoing.OrganisationRepository;
-import com.alertmns.organisation.infrastructure.adapter.incoming.event.ActivateMemberOnUserActivatedListener;
+import com.alertmns.organisation.infrastructure.adapter.incoming.event.AcceptMembershipInvitationOnUserActivatedListener;
 import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.GroupJpaRepository;
 import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.GroupMembershipJpaRepository;
 import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.GroupMembershipPersistenceAdapter;
 import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.GroupPersistenceAdapter;
 import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.MemberJpaRepository;
 import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.MemberPersistenceAdapter;
+import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.MembershipInvitationJpaRepository;
+import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.MembershipInvitationPersistenceAdapter;
 import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.OrganisationJpaRepository;
 import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.OrganisationPersistenceAdapter;
 import com.alertmns.shared.EventPublisher;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import java.time.Duration;
 
 @Configuration
 public class OrganisationBeanConfig {
@@ -50,6 +60,13 @@ public class OrganisationBeanConfig {
     @Bean
     public GroupMembershipRepository groupMembershipRepository(GroupMembershipJpaRepository jpaRepository) {
         return new GroupMembershipPersistenceAdapter(jpaRepository);
+    }
+
+    @Bean
+    public MembershipInvitationRepository membershipInvitationRepository(
+            MembershipInvitationJpaRepository jpaRepository
+    ) {
+        return new MembershipInvitationPersistenceAdapter(jpaRepository);
     }
 
     // --- Services ---
@@ -110,13 +127,35 @@ public class OrganisationBeanConfig {
         return new RemoveMemberFromGroupService(repository, publisher);
     }
 
+    @Bean
+    public IssueMembershipInvitationService issueMembershipInvitationService(
+            MembershipInvitationRepository invitationRepository,
+            UserRepository userRepository,
+            RegisterPendingUserUseCase registerPendingUserUseCase,
+            EventPublisher publisher,
+            @Value("${alertmns.organisation.invitation.ttl}") Duration ttl
+    ) {
+        return new IssueMembershipInvitationService(
+                invitationRepository, userRepository, registerPendingUserUseCase, publisher, ttl);
+    }
+
+    @Bean
+    public AcceptMembershipInvitationService acceptMembershipInvitationService(
+            MembershipInvitationRepository invitationRepository,
+            MemberRepository memberRepository,
+            EventPublisher publisher
+    ) {
+        return new AcceptMembershipInvitationService(invitationRepository, memberRepository, publisher);
+    }
+
     // --- Event listeners ---
 
     @Bean
-    public ActivateMemberOnUserActivatedListener activateMemberOnUserActivatedListener(
-            MemberRepository memberRepository,
-            ActivateMemberUseCase activateMemberUseCase
+    public AcceptMembershipInvitationOnUserActivatedListener acceptMembershipInvitationOnUserActivatedListener(
+            MembershipInvitationRepository invitationRepository,
+            AcceptMembershipInvitationUseCase acceptMembershipInvitationUseCase
     ) {
-        return new ActivateMemberOnUserActivatedListener(memberRepository, activateMemberUseCase);
+        return new AcceptMembershipInvitationOnUserActivatedListener(
+                invitationRepository, acceptMembershipInvitationUseCase);
     }
 }

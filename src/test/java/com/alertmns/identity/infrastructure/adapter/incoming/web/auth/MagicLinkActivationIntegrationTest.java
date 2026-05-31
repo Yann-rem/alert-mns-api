@@ -11,10 +11,9 @@ import com.alertmns.identity.infrastructure.adapter.outgoing.persistence.Activat
 import com.alertmns.identity.infrastructure.adapter.outgoing.persistence.UserJpaEntity;
 import com.alertmns.identity.infrastructure.adapter.outgoing.persistence.UserJpaRepository;
 import com.alertmns.organisation.domain.model.MemberStatus;
-import com.alertmns.organisation.domain.port.incoming.InviteMemberUseCase;
-import com.alertmns.organisation.domain.port.incoming.command.InviteMemberCommand;
 import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.MemberJpaEntity;
 import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.MemberJpaRepository;
+import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.MembershipInvitationJpaRepository;
 import com.alertmns.shared.UserId;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -49,16 +48,12 @@ class MagicLinkActivationIntegrationTest extends AbstractAuthIntegrationTest {
      */
     private static final String NEVER_SET_PASSWORD = "never-set-password-1234";
     private static final String UNKNOWN_RAW_TOKEN = "this-raw-token-was-never-issued";
-    private static final String DEFAULT_ORGANISATION_ID = "00000000-0000-0000-0000-000000000001";
 
     @MockitoBean
     private MailerPort mailer;
 
     @Autowired
     private IssueActivationTokenUseCase issueUseCase;
-
-    @Autowired
-    private InviteMemberUseCase inviteMemberUseCase;
 
     @Autowired
     private ActivationTokenJpaRepository activationTokenJpaRepository;
@@ -69,13 +64,17 @@ class MagicLinkActivationIntegrationTest extends AbstractAuthIntegrationTest {
     @Autowired
     private MemberJpaRepository memberJpaRepository;
 
+    @Autowired
+    private MembershipInvitationJpaRepository membershipInvitationJpaRepository;
+
     /**
-     * Nettoie les artefacts spécifiques à ce test (tokens). Les Members sont nettoyés par le parent
-     * {@link AbstractAuthIntegrationTest#cleanDatabase()} depuis D14.
+     * Nettoie les artefacts spécifiques à ce test (tokens + invitations). Les Members et Users sont nettoyés par
+     * le parent {@link AbstractAuthIntegrationTest#cleanDatabase()}.
      */
     @AfterEach
-    void cleanActivationTokens() {
+    void cleanInvitationsAndTokens() {
         activationTokenJpaRepository.deleteAll();
+        membershipInvitationJpaRepository.deleteAll();
     }
 
     // --- /validate ---
@@ -83,7 +82,7 @@ class MagicLinkActivationIntegrationTest extends AbstractAuthIntegrationTest {
     @Test
     @DisplayName("GET /validate with valid token returns 200 and user context")
     void shouldReturnUserContextWhenTokenIsValid() {
-        PendingUser pending = registerPendingAndCaptureRawToken(EMAIL);
+        PendingUser pending = issueInvitationAndCaptureRawToken(EMAIL);
 
         ResponseEntity<String> response = validate(pending.rawToken());
 
@@ -128,7 +127,7 @@ class MagicLinkActivationIntegrationTest extends AbstractAuthIntegrationTest {
     @Test
     @DisplayName("GET /validate is reachable anonymously (no session, no CSRF)")
     void shouldAllowAnonymousAccessToValidate() {
-        PendingUser pending = registerPendingAndCaptureRawToken(EMAIL);
+        PendingUser pending = issueInvitationAndCaptureRawToken(EMAIL);
 
         // No cookies, no headers — fully anonymous client
         ResponseEntity<String> response = restTemplate.getForEntity(
@@ -140,10 +139,9 @@ class MagicLinkActivationIntegrationTest extends AbstractAuthIntegrationTest {
     // --- /redeem ---
 
     @Test
-    @DisplayName("POST /redeem with valid token activates the user and cascades to Member")
+    @DisplayName("POST /redeem with valid token activates the user and cascades to Member via invitation acceptance")
     void shouldActivateUserWhenRedeemingValidToken() {
-        PendingUser pending = registerPendingAndCaptureRawToken(EMAIL);
-        inviteMemberFor(pending.userId());
+        PendingUser pending = issueInvitationAndCaptureRawToken(EMAIL);
 
         ResponseEntity<String> response = redeem(pending.rawToken(), CHOSEN_PASSWORD);
 
@@ -151,7 +149,7 @@ class MagicLinkActivationIntegrationTest extends AbstractAuthIntegrationTest {
         UserJpaEntity savedUser = userJpaRepository.findById(pending.userId().value()).orElseThrow();
         assertThat(savedUser.getStatus()).isEqualTo(UserStatus.ACTIVE);
         assertThat(activationTokenJpaRepository.findAll()).isEmpty();
-        // Cascade UserActivated → ActivateMember : le Member rattaché passe aussi en ACTIVE
+        // Cascade UserActivated → AcceptMembershipInvitation → Member ACTIVE créé par l'acceptation
         MemberJpaEntity member = memberJpaRepository.findByUserId(pending.userId().value()).orElseThrow();
         assertThat(member.getStatus()).isEqualTo(MemberStatus.ACTIVE);
     }
@@ -184,8 +182,7 @@ class MagicLinkActivationIntegrationTest extends AbstractAuthIntegrationTest {
     @Test
     @DisplayName("POST /redeem is reachable anonymously without CSRF token")
     void shouldAllowAnonymousRedeemWithoutCsrf() {
-        PendingUser pending = registerPendingAndCaptureRawToken(EMAIL);
-        inviteMemberFor(pending.userId());
+        PendingUser pending = issueInvitationAndCaptureRawToken(EMAIL);
 
         // No cookies, no X-XSRF-TOKEN header — atteste l'exemption CSRF
         ResponseEntity<String> response = redeem(pending.rawToken(), CHOSEN_PASSWORD);
@@ -198,7 +195,7 @@ class MagicLinkActivationIntegrationTest extends AbstractAuthIntegrationTest {
     @Test
     @DisplayName("Re-issuing invalidates the previous token")
     void shouldInvalidatePreviousTokenWhenReissued() {
-        PendingUser pending = registerPendingAndCaptureRawToken(EMAIL);
+        PendingUser pending = issueInvitationAndCaptureRawToken(EMAIL);
         String firstRawToken = pending.rawToken();
         String secondRawToken = issueAdditionalTokenAndCaptureRawToken(pending.userId());
 
@@ -214,10 +211,9 @@ class MagicLinkActivationIntegrationTest extends AbstractAuthIntegrationTest {
     // --- End-to-end ---
 
     @Test
-    @DisplayName("End-to-end: register (auto-issue) → invite Member → validate → redeem → cascade → login")
+    @DisplayName("End-to-end: issue invitation → validate → redeem → cascade accepts → Member ACTIVE → login")
     void endToEndActivationFlow() {
-        PendingUser pending = registerPendingAndCaptureRawToken(EMAIL);
-        inviteMemberFor(pending.userId());
+        PendingUser pending = issueInvitationAndCaptureRawToken(EMAIL);
 
         ResponseEntity<String> validateResponse = validate(pending.rawToken());
         assertThat(validateResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -230,7 +226,7 @@ class MagicLinkActivationIntegrationTest extends AbstractAuthIntegrationTest {
         UserJpaEntity activated = userJpaRepository.findById(pending.userId().value()).orElseThrow();
         assertThat(activated.getStatus()).isEqualTo(UserStatus.ACTIVE);
 
-        // Cascade UserActivated → ActivateMember : Member ACTIVE également
+        // Cascade UserActivated → AcceptMembershipInvitation → Member ACTIVE
         MemberJpaEntity member = memberJpaRepository.findByUserId(pending.userId().value()).orElseThrow();
         assertThat(member.getStatus()).isEqualTo(MemberStatus.ACTIVE);
 
@@ -260,13 +256,14 @@ class MagicLinkActivationIntegrationTest extends AbstractAuthIntegrationTest {
     }
 
     /**
-     * Crée un utilisateur PENDING (via {@code RegisterPendingUserUseCase}, sans mot de passe) et capture le raw
-     * token émis automatiquement via la cascade {@code UserRegistered → IssueActivationToken}. C'est le chemin
-     * nominal d'activation : un seul appel suffit pour obtenir un user et son magic-link.
+     * Émet une invitation pour un email (cas A — User inexistant) via {@code IssueMembershipInvitationUseCase}.
+     * Crée User PENDING + invitation PENDING et capture le magic-link émis via la cascade
+     * {@code UserRegistered → IssueActivationToken}. C'est le chemin nominal D17 : tout est en place pour qu'un
+     * redeem subséquent active le User et déclenche la cascade {@code UserActivated → AcceptMembershipInvitation}.
      */
-    private PendingUser registerPendingAndCaptureRawToken(String email) {
+    private PendingUser issueInvitationAndCaptureRawToken(String email) {
         Mockito.clearInvocations(mailer);
-        UserId userId = userFactory.registerPending(email);
+        UserId userId = userFactory.issueMembershipInvitation(email);
 
         ArgumentCaptor<URI> linkCaptor = ArgumentCaptor.forClass(URI.class);
         verify(mailer).sendActivationEmail(any(), any(), linkCaptor.capture());
@@ -291,18 +288,6 @@ class MagicLinkActivationIntegrationTest extends AbstractAuthIntegrationTest {
     private static String extractRawToken(URI link) {
         String query = link.getQuery();
         return query.substring("token=".length());
-    }
-
-    /**
-     * Invite un Member PENDING rattaché à un user existant. Indispensable avant tout redeem qui activera le user :
-     * la cascade {@code UserActivated → ActivateMember} suppose qu'un Member rattaché existe en BD.
-     */
-    private void inviteMemberFor(UserId userId) {
-        inviteMemberUseCase.invite(new InviteMemberCommand(
-                DEFAULT_ORGANISATION_ID,
-                userId.value().toString(),
-                "MEMBER"
-        ));
     }
 
     /**

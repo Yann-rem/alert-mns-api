@@ -3,19 +3,17 @@ package com.alertmns.bootstrap;
 import com.alertmns.identity.domain.model.User;
 import com.alertmns.identity.domain.model.UserStatus;
 import com.alertmns.identity.domain.port.incoming.IssueActivationTokenUseCase;
-import com.alertmns.identity.domain.port.incoming.RegisterPendingUserUseCase;
 import com.alertmns.identity.domain.port.incoming.command.IssueActivationTokenCommand;
-import com.alertmns.identity.domain.port.incoming.command.RegisterPendingUserCommand;
 import com.alertmns.identity.domain.port.outgoing.UserRepository;
-import com.alertmns.organisation.domain.exception.MemberAlreadyExistsException;
-import com.alertmns.organisation.domain.model.MemberId;
 import com.alertmns.organisation.domain.model.MemberRole;
 import com.alertmns.organisation.domain.model.Organisation;
 import com.alertmns.organisation.domain.port.incoming.CreateOrganisationUseCase;
-import com.alertmns.organisation.domain.port.incoming.InviteMemberUseCase;
+import com.alertmns.organisation.domain.port.incoming.IssueMembershipInvitationUseCase;
 import com.alertmns.organisation.domain.port.incoming.command.CreateOrganisationCommand;
-import com.alertmns.organisation.domain.port.incoming.command.InviteMemberCommand;
+import com.alertmns.organisation.domain.port.incoming.command.IssueMembershipInvitationCommand;
 import com.alertmns.organisation.domain.port.outgoing.OrganisationRepository;
+import com.alertmns.shared.Email;
+import com.alertmns.shared.MembershipInvitationId;
 import com.alertmns.shared.OrganisationId;
 import com.alertmns.shared.UserId;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,7 +27,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -49,6 +46,7 @@ class OrganisationBootstrapTest {
     private static final String ADMIN_EMAIL = "admin@metz-numeric-school.com";
     private static final String ADMIN_FIRST_NAME = "Admin";
     private static final String ADMIN_LAST_NAME = "Système";
+    private static final Email ADMIN_EMAIL_VO = Email.of(ADMIN_EMAIL);
 
     @Mock
     OrganisationRepository organisationRepository;
@@ -60,10 +58,7 @@ class OrganisationBootstrapTest {
     CreateOrganisationUseCase createOrganisation;
 
     @Mock
-    RegisterPendingUserUseCase registerPendingUser;
-
-    @Mock
-    InviteMemberUseCase inviteMember;
+    IssueMembershipInvitationUseCase issueMembershipInvitation;
 
     @Mock
     IssueActivationTokenUseCase issueActivationToken;
@@ -85,8 +80,7 @@ class OrganisationBootstrapTest {
                 organisationRepository,
                 userRepository,
                 createOrganisation,
-                registerPendingUser,
-                inviteMember,
+                issueMembershipInvitation,
                 issueActivationToken
         );
     }
@@ -110,8 +104,7 @@ class OrganisationBootstrapTest {
                     organisationRepository,
                     userRepository,
                     createOrganisation,
-                    registerPendingUser,
-                    inviteMember,
+                    issueMembershipInvitation,
                     issueActivationToken
             );
         }
@@ -122,19 +115,22 @@ class OrganisationBootstrapTest {
     class FirstBoot {
 
         @Test
-        @DisplayName("should create the organisation, the admin user (PENDING, no password), the admin member, and rely on the listener for the magic-link")
-        void shouldProvisionAllAggregatesOnFirstBoot() {
+        @DisplayName("should create the organisation, issue the admin invitation, and rely on the listener for the magic-link")
+        void shouldCreateOrgAndIssueAdminInvitation() {
             OrganisationId createdOrgId = OrganisationId.generate();
             UserId createdUserId = UserId.generate();
-            MemberId createdMemberId = MemberId.generate();
             User pendingAdmin = mock(User.class);
+            when(pendingAdmin.id()).thenReturn(createdUserId);
             when(pendingAdmin.status()).thenReturn(UserStatus.PENDING);
 
             when(organisationRepository.findByName(any())).thenReturn(Optional.empty());
             when(createOrganisation.create(any())).thenReturn(createdOrgId);
-            when(userRepository.findByEmail(any())).thenReturn(Optional.empty());
-            when(registerPendingUser.register(any())).thenReturn(createdUserId);
-            when(inviteMember.invite(any())).thenReturn(createdMemberId);
+            // findByEmail is called twice in ensureAdminInvitation: once before issue (empty),
+            // once after issue (returns the newly-created user).
+            when(userRepository.findByEmail(ADMIN_EMAIL_VO))
+                    .thenReturn(Optional.empty())
+                    .thenReturn(Optional.of(pendingAdmin));
+            when(issueMembershipInvitation.issue(any())).thenReturn(MembershipInvitationId.generate());
             when(userRepository.findById(createdUserId)).thenReturn(Optional.of(pendingAdmin));
 
             newBootstrap(enabledProperties).run();
@@ -143,17 +139,13 @@ class OrganisationBootstrapTest {
             verify(createOrganisation).create(orgCmd.capture());
             assertThat(orgCmd.getValue().name()).isEqualTo(ORG_NAME);
 
-            ArgumentCaptor<RegisterPendingUserCommand> userCmd =
-                    ArgumentCaptor.forClass(RegisterPendingUserCommand.class);
-            verify(registerPendingUser).register(userCmd.capture());
-            assertThat(userCmd.getValue().email()).isEqualTo(ADMIN_EMAIL);
-            assertThat(userCmd.getValue().firstName()).isEqualTo(ADMIN_FIRST_NAME);
-            assertThat(userCmd.getValue().lastName()).isEqualTo(ADMIN_LAST_NAME);
-
-            ArgumentCaptor<InviteMemberCommand> inviteCmd = ArgumentCaptor.forClass(InviteMemberCommand.class);
-            verify(inviteMember).invite(inviteCmd.capture());
+            ArgumentCaptor<IssueMembershipInvitationCommand> inviteCmd =
+                    ArgumentCaptor.forClass(IssueMembershipInvitationCommand.class);
+            verify(issueMembershipInvitation).issue(inviteCmd.capture());
             assertThat(inviteCmd.getValue().organisationId()).isEqualTo(createdOrgId.value().toString());
-            assertThat(inviteCmd.getValue().userId()).isEqualTo(createdUserId.value().toString());
+            assertThat(inviteCmd.getValue().invitedEmail()).isEqualTo(ADMIN_EMAIL);
+            assertThat(inviteCmd.getValue().firstName()).isEqualTo(ADMIN_FIRST_NAME);
+            assertThat(inviteCmd.getValue().lastName()).isEqualTo(ADMIN_LAST_NAME);
             assertThat(inviteCmd.getValue().role()).isEqualTo(MemberRole.ADMIN.name());
         }
 
@@ -163,13 +155,15 @@ class OrganisationBootstrapTest {
             OrganisationId createdOrgId = OrganisationId.generate();
             UserId createdUserId = UserId.generate();
             User pendingAdmin = mock(User.class);
+            when(pendingAdmin.id()).thenReturn(createdUserId);
             when(pendingAdmin.status()).thenReturn(UserStatus.PENDING);
 
             when(organisationRepository.findByName(any())).thenReturn(Optional.empty());
             when(createOrganisation.create(any())).thenReturn(createdOrgId);
-            when(userRepository.findByEmail(any())).thenReturn(Optional.empty());
-            when(registerPendingUser.register(any())).thenReturn(createdUserId);
-            when(inviteMember.invite(any())).thenReturn(MemberId.generate());
+            when(userRepository.findByEmail(ADMIN_EMAIL_VO))
+                    .thenReturn(Optional.empty())
+                    .thenReturn(Optional.of(pendingAdmin));
+            when(issueMembershipInvitation.issue(any())).thenReturn(MembershipInvitationId.generate());
             when(userRepository.findById(createdUserId)).thenReturn(Optional.of(pendingAdmin));
 
             newBootstrap(enabledProperties).run();
@@ -181,27 +175,45 @@ class OrganisationBootstrapTest {
         }
 
         @Test
-        @DisplayName("should execute the 4 bootstrap steps in order: organisation → user → member → reissue")
+        @DisplayName("should execute the 3 bootstrap steps in order: organisation → invitation → reissue")
         void shouldExecuteStepsInOrder() {
             OrganisationId createdOrgId = OrganisationId.generate();
             UserId createdUserId = UserId.generate();
             User pendingAdmin = mock(User.class);
+            when(pendingAdmin.id()).thenReturn(createdUserId);
             when(pendingAdmin.status()).thenReturn(UserStatus.PENDING);
 
             when(organisationRepository.findByName(any())).thenReturn(Optional.empty());
             when(createOrganisation.create(any())).thenReturn(createdOrgId);
-            when(userRepository.findByEmail(any())).thenReturn(Optional.empty());
-            when(registerPendingUser.register(any())).thenReturn(createdUserId);
-            when(inviteMember.invite(any())).thenReturn(MemberId.generate());
+            when(userRepository.findByEmail(ADMIN_EMAIL_VO))
+                    .thenReturn(Optional.empty())
+                    .thenReturn(Optional.of(pendingAdmin));
+            when(issueMembershipInvitation.issue(any())).thenReturn(MembershipInvitationId.generate());
             when(userRepository.findById(createdUserId)).thenReturn(Optional.of(pendingAdmin));
 
             newBootstrap(enabledProperties).run();
 
-            InOrder inOrder = inOrder(createOrganisation, registerPendingUser, inviteMember, issueActivationToken);
+            InOrder inOrder = inOrder(createOrganisation, issueMembershipInvitation, issueActivationToken);
             inOrder.verify(createOrganisation).create(any());
-            inOrder.verify(registerPendingUser).register(any());
-            inOrder.verify(inviteMember).invite(any());
+            inOrder.verify(issueMembershipInvitation).issue(any());
             inOrder.verify(issueActivationToken).issue(any());
+        }
+
+        @Test
+        @DisplayName("should throw IllegalStateException if the User is not found after issuing the invitation")
+        void shouldThrowWhenUserNotFoundAfterIssue() {
+            OrganisationId createdOrgId = OrganisationId.generate();
+            when(organisationRepository.findByName(any())).thenReturn(Optional.empty());
+            when(createOrganisation.create(any())).thenReturn(createdOrgId);
+            // findByEmail returns empty both times — simulates a partial failure where IssueMembershipInvitation
+            // did not actually persist the User (defensive guard against orchestration bugs).
+            when(userRepository.findByEmail(ADMIN_EMAIL_VO)).thenReturn(Optional.empty());
+            when(issueMembershipInvitation.issue(any())).thenReturn(MembershipInvitationId.generate());
+
+            assertThrows(IllegalStateException.class,
+                    () -> newBootstrap(enabledProperties).run());
+
+            verify(issueActivationToken, never()).issue(any());
         }
     }
 
@@ -221,7 +233,7 @@ class OrganisationBootstrapTest {
             when(pendingAdmin.status()).thenReturn(UserStatus.PENDING);
 
             when(organisationRepository.findByName(any())).thenReturn(Optional.of(existingOrg));
-            when(userRepository.findByEmail(any())).thenReturn(Optional.of(pendingAdmin));
+            when(userRepository.findByEmail(ADMIN_EMAIL_VO)).thenReturn(Optional.of(pendingAdmin));
             when(userRepository.findById(existingUserId)).thenReturn(Optional.of(pendingAdmin));
 
             newBootstrap(enabledProperties).run();
@@ -230,8 +242,8 @@ class OrganisationBootstrapTest {
         }
 
         @Test
-        @DisplayName("should not recreate the admin user when it already exists")
-        void shouldNotRecreateAdminUser() {
+        @DisplayName("should not re-issue the invitation when the admin user already exists")
+        void shouldNotReissueInvitationWhenAdminExists() {
             OrganisationId existingOrgId = OrganisationId.generate();
             Organisation existingOrg = mock(Organisation.class);
             when(existingOrg.id()).thenReturn(existingOrgId);
@@ -241,35 +253,12 @@ class OrganisationBootstrapTest {
             when(pendingAdmin.status()).thenReturn(UserStatus.PENDING);
 
             when(organisationRepository.findByName(any())).thenReturn(Optional.of(existingOrg));
-            when(userRepository.findByEmail(any())).thenReturn(Optional.of(pendingAdmin));
+            when(userRepository.findByEmail(ADMIN_EMAIL_VO)).thenReturn(Optional.of(pendingAdmin));
             when(userRepository.findById(existingUserId)).thenReturn(Optional.of(pendingAdmin));
 
             newBootstrap(enabledProperties).run();
 
-            verify(registerPendingUser, never()).register(any());
-        }
-
-        @Test
-        @DisplayName("should remain idempotent when InviteMemberUseCase throws MemberAlreadyExistsException")
-        void shouldSwallowMemberAlreadyExistsException() {
-            OrganisationId existingOrgId = OrganisationId.generate();
-            Organisation existingOrg = mock(Organisation.class);
-            when(existingOrg.id()).thenReturn(existingOrgId);
-            User pendingAdmin = mock(User.class);
-            UserId existingUserId = UserId.generate();
-            when(pendingAdmin.id()).thenReturn(existingUserId);
-            when(pendingAdmin.status()).thenReturn(UserStatus.PENDING);
-
-            when(organisationRepository.findByName(any())).thenReturn(Optional.of(existingOrg));
-            when(userRepository.findByEmail(any())).thenReturn(Optional.of(pendingAdmin));
-            when(userRepository.findById(existingUserId)).thenReturn(Optional.of(pendingAdmin));
-            when(inviteMember.invite(any()))
-                    .thenThrow(new MemberAlreadyExistsException(existingOrgId, UUID.randomUUID()));
-
-            // Ne doit pas lever : le flux continue jusqu'au ré-amorçage du magic-link.
-            newBootstrap(enabledProperties).run();
-
-            verify(issueActivationToken).issue(any());
+            verify(issueMembershipInvitation, never()).issue(any());
         }
 
         @Test
@@ -284,10 +273,8 @@ class OrganisationBootstrapTest {
             when(pendingAdmin.status()).thenReturn(UserStatus.PENDING);
 
             when(organisationRepository.findByName(any())).thenReturn(Optional.of(existingOrg));
-            when(userRepository.findByEmail(any())).thenReturn(Optional.of(pendingAdmin));
+            when(userRepository.findByEmail(ADMIN_EMAIL_VO)).thenReturn(Optional.of(pendingAdmin));
             when(userRepository.findById(existingUserId)).thenReturn(Optional.of(pendingAdmin));
-            when(inviteMember.invite(any()))
-                    .thenThrow(new MemberAlreadyExistsException(existingOrgId, UUID.randomUUID()));
 
             newBootstrap(enabledProperties).run();
 
@@ -314,15 +301,13 @@ class OrganisationBootstrapTest {
             when(activeAdmin.status()).thenReturn(UserStatus.ACTIVE);
 
             when(organisationRepository.findByName(any())).thenReturn(Optional.of(existingOrg));
-            when(userRepository.findByEmail(any())).thenReturn(Optional.of(activeAdmin));
+            when(userRepository.findByEmail(ADMIN_EMAIL_VO)).thenReturn(Optional.of(activeAdmin));
             when(userRepository.findById(existingUserId)).thenReturn(Optional.of(activeAdmin));
-            when(inviteMember.invite(any()))
-                    .thenThrow(new MemberAlreadyExistsException(existingOrgId, UUID.randomUUID()));
 
             newBootstrap(enabledProperties).run();
 
             verify(createOrganisation, never()).create(any());
-            verify(registerPendingUser, never()).register(any());
+            verify(issueMembershipInvitation, never()).issue(any());
             verifyNoInteractions(issueActivationToken);
         }
     }
@@ -336,7 +321,7 @@ class OrganisationBootstrapTest {
         void shouldRejectNullProperties() {
             assertThrows(NullPointerException.class, () -> new OrganisationBootstrap(
                     null, organisationRepository, userRepository,
-                    createOrganisation, registerPendingUser, inviteMember, issueActivationToken));
+                    createOrganisation, issueMembershipInvitation, issueActivationToken));
         }
 
         @Test
@@ -344,7 +329,7 @@ class OrganisationBootstrapTest {
         void shouldRejectNullOrganisationRepository() {
             assertThrows(NullPointerException.class, () -> new OrganisationBootstrap(
                     enabledProperties, null, userRepository,
-                    createOrganisation, registerPendingUser, inviteMember, issueActivationToken));
+                    createOrganisation, issueMembershipInvitation, issueActivationToken));
         }
 
         @Test
@@ -352,7 +337,7 @@ class OrganisationBootstrapTest {
         void shouldRejectNullUserRepository() {
             assertThrows(NullPointerException.class, () -> new OrganisationBootstrap(
                     enabledProperties, organisationRepository, null,
-                    createOrganisation, registerPendingUser, inviteMember, issueActivationToken));
+                    createOrganisation, issueMembershipInvitation, issueActivationToken));
         }
 
         @Test
@@ -360,23 +345,15 @@ class OrganisationBootstrapTest {
         void shouldRejectNullCreateOrganisationUseCase() {
             assertThrows(NullPointerException.class, () -> new OrganisationBootstrap(
                     enabledProperties, organisationRepository, userRepository,
-                    null, registerPendingUser, inviteMember, issueActivationToken));
+                    null, issueMembershipInvitation, issueActivationToken));
         }
 
         @Test
-        @DisplayName("should reject null RegisterPendingUserUseCase")
-        void shouldRejectNullRegisterPendingUserUseCase() {
+        @DisplayName("should reject null IssueMembershipInvitationUseCase")
+        void shouldRejectNullIssueMembershipInvitationUseCase() {
             assertThrows(NullPointerException.class, () -> new OrganisationBootstrap(
                     enabledProperties, organisationRepository, userRepository,
-                    createOrganisation, null, inviteMember, issueActivationToken));
-        }
-
-        @Test
-        @DisplayName("should reject null InviteMemberUseCase")
-        void shouldRejectNullInviteMemberUseCase() {
-            assertThrows(NullPointerException.class, () -> new OrganisationBootstrap(
-                    enabledProperties, organisationRepository, userRepository,
-                    createOrganisation, registerPendingUser, null, issueActivationToken));
+                    createOrganisation, null, issueActivationToken));
         }
 
         @Test
@@ -384,7 +361,7 @@ class OrganisationBootstrapTest {
         void shouldRejectNullIssueActivationTokenUseCase() {
             assertThrows(NullPointerException.class, () -> new OrganisationBootstrap(
                     enabledProperties, organisationRepository, userRepository,
-                    createOrganisation, registerPendingUser, inviteMember, null));
+                    createOrganisation, issueMembershipInvitation, null));
         }
     }
 }

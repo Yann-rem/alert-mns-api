@@ -11,9 +11,11 @@ import com.alertmns.identity.infrastructure.adapter.outgoing.persistence.Activat
 import com.alertmns.identity.infrastructure.adapter.outgoing.persistence.ActivationTokenJpaRepository;
 import com.alertmns.identity.infrastructure.adapter.outgoing.persistence.UserJpaEntity;
 import com.alertmns.identity.infrastructure.adapter.outgoing.persistence.UserJpaRepository;
+import com.alertmns.organisation.domain.model.MembershipInvitationStatus;
 import com.alertmns.organisation.domain.model.OrganisationName;
 import com.alertmns.organisation.domain.port.outgoing.OrganisationRepository;
 import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.MemberJpaRepository;
+import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.MembershipInvitationJpaRepository;
 import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.OrganisationJpaRepository;
 import com.alertmns.shared.UserId;
 import org.junit.jupiter.api.AfterEach;
@@ -91,6 +93,9 @@ class BootstrapIntegrationTest {
     private MemberJpaRepository memberJpaRepository;
 
     @Autowired
+    private MembershipInvitationJpaRepository membershipInvitationJpaRepository;
+
+    @Autowired
     private ActivationTokenJpaRepository activationTokenJpaRepository;
 
     @Autowired
@@ -112,13 +117,14 @@ class BootstrapIntegrationTest {
     @AfterEach
     void cleanDatabase() {
         activationTokenJpaRepository.deleteAll();
+        membershipInvitationJpaRepository.deleteAll();
         memberJpaRepository.deleteAll();
         userJpaRepository.deleteAll();
         organisationJpaRepository.deleteAll();
     }
 
     @Test
-    @DisplayName("First boot provisions the organisation, the admin user PENDING, the admin member PENDING, and emits a magic-link")
+    @DisplayName("First boot provisions the organisation, the admin user PENDING, a PENDING invitation, and emits a magic-link (no Member yet)")
     void firstBootProvisionsAllAggregates() {
         // Le bootstrap a tourné automatiquement au démarrage du contexte (ApplicationReadyEvent).
 
@@ -129,8 +135,15 @@ class BootstrapIntegrationTest {
         UserJpaEntity admin = userJpaRepository.findByEmail(EXPECTED_ADMIN_EMAIL).orElseThrow();
         assertThat(admin.getStatus()).isEqualTo(UserStatus.PENDING);
 
+        // Depuis D17 : le bootstrap n'invite plus directement de Member. C'est la cascade
+        // UserActivated → AcceptMembershipInvitation qui le créera quand l'admin cliquera son magic-link.
         assertThat(memberJpaRepository.findByUserId(admin.getId()))
-                .as("Admin Member must have been created")
+                .as("No Member yet — the cascade will create it on activation")
+                .isEmpty();
+
+        assertThat(membershipInvitationJpaRepository.findByInvitedEmailAndStatus(
+                EXPECTED_ADMIN_EMAIL, MembershipInvitationStatus.PENDING))
+                .as("A PENDING invitation must have been issued for the admin email")
                 .isPresent();
 
         assertThat(activationTokenJpaRepository.findAll())

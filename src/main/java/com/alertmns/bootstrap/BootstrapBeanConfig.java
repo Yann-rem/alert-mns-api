@@ -1,10 +1,9 @@
 package com.alertmns.bootstrap;
 
 import com.alertmns.identity.domain.port.incoming.IssueActivationTokenUseCase;
-import com.alertmns.identity.domain.port.incoming.RegisterPendingUserUseCase;
 import com.alertmns.identity.domain.port.outgoing.UserRepository;
 import com.alertmns.organisation.domain.port.incoming.CreateOrganisationUseCase;
-import com.alertmns.organisation.domain.port.incoming.InviteMemberUseCase;
+import com.alertmns.organisation.domain.port.incoming.IssueMembershipInvitationUseCase;
 import com.alertmns.organisation.domain.port.outgoing.OrganisationRepository;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -34,8 +33,7 @@ public class BootstrapBeanConfig {
             OrganisationRepository organisationRepository,
             UserRepository userRepository,
             CreateOrganisationUseCase createOrganisation,
-            RegisterPendingUserUseCase registerPendingUser,
-            InviteMemberUseCase inviteMember,
+            IssueMembershipInvitationUseCase issueMembershipInvitation,
             IssueActivationTokenUseCase issueActivationToken
     ) {
         return new OrganisationBootstrap(
@@ -43,8 +41,7 @@ public class BootstrapBeanConfig {
                 organisationRepository,
                 userRepository,
                 createOrganisation,
-                registerPendingUser,
-                inviteMember,
+                issueMembershipInvitation,
                 issueActivationToken
         );
     }
