@@ -25,6 +25,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -34,6 +35,7 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -44,12 +46,16 @@ class UpdateAbsenceMessageServiceTest {
 
     static final String CONTENT = "Je ne suis pas disponible pour le moment";
     static final boolean ACTIVE = true;
+    static final Instant NOW = Instant.parse("2026-05-30T10:00:00Z");
 
     @Mock
     UserRepository repository;
 
     @Mock
     EventPublisher publisher;
+
+    @Mock
+    Clock clock;
 
     @InjectMocks
     UpdateAbsenceMessageService service;
@@ -64,6 +70,7 @@ class UpdateAbsenceMessageServiceTest {
         @BeforeEach
         void setUp() {
             id = UserId.generate();
+            lenient().when(clock.instant()).thenReturn(NOW);
 
             user = User.reconstitute(
                     id,
@@ -72,7 +79,7 @@ class UpdateAbsenceMessageServiceTest {
                     Profile.of(FirstName.of("John"), LastName.of("Doe")),
                     UserStatus.ACTIVE,
                     false,
-                    Instant.now()
+                    NOW
             );
         }
 
@@ -115,6 +122,7 @@ class UpdateAbsenceMessageServiceTest {
                     AbsenceMessageUpdated.class, events.getFirst()
             );
             assertEquals(id, event.userId());
+            assertEquals(NOW, event.occurredOn());
         }
 
         @Test
@@ -152,14 +160,21 @@ class UpdateAbsenceMessageServiceTest {
         @DisplayName("should reject null repository")
         void shouldRejectNullRepository() {
             assertThrows(NullPointerException.class,
-                    () -> new UpdateAbsenceMessageService(null, publisher));
+                    () -> new UpdateAbsenceMessageService(null, publisher, clock));
         }
 
         @Test
         @DisplayName("should reject null publisher")
         void shouldRejectNullPublisher() {
             assertThrows(NullPointerException.class,
-                    () -> new UpdateAbsenceMessageService(repository, null));
+                    () -> new UpdateAbsenceMessageService(repository, null, clock));
+        }
+
+        @Test
+        @DisplayName("should reject null clock")
+        void shouldRejectNullClock() {
+            assertThrows(NullPointerException.class,
+                    () -> new UpdateAbsenceMessageService(repository, publisher, null));
         }
 
         @Test

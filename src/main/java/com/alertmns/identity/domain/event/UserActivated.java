@@ -11,9 +11,4 @@ import java.time.Instant;
  *
  * <p>Le compte passe du statut PENDING à ACTIVE.</p>
  */
-public record UserActivated(UserId userId, Email email, Instant occurredOn) implements DomainEvent {
-
-    public UserActivated(UserId userId, Email email) {
-        this(userId, email, Instant.now());
-    }
-}
+public record UserActivated(UserId userId, Email email, Instant occurredOn) implements DomainEvent {}

@@ -40,6 +40,7 @@ import org.springframework.security.web.context.HttpSessionSecurityContextReposi
 import org.springframework.security.web.context.SecurityContextRepository;
 
 import java.net.URI;
+import java.time.Clock;
 import java.time.Duration;
 
 @Configuration
@@ -118,8 +119,12 @@ public class IdentityBeanConfig {
     // --- Services ---
 
     @Bean
-    public RegisterPendingUserService registerPendingUserService(UserRepository repository, EventPublisher publisher) {
-        return new RegisterPendingUserService(repository, publisher);
+    public RegisterPendingUserService registerPendingUserService(
+            UserRepository repository,
+            EventPublisher publisher,
+            Clock clock
+    ) {
+        return new RegisterPendingUserService(repository, publisher, clock);
     }
 
     @Bean
@@ -128,17 +133,19 @@ public class IdentityBeanConfig {
             UserRepository userRepository,
             MailerPort mailer,
             @Value("${alertmns.identity.activation.ttl}") Duration ttl,
+            Clock clock,
             @Value("${alertmns.identity.activation.frontend-base-url}") URI frontendBaseUrl
     ) {
-        return new IssueActivationTokenService(tokenRepository, userRepository, mailer, ttl, frontendBaseUrl);
+        return new IssueActivationTokenService(tokenRepository, userRepository, mailer, ttl, clock, frontendBaseUrl);
     }
 
     @Bean
     public ValidateActivationTokenService validateActivationTokenService(
             ActivationTokenRepository tokenRepository,
-            UserRepository userRepository
+            UserRepository userRepository,
+            Clock clock
     ) {
-        return new ValidateActivationTokenService(tokenRepository, userRepository);
+        return new ValidateActivationTokenService(tokenRepository, userRepository, clock);
     }
 
     @Bean
@@ -146,29 +153,42 @@ public class IdentityBeanConfig {
             ActivationTokenRepository tokenRepository,
             UserRepository userRepository,
             PasswordHasher passwordHasher,
-            EventPublisher publisher
+            EventPublisher publisher,
+            Clock clock
     ) {
-        return new RedeemActivationTokenService(tokenRepository, userRepository, passwordHasher, publisher);
+        return new RedeemActivationTokenService(tokenRepository, userRepository, passwordHasher, publisher, clock);
     }
 
     @Bean
-    public UpdateProfileService updateProfileService(UserRepository repository, EventPublisher publisher) {
-        return new UpdateProfileService(repository, publisher);
+    public UpdateProfileService updateProfileService(
+            UserRepository repository,
+            EventPublisher publisher,
+            Clock clock
+    ) {
+        return new UpdateProfileService(repository, publisher, clock);
     }
 
     @Bean
-    public UpdateAbsenceMessageService updateAbsenceMessageService(UserRepository repository, EventPublisher publisher) {
-        return new UpdateAbsenceMessageService(repository, publisher);
+    public UpdateAbsenceMessageService updateAbsenceMessageService(
+            UserRepository repository,
+            EventPublisher publisher,
+            Clock clock
+    ) {
+        return new UpdateAbsenceMessageService(repository, publisher, clock);
     }
 
     @Bean
-    public SuspendUserService suspendUserService(UserRepository repository, EventPublisher publisher) {
-        return new SuspendUserService(repository, publisher);
+    public SuspendUserService suspendUserService(UserRepository repository, EventPublisher publisher, Clock clock) {
+        return new SuspendUserService(repository, publisher, clock);
     }
 
     @Bean
-    public ReactivateUserService reactivateUserService(UserRepository repository, EventPublisher publisher) {
-        return new ReactivateUserService(repository, publisher);
+    public ReactivateUserService reactivateUserService(
+            UserRepository repository,
+            EventPublisher publisher,
+            Clock clock
+    ) {
+        return new ReactivateUserService(repository, publisher, clock);
     }
 
     // --- Event listeners ---

@@ -13,24 +13,28 @@ import com.alertmns.identity.domain.port.incoming.result.ActivationTokenContext;
 import com.alertmns.identity.domain.port.outgoing.ActivationTokenRepository;
 import com.alertmns.identity.domain.port.outgoing.UserRepository;
 
+import java.time.Clock;
 import java.util.Objects;
 
 /**
  * Service applicatif validant un token d'activation et retournant le contexte utilisateur.
  *
  * <p>Parse (VO raw + hash) → load (token) → verify (non expiré) → load (user) → return (DTO).</p>
- *
- * <p>Lecture pure : aucune mutation, pas d'événement publié. Le statut de l'utilisateur n'est pas vérifié — la garde
- * est portée par l'agrégat au moment du redeem (voir D10).</p>
  */
 public final class ValidateActivationTokenService implements ValidateActivationTokenUseCase {
 
     private final ActivationTokenRepository tokenRepository;
     private final UserRepository userRepository;
+    private final Clock clock;
 
-    public ValidateActivationTokenService(ActivationTokenRepository tokenRepository, UserRepository userRepository) {
+    public ValidateActivationTokenService(
+            ActivationTokenRepository tokenRepository,
+            UserRepository userRepository,
+            Clock clock
+    ) {
         this.tokenRepository = Objects.requireNonNull(tokenRepository, "tokenRepository must not be null");
         this.userRepository = Objects.requireNonNull(userRepository, "userRepository must not be null");
+        this.clock = Objects.requireNonNull(clock, "clock must not be null");
     }
 
     /**
@@ -47,7 +51,7 @@ public final class ValidateActivationTokenService implements ValidateActivationT
 
         ActivationToken token = tokenRepository.findByHash(hash).orElseThrow(
                 () -> new ActivationTokenNotFoundException(hash));
-        token.verifyUsable();
+        token.verifyUsable(clock.instant());
 
         User user = userRepository.findById(token.userId()).orElseThrow(
                 () -> new UserNotFoundException(token.userId()));

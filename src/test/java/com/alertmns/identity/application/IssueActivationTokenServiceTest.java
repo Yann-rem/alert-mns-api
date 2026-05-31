@@ -25,7 +25,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.net.URI;
+import java.time.Clock;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -35,6 +37,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -50,6 +53,7 @@ class IssueActivationTokenServiceTest {
     static final String BCRYPT_HASH = "$2a$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012345";
     static final Duration TTL = Duration.ofHours(48);
     static final URI FRONTEND_BASE_URL = URI.create("https://app.alertmns.com/");
+    static final Instant NOW = Instant.parse("2026-05-30T10:00:00Z");
 
     @Mock
     ActivationTokenRepository tokenRepository;
@@ -60,19 +64,25 @@ class IssueActivationTokenServiceTest {
     @Mock
     MailerPort mailer;
 
+    @Mock
+    Clock clock;
+
     IssueActivationTokenService service;
     User user;
 
     @BeforeEach
     void setUp() {
         service = new IssueActivationTokenService(
-                tokenRepository, userRepository, mailer, TTL, FRONTEND_BASE_URL
+                tokenRepository, userRepository, mailer, TTL, clock, FRONTEND_BASE_URL
         );
         user = User.register(
                 Email.of(EMAIL),
                 HashedPassword.of(BCRYPT_HASH),
-                Profile.of(FirstName.of(FIRST_NAME), LastName.of(LAST_NAME))
+                Profile.of(FirstName.of(FIRST_NAME), LastName.of(LAST_NAME)),
+                NOW
         );
+        // lenient: les tests d'invariants ne déclenchent pas l'appel clock.instant().
+        lenient().when(clock.instant()).thenReturn(NOW);
     }
 
     @Nested
@@ -104,8 +114,8 @@ class IssueActivationTokenServiceTest {
         }
 
         @Test
-        @DisplayName("should set expiresAt to createdAt + ttl on the saved token")
-        void shouldSetExpiresAtToCreatedAtPlusTtl() {
+        @DisplayName("should set createdAt = clock.instant() and expiresAt = now + ttl on the saved token")
+        void shouldSetTimestampsFromClock() {
             when(userRepository.findById(user.id())).thenReturn(Optional.of(user));
 
             service.issue(new IssueActivationTokenCommand(user.id().value().toString()));
@@ -113,7 +123,8 @@ class IssueActivationTokenServiceTest {
             ArgumentCaptor<ActivationToken> tokenCaptor = ArgumentCaptor.forClass(ActivationToken.class);
             verify(tokenRepository).save(tokenCaptor.capture());
             ActivationToken saved = tokenCaptor.getValue();
-            assertEquals(saved.createdAt().plus(TTL), saved.expiresAt());
+            assertEquals(NOW, saved.createdAt());
+            assertEquals(NOW.plus(TTL), saved.expiresAt());
         }
 
         @Test
@@ -200,35 +211,42 @@ class IssueActivationTokenServiceTest {
         @DisplayName("should reject null tokenRepository")
         void shouldRejectNullTokenRepository() {
             assertThrows(NullPointerException.class,
-                    () -> new IssueActivationTokenService(null, userRepository, mailer, TTL, FRONTEND_BASE_URL));
+                    () -> new IssueActivationTokenService(null, userRepository, mailer, TTL, clock, FRONTEND_BASE_URL));
         }
 
         @Test
         @DisplayName("should reject null userRepository")
         void shouldRejectNullUserRepository() {
             assertThrows(NullPointerException.class,
-                    () -> new IssueActivationTokenService(tokenRepository, null, mailer, TTL, FRONTEND_BASE_URL));
+                    () -> new IssueActivationTokenService(tokenRepository, null, mailer, TTL, clock, FRONTEND_BASE_URL));
         }
 
         @Test
         @DisplayName("should reject null mailer")
         void shouldRejectNullMailer() {
             assertThrows(NullPointerException.class,
-                    () -> new IssueActivationTokenService(tokenRepository, userRepository, null, TTL, FRONTEND_BASE_URL));
+                    () -> new IssueActivationTokenService(tokenRepository, userRepository, null, TTL, clock, FRONTEND_BASE_URL));
         }
 
         @Test
         @DisplayName("should reject null ttl")
         void shouldRejectNullTtl() {
             assertThrows(NullPointerException.class,
-                    () -> new IssueActivationTokenService(tokenRepository, userRepository, mailer, null, FRONTEND_BASE_URL));
+                    () -> new IssueActivationTokenService(tokenRepository, userRepository, mailer, null, clock, FRONTEND_BASE_URL));
+        }
+
+        @Test
+        @DisplayName("should reject null clock")
+        void shouldRejectNullClock() {
+            assertThrows(NullPointerException.class,
+                    () -> new IssueActivationTokenService(tokenRepository, userRepository, mailer, TTL, null, FRONTEND_BASE_URL));
         }
 
         @Test
         @DisplayName("should reject null frontendBaseUrl")
         void shouldRejectNullFrontendBaseUrl() {
             assertThrows(NullPointerException.class,
-                    () -> new IssueActivationTokenService(tokenRepository, userRepository, mailer, TTL, null));
+                    () -> new IssueActivationTokenService(tokenRepository, userRepository, mailer, TTL, clock, null));
         }
 
         @Test

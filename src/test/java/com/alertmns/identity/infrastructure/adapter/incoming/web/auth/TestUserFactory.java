@@ -18,6 +18,8 @@ import com.alertmns.shared.EventPublisher;
 import com.alertmns.shared.OrganisationId;
 import com.alertmns.shared.UserId;
 
+import java.time.Instant;
+
 /**
  * Factory de test créant des utilisateurs dans différents états via les use cases du domaine.
  *
@@ -159,7 +161,7 @@ public final class TestUserFactory {
     private void activateInPlace(UserId id, String rawPassword) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalStateException("User just registered should exist in DB: " + id));
-        user.activateWithPassword(passwordHasher.hash(RawPassword.of(rawPassword)));
+        user.activateWithPassword(passwordHasher.hash(RawPassword.of(rawPassword)), Instant.now());
         userRepository.save(user);
     }
 

@@ -13,6 +13,7 @@ import com.alertmns.shared.UserId;
 
 import java.net.URI;
 import java.security.SecureRandom;
+import java.time.Clock;
 import java.time.Duration;
 import java.util.Base64;
 import java.util.Objects;
@@ -35,6 +36,7 @@ public final class IssueActivationTokenService implements IssueActivationTokenUs
     private final UserRepository userRepository;
     private final MailerPort mailer;
     private final Duration ttl;
+    private final Clock clock;
     private final URI frontendBaseUrl;
 
     public IssueActivationTokenService(
@@ -42,12 +44,14 @@ public final class IssueActivationTokenService implements IssueActivationTokenUs
             UserRepository userRepository,
             MailerPort mailer,
             Duration ttl,
+            Clock clock,
             URI frontendBaseUrl
     ) {
         this.tokenRepository = Objects.requireNonNull(tokenRepository, "tokenRepository must not be null");
         this.userRepository = Objects.requireNonNull(userRepository, "userRepository must not be null");
         this.mailer = Objects.requireNonNull(mailer, "mailer must not be null");
         this.ttl = Objects.requireNonNull(ttl, "ttl must not be null");
+        this.clock = Objects.requireNonNull(clock, "clock must not be null");
         this.frontendBaseUrl = Objects.requireNonNull(frontendBaseUrl, "frontendBaseUrl must not be null");
     }
 
@@ -65,7 +69,7 @@ public final class IssueActivationTokenService implements IssueActivationTokenUs
         User user = userRepository.findById(id).orElseThrow(() -> new UserNotFoundException(id));
 
         RawToken raw = generateRawToken();
-        ActivationToken.IssuedToken issued = ActivationToken.issue(id, raw, ttl);
+        ActivationToken.IssuedToken issued = ActivationToken.issue(id, raw, ttl, clock.instant());
 
         tokenRepository.deleteByUserId(id);
         tokenRepository.save(issued.activationToken());

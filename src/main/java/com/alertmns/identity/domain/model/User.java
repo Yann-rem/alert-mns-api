@@ -54,22 +54,19 @@ public final class User extends AggregateRoot {
     /**
      * Crée un nouvel utilisateur avec le statut {@link UserStatus#PENDING}.
      *
-     * <p>L'identifiant et la date de création sont générés automatiquement. Le drapeau {@code isAnonymized} est
-     * initialisé à {@code false}.</p>
-     *
-     * <p>Le User n'a pas de rôle métier : ceux-ci vivent dans le BC Organisation via {@code Member.role}</p>
-     *
      * <p>Émet {@link UserRegistered}.</p>
      *
      * @param email          l'adresse email de l'utilisateur
      * @param hashedPassword le mot de passe déjà haché
      * @param profile        le profil de l'utilisateur
+     * @param now            instant de l'opération
      * @return le nouvel utilisateur créé
      */
     public static User register(
             Email email,
             HashedPassword hashedPassword,
-            Profile profile
+            Profile profile,
+            Instant now
     ) {
         User user = new User(
                 UserId.generate(),
@@ -78,10 +75,10 @@ public final class User extends AggregateRoot {
                 profile,
                 UserStatus.PENDING,
                 false,
-                Instant.now()
+                now
         );
 
-        user.registerEvent(new UserRegistered(user.id, user.email));
+        user.registerEvent(new UserRegistered(user.id, user.email, now));
         return user;
     }
 
@@ -120,16 +117,17 @@ public final class User extends AggregateRoot {
      *
      * @param firstName le nouveau prénom
      * @param lastName  le nouveau nom
-     * @param avatar    l'URL de l'avatar (nullable)
+     * @param avatar    l'URL de l'avatar
+     * @param now       instant de l'opération
      * @throws NullPointerException  si firstName ou lastName est null
      * @throws IllegalStateException si le statut n'est pas {@link UserStatus#ACTIVE}
      */
-    public void updateProfile(FirstName firstName, LastName lastName, String avatar) {
+    public void updateProfile(FirstName firstName, LastName lastName, String avatar, Instant now) {
         requireStatus(UserStatus.ACTIVE, "update profile");
         Objects.requireNonNull(firstName, "firstName must not be null");
         Objects.requireNonNull(lastName, "lastName must not be null");
         profile = profile.withIdentity(firstName, lastName, avatar);
-        registerEvent(new ProfileUpdated(id));
+        registerEvent(new ProfileUpdated(id, now));
     }
 
     /**
@@ -138,34 +136,33 @@ public final class User extends AggregateRoot {
      * <p>Émet {@link AbsenceMessageUpdated}.</p>
      *
      * @param absenceMessage le nouveau message d'absence
+     * @param now            instant de l'opération
      * @throws NullPointerException  si absenceMessage est null
      * @throws IllegalStateException si le statut n'est pas {@link UserStatus#ACTIVE}
      */
-    public void updateAbsenceMessage(AbsenceMessage absenceMessage) {
+    public void updateAbsenceMessage(AbsenceMessage absenceMessage, Instant now) {
         requireStatus(UserStatus.ACTIVE, "update absence message");
         Objects.requireNonNull(absenceMessage, "absenceMessage must not be null");
         profile = profile.withAbsenceMessage(absenceMessage);
-        registerEvent(new AbsenceMessageUpdated(id));
+        registerEvent(new AbsenceMessageUpdated(id, now));
     }
 
     /**
      * Active un compte en attente en définissant son mot de passe.
      *
-     * <p>Remplace le mot de passe initial (généré à l'inscription) par celui choisi par l'utilisateur via le lien
-     * magique, puis transitionne PENDING → ACTIVE.</p>
-     *
      * <p>Émet {@link UserActivated}.</p>
      *
      * @param hashedPassword le nouveau mot de passe haché choisi par l'utilisateur
+     * @param now            instant de l'opération
      * @throws NullPointerException  si hashedPassword est null
      * @throws IllegalStateException si le statut n'est pas {@link UserStatus#PENDING}
      */
-    public void activateWithPassword(HashedPassword hashedPassword) {
+    public void activateWithPassword(HashedPassword hashedPassword, Instant now) {
         requireStatus(UserStatus.PENDING, "activate with password");
         Objects.requireNonNull(hashedPassword, "hashedPassword must not be null");
         this.hashedPassword = hashedPassword;
         this.status = UserStatus.ACTIVE;
-        registerEvent(new UserActivated(id, email));
+        registerEvent(new UserActivated(id, email, now));
     }
 
     /**
@@ -175,16 +172,17 @@ public final class User extends AggregateRoot {
      *
      * <p>Émet {@link UserReactivated}.</p>
      *
+     * @param now instant de l'opération
      * @throws BannedUserCannotBeReactivatedException si le statut est {@link UserStatus#BANNED}
      * @throws IllegalStateException                  si le statut n'est ni {@link UserStatus#SUSPENDED} ni {@link UserStatus#BANNED}
      */
-    public void reactivate() {
+    public void reactivate(Instant now) {
         if (status == UserStatus.BANNED) {
             throw new BannedUserCannotBeReactivatedException(id);
         }
         requireStatus(UserStatus.SUSPENDED, "reactivate");
         status = UserStatus.ACTIVE;
-        registerEvent(new UserReactivated(id));
+        registerEvent(new UserReactivated(id, now));
     }
 
     /**
@@ -192,12 +190,13 @@ public final class User extends AggregateRoot {
      *
      * <p>Émet {@link UserSuspended}.</p>
      *
+     * @param now instant de l'opération
      * @throws IllegalStateException si le statut n'est pas {@link UserStatus#ACTIVE}
      */
-    public void suspend() {
+    public void suspend(Instant now) {
         requireStatus(UserStatus.ACTIVE, "suspend");
         status = UserStatus.SUSPENDED;
-        registerEvent(new UserSuspended(id));
+        registerEvent(new UserSuspended(id, now));
     }
 
     private void requireStatus(UserStatus expected, String action) {

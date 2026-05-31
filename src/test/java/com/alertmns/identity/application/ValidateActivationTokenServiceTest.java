@@ -25,6 +25,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
@@ -32,6 +33,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -47,6 +49,7 @@ class ValidateActivationTokenServiceTest {
     static final String BCRYPT_HASH = "$2a$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012345";
     static final String RAW_TOKEN = "any-raw-token-value";
     static final Duration TTL = Duration.ofHours(48);
+    static final Instant NOW = Instant.parse("2026-05-30T10:00:00Z");
 
     @Mock
     ActivationTokenRepository tokenRepository;
@@ -54,19 +57,25 @@ class ValidateActivationTokenServiceTest {
     @Mock
     UserRepository userRepository;
 
+    @Mock
+    Clock clock;
+
     ValidateActivationTokenService service;
     User user;
     ActivationToken validToken;
 
     @BeforeEach
     void setUp() {
-        service = new ValidateActivationTokenService(tokenRepository, userRepository);
+        service = new ValidateActivationTokenService(tokenRepository, userRepository, clock);
         user = User.register(
                 Email.of(EMAIL),
                 HashedPassword.of(BCRYPT_HASH),
-                Profile.of(FirstName.of(FIRST_NAME), LastName.of(LAST_NAME))
+                Profile.of(FirstName.of(FIRST_NAME), LastName.of(LAST_NAME)),
+                NOW
         );
-        validToken = ActivationToken.issue(user.id(), RawToken.of(RAW_TOKEN), TTL).activationToken();
+        validToken = ActivationToken.issue(user.id(), RawToken.of(RAW_TOKEN), TTL, NOW).activationToken();
+        // lenient: certains tests court-circuitent avant l'appel à clock.instant().
+        lenient().when(clock.instant()).thenReturn(NOW);
     }
 
     @Nested
@@ -132,8 +141,8 @@ class ValidateActivationTokenServiceTest {
                     ActivationTokenId.generate(),
                     user.id(),
                     HashedToken.of(RawToken.of(RAW_TOKEN)),
-                    Instant.now().minus(Duration.ofHours(49)),
-                    Instant.now().minus(Duration.ofHours(1))
+                    NOW.minus(Duration.ofHours(49)),
+                    NOW.minus(Duration.ofHours(1))
             );
             HashedToken hash = HashedToken.of(RawToken.of(RAW_TOKEN));
             when(tokenRepository.findByHash(hash)).thenReturn(Optional.of(expired));
@@ -164,14 +173,21 @@ class ValidateActivationTokenServiceTest {
         @DisplayName("should reject null tokenRepository")
         void shouldRejectNullTokenRepository() {
             assertThrows(NullPointerException.class,
-                    () -> new ValidateActivationTokenService(null, userRepository));
+                    () -> new ValidateActivationTokenService(null, userRepository, clock));
         }
 
         @Test
         @DisplayName("should reject null userRepository")
         void shouldRejectNullUserRepository() {
             assertThrows(NullPointerException.class,
-                    () -> new ValidateActivationTokenService(tokenRepository, null));
+                    () -> new ValidateActivationTokenService(tokenRepository, null, clock));
+        }
+
+        @Test
+        @DisplayName("should reject null clock")
+        void shouldRejectNullClock() {
+            assertThrows(NullPointerException.class,
+                    () -> new ValidateActivationTokenService(tokenRepository, userRepository, null));
         }
 
         @Test

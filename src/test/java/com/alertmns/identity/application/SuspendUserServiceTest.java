@@ -24,6 +24,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -33,6 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -41,11 +43,16 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class SuspendUserServiceTest {
 
+    static final Instant NOW = Instant.parse("2026-05-30T10:00:00Z");
+
     @Mock
     UserRepository repository;
 
     @Mock
     EventPublisher publisher;
+
+    @Mock
+    Clock clock;
 
     @InjectMocks
     SuspendUserService service;
@@ -60,6 +67,8 @@ class SuspendUserServiceTest {
         @BeforeEach
         void setUp() {
             id = UserId.generate();
+            // lenient: some tests throw before reaching clock.instant() (UserNotFound, invalid UUID).
+            lenient().when(clock.instant()).thenReturn(NOW);
 
             activeUser = User.reconstitute(
                     id,
@@ -68,7 +77,7 @@ class SuspendUserServiceTest {
                     Profile.of(FirstName.of("John"), LastName.of("Doe")),
                     UserStatus.ACTIVE,
                     false,
-                    Instant.now()
+                    NOW
             );
         }
 
@@ -101,6 +110,7 @@ class SuspendUserServiceTest {
             assertEquals(1, events.size());
             UserSuspended event = assertInstanceOf(UserSuspended.class, events.getFirst());
             assertEquals(id, event.userId());
+            assertEquals(NOW, event.occurredOn());
         }
 
         @Test
@@ -123,7 +133,7 @@ class SuspendUserServiceTest {
                     activeUser.profile(),
                     UserStatus.PENDING,
                     false,
-                    Instant.now()
+                    NOW
             );
 
             when(repository.findById(any())).thenReturn(Optional.of(pendingUser));
@@ -151,14 +161,21 @@ class SuspendUserServiceTest {
         @DisplayName("should reject null repository")
         void shouldRejectNullRepository() {
             assertThrows(NullPointerException.class,
-                    () -> new SuspendUserService(null, publisher));
+                    () -> new SuspendUserService(null, publisher, clock));
         }
 
         @Test
         @DisplayName("should reject null publisher")
         void shouldRejectNullPublisher() {
             assertThrows(NullPointerException.class,
-                    () -> new SuspendUserService(repository, null));
+                    () -> new SuspendUserService(repository, null, clock));
+        }
+
+        @Test
+        @DisplayName("should reject null clock")
+        void shouldRejectNullClock() {
+            assertThrows(NullPointerException.class,
+                    () -> new SuspendUserService(repository, publisher, null));
         }
 
         @Test

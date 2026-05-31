@@ -32,6 +32,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.net.URI;
+import java.time.Instant;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -192,7 +193,7 @@ class BootstrapIntegrationTest {
         UserJpaEntity adminEntity = userJpaRepository.findByEmail(EXPECTED_ADMIN_EMAIL).orElseThrow();
         User admin = userRepository.findById(UserId.from(adminEntity.getId())).orElseThrow();
         // Active l'admin de la même façon que le redeem du magic-link l'aurait fait, sans passer par le flux web.
-        admin.activateWithPassword(passwordHasher.hash(RawPassword.of("chosen-password-1234")));
+        admin.activateWithPassword(passwordHasher.hash(RawPassword.of("chosen-password-1234")), Instant.now());
         userRepository.save(admin);
         activationTokenJpaRepository.deleteAll();
 

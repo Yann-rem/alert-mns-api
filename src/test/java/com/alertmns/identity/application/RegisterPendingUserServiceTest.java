@@ -12,6 +12,7 @@ import com.alertmns.identity.domain.port.outgoing.UserRepository;
 import com.alertmns.shared.DomainEvent;
 import com.alertmns.shared.Email;
 import com.alertmns.shared.EventPublisher;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -21,6 +22,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -41,6 +44,7 @@ class RegisterPendingUserServiceTest {
     static final String EMAIL = "johndoe@example.com";
     static final String FIRST_NAME = "John";
     static final String LAST_NAME = "Doe";
+    static final Instant NOW = Instant.parse("2026-05-30T10:00:00Z");
 
     @Mock
     UserRepository repository;
@@ -48,12 +52,20 @@ class RegisterPendingUserServiceTest {
     @Mock
     EventPublisher publisher;
 
+    @Mock
+    Clock clock;
+
     @InjectMocks
     RegisterPendingUserService service;
 
     @Nested
     @DisplayName("Registration")
     class Registration {
+
+        @BeforeEach
+        void stubClock() {
+            when(clock.instant()).thenReturn(NOW);
+        }
 
         @Test
         @DisplayName("should save the user with email, profile, and status PENDING")
@@ -73,6 +85,18 @@ class RegisterPendingUserServiceTest {
             assertEquals(FirstName.of(FIRST_NAME), saved.profile().firstName());
             assertEquals(LastName.of(LAST_NAME), saved.profile().lastName());
             assertEquals(UserStatus.PENDING, saved.status());
+        }
+
+        @Test
+        @DisplayName("should save the user with createdAt = clock.instant()")
+        void shouldSaveTheUserWithCreatedAtFromClock() {
+            when(repository.existsByEmail(any())).thenReturn(false);
+
+            service.register(new RegisterPendingUserCommand(EMAIL, FIRST_NAME, LAST_NAME));
+
+            ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+            verify(repository).save(userCaptor.capture());
+            assertEquals(NOW, userCaptor.getValue().createdAt());
         }
 
         @Test
@@ -116,6 +140,7 @@ class RegisterPendingUserServiceTest {
             UserRegistered event = assertInstanceOf(UserRegistered.class, events.getFirst());
             assertEquals(saved.id(), event.userId());
             assertEquals(saved.email(), event.email());
+            assertEquals(NOW, event.occurredOn());
         }
 
         @Test
@@ -133,6 +158,11 @@ class RegisterPendingUserServiceTest {
             verify(repository).save(userCaptor.capture());
             assertThat(returnedId).isEqualTo(userCaptor.getValue().id());
         }
+    }
+
+    @Nested
+    @DisplayName("Pre-conditions failing before Clock is consulted")
+    class PreConditions {
 
         @Test
         @DisplayName("should throw EmailAlreadyExistsException when email already exists")
@@ -157,14 +187,21 @@ class RegisterPendingUserServiceTest {
         @DisplayName("should reject null repository")
         void shouldRejectNullRepository() {
             assertThrows(NullPointerException.class,
-                    () -> new RegisterPendingUserService(null, publisher));
+                    () -> new RegisterPendingUserService(null, publisher, clock));
         }
 
         @Test
         @DisplayName("should reject null publisher")
         void shouldRejectNullPublisher() {
             assertThrows(NullPointerException.class,
-                    () -> new RegisterPendingUserService(repository, null));
+                    () -> new RegisterPendingUserService(repository, null, clock));
+        }
+
+        @Test
+        @DisplayName("should reject null clock")
+        void shouldRejectNullClock() {
+            assertThrows(NullPointerException.class,
+                    () -> new RegisterPendingUserService(repository, publisher, null));
         }
 
         @Test

@@ -71,7 +71,7 @@ class AcceptMembershipInvitationOnUserActivatedListenerTest {
             MembershipInvitation invitation = pendingInvitationFor(EMAIL);
             when(invitationRepository.findPendingByEmail(EMAIL)).thenReturn(Optional.of(invitation));
 
-            listener.onUserActivatedEvent(new UserActivated(userId, EMAIL));
+            listener.onUserActivatedEvent(new UserActivated(userId, EMAIL, Instant.now()));
 
             ArgumentCaptor<AcceptMembershipInvitationCommand> commandCaptor =
                     ArgumentCaptor.forClass(AcceptMembershipInvitationCommand.class);
@@ -87,7 +87,7 @@ class AcceptMembershipInvitationOnUserActivatedListenerTest {
             MembershipInvitation invitation = pendingInvitationFor(EMAIL);
             when(invitationRepository.findPendingByEmail(EMAIL)).thenReturn(Optional.of(invitation));
 
-            listener.onUserActivatedEvent(new UserActivated(UserId.generate(), EMAIL));
+            listener.onUserActivatedEvent(new UserActivated(UserId.generate(), EMAIL, Instant.now()));
 
             verify(invitationRepository).findPendingByEmail(EMAIL);
         }
@@ -98,7 +98,7 @@ class AcceptMembershipInvitationOnUserActivatedListenerTest {
             when(invitationRepository.findPendingByEmail(EMAIL)).thenReturn(Optional.empty());
 
             assertThrows(IllegalStateException.class,
-                    () -> listener.onUserActivatedEvent(new UserActivated(UserId.generate(), EMAIL)));
+                    () -> listener.onUserActivatedEvent(new UserActivated(UserId.generate(), EMAIL, Instant.now())));
 
             verify(acceptMembershipInvitationUseCase, never()).accept(any());
         }

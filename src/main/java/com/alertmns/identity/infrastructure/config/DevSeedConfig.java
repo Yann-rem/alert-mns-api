@@ -1,12 +1,12 @@
 package com.alertmns.identity.infrastructure.config;
 
-import com.alertmns.shared.Email;
 import com.alertmns.identity.domain.model.FirstName;
 import com.alertmns.identity.domain.model.HashedPassword;
 import com.alertmns.identity.domain.model.LastName;
 import com.alertmns.identity.domain.model.Profile;
 import com.alertmns.identity.domain.model.User;
 import com.alertmns.identity.domain.port.outgoing.UserRepository;
+import com.alertmns.shared.Email;
 import com.alertmns.shared.EventPublisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +14,8 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.time.Instant;
 
 /**
  * Seed temporaire pour permettre de tester /auth/login pendant le développement, en attendant la mise en place de
@@ -46,9 +48,10 @@ public class DevSeedConfig {
             User user = User.register(
                     email,
                     HashedPassword.of(passwordEncoder.encode(DEV_PASSWORD)),
-                    Profile.of(FirstName.of("Dev"), LastName.of("User"))
+                    Profile.of(FirstName.of("Dev"), LastName.of("User")),
+                    Instant.now()
             );
-            user.activateWithPassword(HashedPassword.of(passwordEncoder.encode(DEV_PASSWORD)));
+            user.activateWithPassword(HashedPassword.of(passwordEncoder.encode(DEV_PASSWORD)), Instant.now());
 
             userRepository.save(user);
             eventPublisher.publish(user.pullDomainEvents());

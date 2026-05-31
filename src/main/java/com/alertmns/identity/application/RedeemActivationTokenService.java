@@ -16,6 +16,7 @@ import com.alertmns.identity.domain.port.outgoing.PasswordHasher;
 import com.alertmns.identity.domain.port.outgoing.UserRepository;
 import com.alertmns.shared.EventPublisher;
 
+import java.time.Clock;
 import java.util.Objects;
 
 /**
@@ -33,17 +34,20 @@ public final class RedeemActivationTokenService implements RedeemActivationToken
     private final UserRepository userRepository;
     private final PasswordHasher passwordHasher;
     private final EventPublisher publisher;
+    private final Clock clock;
 
     public RedeemActivationTokenService(
             ActivationTokenRepository tokenRepository,
             UserRepository userRepository,
             PasswordHasher passwordHasher,
-            EventPublisher publisher
+            EventPublisher publisher,
+            Clock clock
     ) {
         this.tokenRepository = Objects.requireNonNull(tokenRepository, "tokenRepository must not be null");
         this.userRepository = Objects.requireNonNull(userRepository, "userRepository must not be null");
         this.passwordHasher = Objects.requireNonNull(passwordHasher, "passwordHasher must not be null");
         this.publisher = Objects.requireNonNull(publisher, "publisher must not be null");
+        this.clock = Objects.requireNonNull(clock, "clock must not be null");
     }
 
     /**
@@ -62,13 +66,13 @@ public final class RedeemActivationTokenService implements RedeemActivationToken
 
         ActivationToken token = tokenRepository.findByHash(hash).orElseThrow(
                 () -> new ActivationTokenNotFoundException(hash));
-        token.verifyUsable();
+        token.verifyUsable(clock.instant());
 
         User user = userRepository.findById(token.userId())
                 .orElseThrow(() -> new UserNotFoundException(token.userId()));
 
         HashedPassword hashedPassword = passwordHasher.hash(rawPassword);
-        user.activateWithPassword(hashedPassword);
+        user.activateWithPassword(hashedPassword, clock.instant());
         userRepository.save(user);
         tokenRepository.deleteByUserId(user.id());
         publisher.publish(user.pullDomainEvents());

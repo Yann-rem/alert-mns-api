@@ -1,7 +1,7 @@
 package com.alertmns.identity.domain.event;
 
-import com.alertmns.shared.UserId;
 import com.alertmns.shared.DomainEvent;
+import com.alertmns.shared.UserId;
 
 import java.time.Instant;
 
@@ -10,9 +10,4 @@ import java.time.Instant;
  *
  * <p>Le compte passe du statut SUSPENDED à ACTIVE.</p>
  */
-public record UserReactivated(UserId userId, Instant occurredOn) implements DomainEvent {
-
-    public UserReactivated(UserId userId) {
-        this(userId, Instant.now());
-    }
-}
+public record UserReactivated(UserId userId, Instant occurredOn) implements DomainEvent {}

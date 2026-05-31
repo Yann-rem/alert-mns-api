@@ -24,6 +24,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -33,6 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -44,12 +46,16 @@ class UpdateProfileServiceTest {
     static final String NEW_FIRST_NAME = "Jane";
     static final String NEW_LAST_NAME = "Doe";
     static final String NEW_AVATAR = "https://cdn.example.com/avatar.jpg";
+    static final Instant NOW = Instant.parse("2026-05-30T10:00:00Z");
 
     @Mock
     UserRepository repository;
 
     @Mock
     EventPublisher publisher;
+
+    @Mock
+    Clock clock;
 
     @InjectMocks
     UpdateProfileService service;
@@ -64,6 +70,7 @@ class UpdateProfileServiceTest {
         @BeforeEach
         void setUp() {
             id = UserId.generate();
+            lenient().when(clock.instant()).thenReturn(NOW);
 
             user = User.reconstitute(
                     id,
@@ -72,7 +79,7 @@ class UpdateProfileServiceTest {
                     Profile.of(FirstName.of("John"), LastName.of("Doe")),
                     UserStatus.ACTIVE,
                     false,
-                    Instant.now()
+                    NOW
             );
         }
 
@@ -112,6 +119,7 @@ class UpdateProfileServiceTest {
             assertEquals(1, events.size());
             ProfileUpdated event = assertInstanceOf(ProfileUpdated.class, events.getFirst());
             assertEquals(id, event.userId());
+            assertEquals(NOW, event.occurredOn());
         }
 
         @Test
@@ -149,14 +157,21 @@ class UpdateProfileServiceTest {
         @DisplayName("should reject null repository")
         void shouldRejectNullRepository() {
             assertThrows(NullPointerException.class,
-                    () -> new UpdateProfileService(null, publisher));
+                    () -> new UpdateProfileService(null, publisher, clock));
         }
 
         @Test
         @DisplayName("should reject null publisher")
         void shouldRejectNullPublisher() {
             assertThrows(NullPointerException.class,
-                    () -> new UpdateProfileService(repository, null));
+                    () -> new UpdateProfileService(repository, null, clock));
+        }
+
+        @Test
+        @DisplayName("should reject null clock")
+        void shouldRejectNullClock() {
+            assertThrows(NullPointerException.class,
+                    () -> new UpdateProfileService(repository, publisher, null));
         }
 
         @Test

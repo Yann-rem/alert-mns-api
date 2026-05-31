@@ -42,16 +42,13 @@ public final class ActivationToken extends AggregateRoot {
     /**
      * Émet un nouveau token d'activation pour un utilisateur.
      *
-     * <p>L'identifiant et la date de création sont générés automatiquement. La date d'expiration est calculée par
-     * {@code createdAt + ttl}.</p>
-     *
      * @param userId   l'identifiant de l'utilisateur cible
-     * @param rawToken le token brut (sera haché en SHA-256 et seul le hash sera persisté)
+     * @param rawToken le token brut
      * @param ttl      la durée de validité du token
-     * @return un {@link IssuedToken} portant l'agrégat et le raw token (à transmettre une seule fois)
+     * @param now      instant de l'opération
+     * @return un {@link IssuedToken} portant l'agrégat et le raw token
      */
-    public static IssuedToken issue(UserId userId, RawToken rawToken, Duration ttl) {
-        Instant now = Instant.now();
+    public static IssuedToken issue(UserId userId, RawToken rawToken, Duration ttl, Instant now) {
         ActivationToken activationToken = new ActivationToken(
                 ActivationTokenId.generate(),
                 userId,
@@ -79,23 +76,25 @@ public final class ActivationToken extends AggregateRoot {
     }
 
     /**
-     * Vérifie que le token est encore utilisable au moment courant.
+     * Vérifie que le token est encore utilisable à l'instant donné.
      *
-     * @throws ActivationTokenExpiredException si le token a dépassé sa date d'expiration
+     * @param now instant de référence pour la comparaison
+     * @throws ActivationTokenExpiredException si {@code now > expiresAt}
      */
-    public void verifyUsable() {
-        if (isExpired()) {
+    public void verifyUsable(Instant now) {
+        if (isExpired(now)) {
             throw new ActivationTokenExpiredException(id);
         }
     }
 
     /**
-     * Indique si le token a dépassé sa date d'expiration.
+     * Indique si le token a dépassé sa date d'expiration à l'instant donné.
      *
+     * @param now instant de référence pour la comparaison
      * @return {@code true} si {@code now > expiresAt}
      */
-    public boolean isExpired() {
-        return Instant.now().isAfter(expiresAt);
+    public boolean isExpired(Instant now) {
+        return now.isAfter(expiresAt);
     }
 
     public ActivationTokenId id() {

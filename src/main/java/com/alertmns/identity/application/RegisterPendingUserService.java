@@ -13,6 +13,7 @@ import com.alertmns.shared.Email;
 import com.alertmns.shared.EventPublisher;
 import com.alertmns.shared.UserId;
 
+import java.time.Clock;
 import java.util.Objects;
 
 /**
@@ -24,10 +25,12 @@ public final class RegisterPendingUserService implements RegisterPendingUserUseC
 
     private final UserRepository repository;
     private final EventPublisher publisher;
+    private final Clock clock;
 
-    public RegisterPendingUserService(UserRepository repository, EventPublisher publisher) {
+    public RegisterPendingUserService(UserRepository repository, EventPublisher publisher, Clock clock) {
         this.repository = Objects.requireNonNull(repository, "repository must not be null");
         this.publisher = Objects.requireNonNull(publisher, "publisher must not be null");
+        this.clock = Objects.requireNonNull(clock, "clock must not be null");
     }
 
     @Override
@@ -39,7 +42,7 @@ public final class RegisterPendingUserService implements RegisterPendingUserUseC
             throw new EmailAlreadyExistsException(email);
         }
 
-        User user = User.register(email, HashedPassword.unset(), profile);
+        User user = User.register(email, HashedPassword.unset(), profile, clock.instant());
         repository.save(user);
         publisher.publish(user.pullDomainEvents());
         return user.id();

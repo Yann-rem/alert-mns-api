@@ -30,21 +30,23 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class UserTest {
 
     static final String BCRYPT_HASH = "$2a$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012345";
+    static final Instant NOW = Instant.parse("2026-05-30T10:00:00Z");
+    static final Instant LATER = NOW.plusSeconds(60);
 
     @Nested
     @DisplayName("Creation")
     class Creation {
 
         @Test
-        @DisplayName("should register a new user with PENDING status")
+        @DisplayName("should register a new user with PENDING status and createdAt = now")
         void shouldRegisterANewUserWithPENDINGStatus() {
             Email email = Email.of("johndoe@example.com");
             HashedPassword hashedPassword = HashedPassword.of(BCRYPT_HASH);
             Profile profile = Profile.of(FirstName.of("John"), LastName.of("Doe"));
-            User user = User.register(email, hashedPassword, profile);
+            User user = User.register(email, hashedPassword, profile, NOW);
             assertEquals(UserStatus.PENDING, user.status());
             assertNotNull(user.id());
-            assertNotNull(user.createdAt());
+            assertEquals(NOW, user.createdAt());
         }
 
         @Test
@@ -54,7 +56,7 @@ class UserTest {
             Email email = Email.of("johndoe@example.com");
             HashedPassword hashedPassword = HashedPassword.of(BCRYPT_HASH);
             Profile profile = Profile.of(FirstName.of("John"), LastName.of("Doe"));
-            Instant createdAt = Instant.now();
+            Instant createdAt = NOW;
 
             User user = User.reconstitute(
                     id,
@@ -81,7 +83,7 @@ class UserTest {
             Email email = Email.of("johndoe@example.com");
             HashedPassword hashedPassword = HashedPassword.of(BCRYPT_HASH);
             Profile profile = Profile.of(FirstName.of("John"), LastName.of("Doe"));
-            User user = User.register(email, hashedPassword, profile);
+            User user = User.register(email, hashedPassword, profile, NOW);
             assertFalse(user.isAnonymized());
         }
     }
@@ -96,7 +98,7 @@ class UserTest {
             HashedPassword hashedPassword = HashedPassword.of(BCRYPT_HASH);
             Profile profile = Profile.of(FirstName.of("John"), LastName.of("Doe"));
             assertThrows(NullPointerException.class,
-                    () -> User.register(null, hashedPassword, profile));
+                    () -> User.register(null, hashedPassword, profile, NOW));
         }
 
         @Test
@@ -105,7 +107,7 @@ class UserTest {
             Email email = Email.of("johndoe@example.com");
             Profile profile = Profile.of(FirstName.of("John"), LastName.of("Doe"));
             assertThrows(NullPointerException.class,
-                    () -> User.register(email, null, profile));
+                    () -> User.register(email, null, profile, NOW));
         }
 
         @Test
@@ -114,7 +116,7 @@ class UserTest {
             Email email = Email.of("johndoe@example.com");
             HashedPassword hashedPassword = HashedPassword.of(BCRYPT_HASH);
             assertThrows(NullPointerException.class,
-                    () -> User.register(email, hashedPassword, null));
+                    () -> User.register(email, hashedPassword, null, NOW));
         }
     }
 
@@ -129,17 +131,17 @@ class UserTest {
             Email email = Email.of("johndoe@example.com");
             HashedPassword hashedPassword = HashedPassword.of(BCRYPT_HASH);
             Profile profile = Profile.of(FirstName.of("John"), LastName.of("Doe"));
-            user = User.register(email, hashedPassword, profile);
+            user = User.register(email, hashedPassword, profile, NOW);
         }
 
         @Test
         @DisplayName("updateProfile should update the user profile")
         void updateProfileShouldUpdateTheUserProfile() {
-            user.activateWithPassword(HashedPassword.of(BCRYPT_HASH));
+            user.activateWithPassword(HashedPassword.of(BCRYPT_HASH), NOW);
             FirstName newFirstName = FirstName.of("Jane");
             LastName newLastName = LastName.of("Smith");
             String newAvatar = "https://cdn.example.com/avatar.jpg";
-            user.updateProfile(newFirstName, newLastName, newAvatar);
+            user.updateProfile(newFirstName, newLastName, newAvatar, LATER);
             assertEquals(newFirstName, user.profile().firstName());
             assertEquals(newLastName, user.profile().lastName());
             assertTrue(user.profile().avatar().isPresent());
@@ -149,12 +151,12 @@ class UserTest {
         @Test
         @DisplayName("updateAbsenceMessage should update the absence message")
         void updateAbsenceMessageShouldUpdateTheAbsenceMessage() {
-            user.activateWithPassword(HashedPassword.of(BCRYPT_HASH));
+            user.activateWithPassword(HashedPassword.of(BCRYPT_HASH), NOW);
             AbsenceMessage absenceMessage = AbsenceMessage.of(
                     "Je ne suis pas disponible pour le moment", true
             );
 
-            user.updateAbsenceMessage(absenceMessage);
+            user.updateAbsenceMessage(absenceMessage, LATER);
             assertTrue(user.profile().absenceMessage().isPresent());
             assertEquals(absenceMessage, user.profile().absenceMessage().orElseThrow());
         }
@@ -163,20 +165,20 @@ class UserTest {
         @DisplayName("updateProfile should reject non-ACTIVE account")
         void updateProfileShouldRejectNonACTIVEAccount() {
             assertThrows(IllegalStateException.class,
-                    () -> user.updateProfile(FirstName.of("Jane"), LastName.of("Smith"), null));
+                    () -> user.updateProfile(FirstName.of("Jane"), LastName.of("Smith"), null, NOW));
         }
 
         @Test
         @DisplayName("updateAbsenceMessage should reject non-ACTIVE account")
         void updateAbsenceMessageShouldRejectNonACTIVEAccount() {
             assertThrows(IllegalStateException.class,
-                    () -> user.updateAbsenceMessage(AbsenceMessage.of("Absent", true)));
+                    () -> user.updateAbsenceMessage(AbsenceMessage.of("Absent", true), NOW));
         }
 
         @Test
         @DisplayName("activateWithPassword should transition PENDING to ACTIVE")
         void activateWithPasswordShouldTransitionPENDINGToACTIVE() {
-            user.activateWithPassword(HashedPassword.of(BCRYPT_HASH));
+            user.activateWithPassword(HashedPassword.of(BCRYPT_HASH), NOW);
             assertEquals(UserStatus.ACTIVE, user.status());
         }
 
@@ -186,7 +188,7 @@ class UserTest {
             String newHash = "$2a$10$zzzzzzzzzzzzzzzzzzzzzzZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ987654";
             HashedPassword newHashedPassword = HashedPassword.of(newHash);
 
-            user.activateWithPassword(newHashedPassword);
+            user.activateWithPassword(newHashedPassword, NOW);
 
             assertEquals(newHashedPassword, user.hashedPassword());
         }
@@ -194,44 +196,44 @@ class UserTest {
         @Test
         @DisplayName("activateWithPassword should reject null hashedPassword")
         void activateWithPasswordShouldRejectNullHashedPassword() {
-            assertThrows(NullPointerException.class, () -> user.activateWithPassword(null));
+            assertThrows(NullPointerException.class, () -> user.activateWithPassword(null, NOW));
         }
 
         @Test
         @DisplayName("activateWithPassword should reject non-PENDING account")
         void activateWithPasswordShouldRejectNonPENDINGAccount() {
-            user.activateWithPassword(HashedPassword.of(BCRYPT_HASH));
+            user.activateWithPassword(HashedPassword.of(BCRYPT_HASH), NOW);
             assertThrows(IllegalStateException.class,
-                    () -> user.activateWithPassword(HashedPassword.of(BCRYPT_HASH)));
+                    () -> user.activateWithPassword(HashedPassword.of(BCRYPT_HASH), LATER));
         }
 
         @Test
         @DisplayName("suspend should transition ACTIVE to SUSPENDED")
         void suspendShouldTransitionACTIVEToSUSPENDED() {
-            user.activateWithPassword(HashedPassword.of(BCRYPT_HASH));
-            user.suspend();
+            user.activateWithPassword(HashedPassword.of(BCRYPT_HASH), NOW);
+            user.suspend(LATER);
             assertEquals(UserStatus.SUSPENDED, user.status());
         }
 
         @Test
         @DisplayName("suspend should reject non-ACTIVE account")
         void suspendShouldRejectNonACTIVEAccount() {
-            assertThrows(IllegalStateException.class, () -> user.suspend());
+            assertThrows(IllegalStateException.class, () -> user.suspend(NOW));
         }
 
         @Test
         @DisplayName("reactivate should transition SUSPENDED to ACTIVE")
         void reactivateShouldTransitionSUSPENDEDToACTIVE() {
-            user.activateWithPassword(HashedPassword.of(BCRYPT_HASH));
-            user.suspend();
-            user.reactivate();
+            user.activateWithPassword(HashedPassword.of(BCRYPT_HASH), NOW);
+            user.suspend(LATER);
+            user.reactivate(LATER.plusSeconds(60));
             assertEquals(UserStatus.ACTIVE, user.status());
         }
 
         @Test
         @DisplayName("reactivate should reject non-SUSPENDED account")
         void reactivateShouldRejectNonSUSPENDEDAccount() {
-            assertThrows(IllegalStateException.class, () -> user.reactivate());
+            assertThrows(IllegalStateException.class, () -> user.reactivate(NOW));
         }
 
         @Test
@@ -244,10 +246,10 @@ class UserTest {
                     Profile.of(FirstName.of("John"), LastName.of("Doe")),
                     UserStatus.BANNED,
                     false,
-                    Instant.now()
+                    NOW
             );
 
-            assertThrows(BannedUserCannotBeReactivatedException.class, bannedUser::reactivate);
+            assertThrows(BannedUserCannotBeReactivatedException.class, () -> bannedUser.reactivate(NOW));
             assertEquals(UserStatus.BANNED, bannedUser.status());
         }
     }
@@ -263,92 +265,99 @@ class UserTest {
             Email email = Email.of("johndoe@example.com");
             HashedPassword hashedPassword = HashedPassword.of(BCRYPT_HASH);
             Profile profile = Profile.of(FirstName.of("John"), LastName.of("Doe"));
-            user = User.register(email, hashedPassword, profile);
+            user = User.register(email, hashedPassword, profile, NOW);
         }
 
         @Test
-        @DisplayName("register should emit UserRegistered")
+        @DisplayName("register should emit UserRegistered with occurredOn = now")
         void registerShouldEmitUserRegistered() {
             List<DomainEvent> events = user.pullDomainEvents();
             assertEquals(1, events.size());
             UserRegistered event = assertInstanceOf(UserRegistered.class, events.getFirst());
             assertEquals(user.id(), event.userId());
             assertEquals(user.email(), event.email());
+            assertEquals(NOW, event.occurredOn());
         }
 
         @Test
-        @DisplayName("updateProfile should emit ProfileUpdated")
+        @DisplayName("updateProfile should emit ProfileUpdated with occurredOn = now")
         void updateProfileShouldEmitUpdateProfile() {
-            user.activateWithPassword(HashedPassword.of(BCRYPT_HASH));
+            user.activateWithPassword(HashedPassword.of(BCRYPT_HASH), NOW);
             user.pullDomainEvents();
 
             user.updateProfile(
                     FirstName.of("Jane"),
                     LastName.of("Doe"),
-                    "https://cdn.example.com/avatar.jpg"
+                    "https://cdn.example.com/avatar.jpg",
+                    LATER
             );
 
             List<DomainEvent> events = user.pullDomainEvents();
             assertEquals(1, events.size());
             ProfileUpdated event = assertInstanceOf(ProfileUpdated.class, events.getFirst());
             assertEquals(user.id(), event.userId());
+            assertEquals(LATER, event.occurredOn());
         }
 
         @Test
         @DisplayName("updateAbsenceMessage should emit AbsenceMessageUpdated")
         void updateAbsenceMessageShouldEmitUpdateAbsenceMessage() {
-            user.activateWithPassword(HashedPassword.of(BCRYPT_HASH));
+            user.activateWithPassword(HashedPassword.of(BCRYPT_HASH), NOW);
             user.pullDomainEvents();
 
             user.updateAbsenceMessage(AbsenceMessage.of(
                     "je ne suis pas disponible pour le moment",
                     true
-            ));
+            ), LATER);
 
             List<DomainEvent> events = user.pullDomainEvents();
             assertEquals(1, events.size());
             AbsenceMessageUpdated event = assertInstanceOf(AbsenceMessageUpdated.class, events.getFirst());
             assertEquals(user.id(), event.userId());
+            assertEquals(LATER, event.occurredOn());
         }
 
         @Test
-        @DisplayName("activateWithPassword should emit UserActivated with userId and email")
+        @DisplayName("activateWithPassword should emit UserActivated with userId, email and occurredOn")
         void activateWithPasswordShouldEmitUserActivated() {
             user.pullDomainEvents();
-            user.activateWithPassword(HashedPassword.of(BCRYPT_HASH));
+            user.activateWithPassword(HashedPassword.of(BCRYPT_HASH), LATER);
             List<DomainEvent> events = user.pullDomainEvents();
             assertEquals(1, events.size());
             UserActivated event = assertInstanceOf(UserActivated.class, events.getFirst());
             assertEquals(user.id(), event.userId());
             assertEquals(user.email(), event.email());
+            assertEquals(LATER, event.occurredOn());
         }
 
         @Test
         @DisplayName("suspend should emit UserSuspended")
         void suspendShouldEmitUserSuspended() {
             user.pullDomainEvents();
-            user.activateWithPassword(HashedPassword.of(BCRYPT_HASH));
+            user.activateWithPassword(HashedPassword.of(BCRYPT_HASH), NOW);
             user.pullDomainEvents();
-            user.suspend();
+            user.suspend(LATER);
             List<DomainEvent> events = user.pullDomainEvents();
             assertEquals(1, events.size());
             UserSuspended event = assertInstanceOf(UserSuspended.class, events.getFirst());
             assertEquals(user.id(), event.userId());
+            assertEquals(LATER, event.occurredOn());
         }
 
         @Test
         @DisplayName("reactivate should emit UserReactivated")
         void reactivateShouldEmitUserReactivated() {
             user.pullDomainEvents();
-            user.activateWithPassword(HashedPassword.of(BCRYPT_HASH));
+            user.activateWithPassword(HashedPassword.of(BCRYPT_HASH), NOW);
             user.pullDomainEvents();
-            user.suspend();
+            user.suspend(NOW);
             user.pullDomainEvents();
-            user.reactivate();
+            user.reactivate(LATER);
             List<DomainEvent> events = user.pullDomainEvents();
             assertEquals(1, events.size());
             UserReactivated event = assertInstanceOf(UserReactivated.class, events.getFirst());
             assertEquals(user.id(), event.userId());
+            assertEquals(LATER, event.occurredOn());
         }
 
         @Test
@@ -361,10 +370,10 @@ class UserTest {
                     Profile.of(FirstName.of("John"), LastName.of("Doe")),
                     UserStatus.BANNED,
                     false,
-                    Instant.now()
+                    NOW
             );
 
-            assertThrows(BannedUserCannotBeReactivatedException.class, bannedUser::reactivate);
+            assertThrows(BannedUserCannotBeReactivatedException.class, () -> bannedUser.reactivate(NOW));
             assertTrue(bannedUser.pullDomainEvents().isEmpty());
         }
 
@@ -388,27 +397,14 @@ class UserTest {
             Email email = Email.of("johndoe@example.com");
             HashedPassword hashedPassword = HashedPassword.of(BCRYPT_HASH);
             Profile profile = Profile.of(FirstName.of("John"), LastName.of("Doe"));
-            Instant createdAt = Instant.now();
 
             User user1 = User.reconstitute(
-                    id,
-                    email,
-                    hashedPassword,
-                    profile,
-                    UserStatus.ACTIVE,
-                    false,
-                    createdAt
-            );
+                    id, email, hashedPassword, profile,
+                    UserStatus.ACTIVE, false, NOW);
 
             User user2 = User.reconstitute(
-                    id,
-                    email,
-                    hashedPassword,
-                    profile,
-                    UserStatus.ACTIVE,
-                    false,
-                    createdAt
-            );
+                    id, email, hashedPassword, profile,
+                    UserStatus.ACTIVE, false, NOW);
 
             assertEquals(user1, user2);
         }
@@ -419,8 +415,8 @@ class UserTest {
             Email email = Email.of("johndoe@example.com");
             HashedPassword hashedPassword = HashedPassword.of(BCRYPT_HASH);
             Profile profile = Profile.of(FirstName.of("John"), LastName.of("Doe"));
-            User user1 = User.register(email, hashedPassword, profile);
-            User user2 = User.register(email, hashedPassword, profile);
+            User user1 = User.register(email, hashedPassword, profile, NOW);
+            User user2 = User.register(email, hashedPassword, profile, NOW);
             assertNotEquals(user1, user2);
         }
     }

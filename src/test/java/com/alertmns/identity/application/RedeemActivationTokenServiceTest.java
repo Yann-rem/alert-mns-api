@@ -31,6 +31,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -42,6 +43,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -61,6 +63,7 @@ class RedeemActivationTokenServiceTest {
     static final String RAW_TOKEN = "any-raw-token-value";
     static final String NEW_RAW_PASSWORD = "my-chosen-password";
     static final Duration TTL = Duration.ofHours(48);
+    static final Instant NOW = Instant.parse("2026-05-30T10:00:00Z");
 
     @Mock
     ActivationTokenRepository tokenRepository;
@@ -74,23 +77,31 @@ class RedeemActivationTokenServiceTest {
     @Mock
     EventPublisher publisher;
 
+    @Mock
+    Clock clock;
+
     RedeemActivationTokenService service;
     User pendingUser;
     ActivationToken validToken;
 
     @BeforeEach
     void setUp() {
-        service = new RedeemActivationTokenService(tokenRepository, userRepository, passwordHasher, publisher);
+        service = new RedeemActivationTokenService(
+                tokenRepository, userRepository, passwordHasher, publisher, clock);
         pendingUser = User.register(
                 Email.of(EMAIL),
                 HashedPassword.of(INITIAL_BCRYPT_HASH),
-                Profile.of(FirstName.of(FIRST_NAME), LastName.of(LAST_NAME))
+                Profile.of(FirstName.of(FIRST_NAME), LastName.of(LAST_NAME)),
+                NOW
         );
         // Simule l'état "user déjà en BD" — UserRegistered a déjà été publié à la création.
         // Sans ce flush, le redeem republierait UserRegistered + UserActivated, faussant les assertions
         // sur la taille de la liste d'events.
         pendingUser.pullDomainEvents();
-        validToken = ActivationToken.issue(pendingUser.id(), RawToken.of(RAW_TOKEN), TTL).activationToken();
+        validToken = ActivationToken.issue(
+                pendingUser.id(), RawToken.of(RAW_TOKEN), TTL, NOW).activationToken();
+        // lenient: certains tests court-circuitent avant l'appel à clock.instant().
+        lenient().when(clock.instant()).thenReturn(NOW);
     }
 
     @Nested
@@ -158,6 +169,7 @@ class RedeemActivationTokenServiceTest {
             assertEquals(1, events.size());
             UserActivated event = assertInstanceOf(UserActivated.class, events.getFirst());
             assertEquals(pendingUser.id(), event.userId());
+            assertEquals(NOW, event.occurredOn());
         }
 
         @Test
@@ -180,8 +192,8 @@ class RedeemActivationTokenServiceTest {
                     ActivationTokenId.generate(),
                     pendingUser.id(),
                     HashedToken.of(RawToken.of(RAW_TOKEN)),
-                    Instant.now().minus(Duration.ofHours(49)),
-                    Instant.now().minus(Duration.ofHours(1))
+                    NOW.minus(Duration.ofHours(49)),
+                    NOW.minus(Duration.ofHours(1))
             );
             HashedToken hash = HashedToken.of(RawToken.of(RAW_TOKEN));
             when(tokenRepository.findByHash(hash)).thenReturn(Optional.of(expired));
@@ -219,7 +231,7 @@ class RedeemActivationTokenServiceTest {
                     Profile.of(FirstName.of(FIRST_NAME), LastName.of(LAST_NAME)),
                     UserStatus.ACTIVE,
                     false,
-                    Instant.now()
+                    NOW
             );
             HashedToken hash = HashedToken.of(RawToken.of(RAW_TOKEN));
             when(tokenRepository.findByHash(hash)).thenReturn(Optional.of(validToken));
@@ -243,28 +255,36 @@ class RedeemActivationTokenServiceTest {
         @DisplayName("should reject null tokenRepository")
         void shouldRejectNullTokenRepository() {
             assertThrows(NullPointerException.class,
-                    () -> new RedeemActivationTokenService(null, userRepository, passwordHasher, publisher));
+                    () -> new RedeemActivationTokenService(null, userRepository, passwordHasher, publisher, clock));
         }
 
         @Test
         @DisplayName("should reject null userRepository")
         void shouldRejectNullUserRepository() {
             assertThrows(NullPointerException.class,
-                    () -> new RedeemActivationTokenService(tokenRepository, null, passwordHasher, publisher));
+                    () -> new RedeemActivationTokenService(tokenRepository, null, passwordHasher, publisher, clock));
         }
 
         @Test
         @DisplayName("should reject null passwordHasher")
         void shouldRejectNullPasswordHasher() {
             assertThrows(NullPointerException.class,
-                    () -> new RedeemActivationTokenService(tokenRepository, userRepository, null, publisher));
+                    () -> new RedeemActivationTokenService(tokenRepository, userRepository, null, publisher, clock));
         }
 
         @Test
         @DisplayName("should reject null publisher")
         void shouldRejectNullPublisher() {
             assertThrows(NullPointerException.class,
-                    () -> new RedeemActivationTokenService(tokenRepository, userRepository, passwordHasher, null));
+                    () -> new RedeemActivationTokenService(tokenRepository, userRepository, passwordHasher, null, clock));
+        }
+
+        @Test
+        @DisplayName("should reject null clock")
+        void shouldRejectNullClock() {
+            assertThrows(NullPointerException.class,
+                    () -> new RedeemActivationTokenService(
+                            tokenRepository, userRepository, passwordHasher, publisher, null));
         }
 
         @Test
