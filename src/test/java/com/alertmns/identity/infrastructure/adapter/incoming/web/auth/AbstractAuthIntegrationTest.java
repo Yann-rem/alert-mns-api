@@ -5,9 +5,10 @@ import com.alertmns.identity.application.SuspendUserService;
 import com.alertmns.identity.domain.port.outgoing.PasswordHasher;
 import com.alertmns.identity.domain.port.outgoing.UserRepository;
 import com.alertmns.identity.infrastructure.adapter.outgoing.persistence.UserJpaRepository;
-import com.alertmns.organisation.domain.port.incoming.InviteMemberUseCase;
 import com.alertmns.organisation.domain.port.incoming.IssueMembershipInvitationUseCase;
+import com.alertmns.organisation.domain.port.outgoing.MemberRepository;
 import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.MemberJpaRepository;
+import com.alertmns.shared.EventPublisher;
 import org.junit.jupiter.api.AfterEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -252,7 +253,8 @@ abstract class AbstractAuthIntegrationTest {
                 SuspendUserService suspendUserService,
                 UserRepository userRepository,
                 PasswordHasher passwordHasher,
-                InviteMemberUseCase inviteMemberUseCase,
+                MemberRepository memberRepository,
+                EventPublisher publisher,
                 IssueMembershipInvitationUseCase issueMembershipInvitationUseCase
         ) {
             return new TestUserFactory(
@@ -260,7 +262,8 @@ abstract class AbstractAuthIntegrationTest {
                     suspendUserService,
                     userRepository,
                     passwordHasher,
-                    inviteMemberUseCase,
+                    memberRepository,
+                    publisher,
                     issueMembershipInvitationUseCase
             );
         }

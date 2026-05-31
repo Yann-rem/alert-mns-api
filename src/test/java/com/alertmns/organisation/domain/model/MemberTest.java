@@ -2,6 +2,7 @@ package com.alertmns.organisation.domain.model;
 
 import com.alertmns.organisation.domain.event.MemberActivated;
 import com.alertmns.organisation.domain.event.MemberInvited;
+import com.alertmns.organisation.domain.event.MemberJoined;
 import com.alertmns.organisation.domain.event.MemberReactivated;
 import com.alertmns.organisation.domain.event.MemberSuspended;
 import com.alertmns.shared.DomainEvent;
@@ -53,6 +54,26 @@ class MemberTest {
         }
 
         @Test
+        @DisplayName("should create a new member directly ACTIVE via createActive")
+        void shouldCreateANewMemberDirectlyActive() {
+            Member member = Member.createActive(ORGANISATION_ID, USER_ID, MemberRole.MEMBER);
+            assertEquals(MemberStatus.ACTIVE, member.status());
+            assertEquals(MemberRole.MEMBER, member.role());
+            assertEquals(ORGANISATION_ID, member.organisationId());
+            assertEquals(USER_ID, member.userId());
+            assertNotNull(member.id());
+            assertNotNull(member.joinedAt());
+        }
+
+        @Test
+        @DisplayName("createActive should preserve the ADMIN role")
+        void createActiveShouldPreserveAdminRole() {
+            Member member = Member.createActive(ORGANISATION_ID, USER_ID, MemberRole.ADMIN);
+            assertEquals(MemberRole.ADMIN, member.role());
+            assertEquals(MemberStatus.ACTIVE, member.status());
+        }
+
+        @Test
         @DisplayName("should reconstitute an existing member")
         void shouldReconstituteAnExistingMember() {
             MemberId id = MemberId.generate();
@@ -77,24 +98,45 @@ class MemberTest {
     class Invariants {
 
         @Test
-        @DisplayName("should reject null organisationId")
+        @DisplayName("invite should reject null organisationId")
         void shouldRejectNullOrganisationId() {
             assertThrows(NullPointerException.class,
                     () -> Member.invite(null, USER_ID, MemberRole.MEMBER));
         }
 
         @Test
-        @DisplayName("should reject null userId")
+        @DisplayName("invite should reject null userId")
         void shouldRejectNullUserId() {
             assertThrows(NullPointerException.class,
                     () -> Member.invite(ORGANISATION_ID, null, MemberRole.MEMBER));
         }
 
         @Test
-        @DisplayName("should reject null role")
+        @DisplayName("invite should reject null role")
         void shouldRejectNullRole() {
             assertThrows(NullPointerException.class,
                     () -> Member.invite(ORGANISATION_ID, USER_ID, null));
+        }
+
+        @Test
+        @DisplayName("createActive should reject null organisationId")
+        void createActiveShouldRejectNullOrganisationId() {
+            assertThrows(NullPointerException.class,
+                    () -> Member.createActive(null, USER_ID, MemberRole.MEMBER));
+        }
+
+        @Test
+        @DisplayName("createActive should reject null userId")
+        void createActiveShouldRejectNullUserId() {
+            assertThrows(NullPointerException.class,
+                    () -> Member.createActive(ORGANISATION_ID, null, MemberRole.MEMBER));
+        }
+
+        @Test
+        @DisplayName("createActive should reject null role")
+        void createActiveShouldRejectNullRole() {
+            assertThrows(NullPointerException.class,
+                    () -> Member.createActive(ORGANISATION_ID, USER_ID, null));
         }
     }
 
@@ -172,6 +214,20 @@ class MemberTest {
             MemberInvited event = assertInstanceOf(MemberInvited.class, events.getFirst());
             assertEquals(ORGANISATION_ID, event.organisationId());
             assertEquals(member.id(), event.memberId());
+        }
+
+        @Test
+        @DisplayName("createActive should emit MemberJoined with organisationId, memberId, userId and role")
+        void createActiveShouldEmitMemberJoined() {
+            Member joined = Member.createActive(ORGANISATION_ID, USER_ID, MemberRole.ADMIN);
+
+            List<DomainEvent> events = joined.pullDomainEvents();
+            assertEquals(1, events.size());
+            MemberJoined event = assertInstanceOf(MemberJoined.class, events.getFirst());
+            assertEquals(ORGANISATION_ID, event.organisationId());
+            assertEquals(joined.id(), event.memberId());
+            assertEquals(USER_ID, event.userId());
+            assertEquals(MemberRole.ADMIN, event.role());
         }
 
         @Test

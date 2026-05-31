@@ -1,7 +1,6 @@
 package com.alertmns.organisation.application;
 
-import com.alertmns.organisation.domain.event.MemberActivated;
-import com.alertmns.organisation.domain.event.MemberInvited;
+import com.alertmns.organisation.domain.event.MemberJoined;
 import com.alertmns.organisation.domain.event.MembershipInvitationAccepted;
 import com.alertmns.organisation.domain.exception.InvitationExpiredException;
 import com.alertmns.organisation.domain.exception.MembershipInvitationNotFoundException;
@@ -120,8 +119,8 @@ class AcceptMembershipInvitationServiceTest {
         }
 
         @Test
-        @DisplayName("should publish MembershipInvitationAccepted, MemberInvited and MemberActivated in one batch")
-        void shouldPublishAllThreeEventsInOneBatch() {
+        @DisplayName("should publish MembershipInvitationAccepted and MemberJoined in one batch")
+        void shouldPublishBothEventsInOneBatch() {
             MembershipInvitation invitation = pendingInvitation(MemberRole.MEMBER);
             when(invitationRepository.findById(INVITATION_ID)).thenReturn(Optional.of(invitation));
 
@@ -130,10 +129,28 @@ class AcceptMembershipInvitationServiceTest {
             ArgumentCaptor<List<DomainEvent>> eventsCaptor = ArgumentCaptor.captor();
             verify(publisher).publish(eventsCaptor.capture());
             List<DomainEvent> events = eventsCaptor.getValue();
-            assertThat(events).hasSize(3);
+            assertThat(events).hasSize(2);
             assertThat(events).hasAtLeastOneElementOfType(MembershipInvitationAccepted.class);
-            assertThat(events).hasAtLeastOneElementOfType(MemberInvited.class);
-            assertThat(events).hasAtLeastOneElementOfType(MemberActivated.class);
+            assertThat(events).hasAtLeastOneElementOfType(MemberJoined.class);
+        }
+
+        @Test
+        @DisplayName("MemberJoined should carry organisationId, memberId, userId and role")
+        void memberJoinedShouldCarryContext() {
+            MembershipInvitation invitation = pendingInvitation(MemberRole.ADMIN);
+            when(invitationRepository.findById(INVITATION_ID)).thenReturn(Optional.of(invitation));
+
+            service.accept(command);
+
+            ArgumentCaptor<List<DomainEvent>> eventsCaptor = ArgumentCaptor.captor();
+            verify(publisher).publish(eventsCaptor.capture());
+            MemberJoined event = eventsCaptor.getValue().stream()
+                    .filter(MemberJoined.class::isInstance)
+                    .map(MemberJoined.class::cast)
+                    .findFirst().orElseThrow();
+            assertEquals(ORG_ID, event.organisationId());
+            assertEquals(USER_ID, event.userId());
+            assertEquals(MemberRole.ADMIN, event.role());
         }
 
         @Test

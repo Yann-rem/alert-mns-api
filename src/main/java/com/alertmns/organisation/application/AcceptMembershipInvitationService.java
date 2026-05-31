@@ -2,6 +2,7 @@ package com.alertmns.organisation.application;
 
 import com.alertmns.organisation.domain.exception.MembershipInvitationNotFoundException;
 import com.alertmns.organisation.domain.model.Member;
+import com.alertmns.organisation.domain.model.MemberStatus;
 import com.alertmns.organisation.domain.model.MembershipInvitation;
 import com.alertmns.organisation.domain.port.incoming.AcceptMembershipInvitationUseCase;
 import com.alertmns.organisation.domain.port.incoming.command.AcceptMembershipInvitationCommand;
@@ -21,8 +22,8 @@ import java.util.UUID;
  * Service applicatif orchestrant l'acceptation d'une invitation.
  *
  * <p>Charge l'invitation → délègue la transition à l'agrégat ({@code invitation.accept}) → sauvegarde → crée le
- * {@code Member} ACTIVE via le couplet {@code invite + activate} → sauvegarde → publie l'ensemble des événements en
- * une seule fois.</p>
+ * {@code Member} directement en {@link MemberStatus#ACTIVE} via {@link Member#createActive} → sauvegarde → publie
+ * l'ensemble des événements en une seule fois ({@code MembershipInvitationAccepted} + {@code MemberJoined}).</p>
  */
 public final class AcceptMembershipInvitationService implements AcceptMembershipInvitationUseCase {
 
@@ -52,8 +53,7 @@ public final class AcceptMembershipInvitationService implements AcceptMembership
         invitation.accept(Instant.now(), userId);
         invitationRepository.save(invitation);
 
-        Member member = Member.invite(invitation.organisationId(), userId, invitation.role());
-        member.activate();
+        Member member = Member.createActive(invitation.organisationId(), userId, invitation.role());
         memberRepository.save(member);
 
         List<DomainEvent> events = new ArrayList<>();

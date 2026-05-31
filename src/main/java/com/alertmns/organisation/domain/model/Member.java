@@ -2,6 +2,7 @@ package com.alertmns.organisation.domain.model;
 
 import com.alertmns.organisation.domain.event.MemberActivated;
 import com.alertmns.organisation.domain.event.MemberInvited;
+import com.alertmns.organisation.domain.event.MemberJoined;
 import com.alertmns.organisation.domain.event.MemberReactivated;
 import com.alertmns.organisation.domain.event.MemberSuspended;
 import com.alertmns.shared.AggregateRoot;
@@ -14,12 +15,12 @@ import java.util.UUID;
 /**
  * Agrégat racine représentant un membre d'une organisation dans le BC Organisation.
  *
- * <p>Un membre matérialise l'appartenance d'un utilisateur (référencé par son {@code userId}
- * opaque, issu du BC Identity) à une organisation. Il possède son propre cycle de vie
- * (PENDING → ACTIVE → SUSPENDED → ACTIVE) indépendant de celui du compte utilisateur.</p>
+ * <p>Un membre matérialise l'appartenance d'un utilisateur (référencé par son {@code userId}) à une organisation. Un
+ * membre naît directement en état {@link MemberStatus#ACTIVE} via {@link #createActive}, puis son état transite via
+ * {@link #suspend} et {@link #reactivate}.</p>
  *
- * <p>Le {@code userId} est un simple {@link java.util.UUID} — aucun couplage vers le BC Identity
- * n'est introduit dans le domaine Organisation.</p>
+ * <p>Le {@code userId} est un simple {@link UUID} — aucun couplage vers le BC Identity n'est introduit dans le domaine
+ * Organisation.</p>
  */
 public final class Member extends AggregateRoot {
 
@@ -44,6 +45,33 @@ public final class Member extends AggregateRoot {
         this.role = Objects.requireNonNull(role, "role must not be null");
         this.status = Objects.requireNonNull(status, "status must not be null");
         this.joinedAt = Objects.requireNonNull(joinedAt, "joinedAt must not be null");
+    }
+
+    /**
+     * Crée un nouveau membre directement en état {@link MemberStatus#ACTIVE}.
+     *
+     * <p>Émet {@link MemberJoined}.</p>
+     *
+     * @param organisationId organisation rejointe
+     * @param userId         utilisateur qui rejoint
+     * @param role           rôle attribué
+     * @return le nouveau membre, en statut ACTIVE
+     */
+    public static Member createActive(
+            OrganisationId organisationId,
+            UUID userId,
+            MemberRole role
+    ) {
+        Member member = new Member(
+                MemberId.generate(),
+                organisationId,
+                userId,
+                role,
+                MemberStatus.ACTIVE,
+                Instant.now()
+        );
+        member.registerEvent(new MemberJoined(organisationId, member.id, userId, role));
+        return member;
     }
 
     /**
