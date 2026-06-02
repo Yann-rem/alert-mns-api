@@ -15,9 +15,4 @@ public record MemberSuspended(
         OrganisationId organisationId,
         MemberId memberId,
         Instant occurredOn
-) implements DomainEvent {
-
-    public MemberSuspended(OrganisationId organisationId, MemberId memberId) {
-        this(organisationId, memberId, Instant.now());
-    }
-}
+) implements DomainEvent {}

@@ -22,6 +22,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -32,6 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -43,12 +45,16 @@ class ReactivateMemberServiceTest {
     static final OrganisationId ORGANISATION_ID = OrganisationId.generate();
     static final OrganisationId OTHER_ORGANISATION_ID = OrganisationId.generate();
     static final UUID USER_ID = UUID.randomUUID();
+    static final Instant NOW = Instant.parse("2026-05-30T10:00:00Z");
 
     @Mock
     MemberRepository repository;
 
     @Mock
     EventPublisher publisher;
+
+    @Mock
+    Clock clock;
 
     @InjectMocks
     ReactivateMemberService service;
@@ -63,6 +69,7 @@ class ReactivateMemberServiceTest {
         @BeforeEach
         void setUp() {
             id = MemberId.generate();
+            lenient().when(clock.instant()).thenReturn(NOW);
 
             suspendedMember = Member.reconstitute(
                     id,
@@ -70,7 +77,7 @@ class ReactivateMemberServiceTest {
                     USER_ID,
                     MemberRole.MEMBER,
                     MemberStatus.SUSPENDED,
-                    Instant.now()
+                    NOW
             );
         }
 
@@ -106,6 +113,7 @@ class ReactivateMemberServiceTest {
             MemberReactivated event = assertInstanceOf(MemberReactivated.class, events.getFirst());
             assertEquals(ORGANISATION_ID, event.organisationId());
             assertEquals(id, event.memberId());
+            assertEquals(NOW, event.occurredOn());
         }
 
         @Test
@@ -185,14 +193,21 @@ class ReactivateMemberServiceTest {
         @DisplayName("should reject null repository")
         void shouldRejectNullRepository() {
             assertThrows(NullPointerException.class,
-                    () -> new ReactivateMemberService(null, publisher));
+                    () -> new ReactivateMemberService(null, publisher, clock));
         }
 
         @Test
         @DisplayName("should reject null publisher")
         void shouldRejectNullPublisher() {
             assertThrows(NullPointerException.class,
-                    () -> new ReactivateMemberService(repository, null));
+                    () -> new ReactivateMemberService(repository, null, clock));
+        }
+
+        @Test
+        @DisplayName("should reject null clock")
+        void shouldRejectNullClock() {
+            assertThrows(NullPointerException.class,
+                    () -> new ReactivateMemberService(repository, publisher, null));
         }
 
         @Test

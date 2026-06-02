@@ -11,9 +11,8 @@ import java.util.Objects;
 /**
  * Agrégat racine représentant un groupe dans le BC Organisation.
  *
- * <p>Un groupe appartient à une seule organisation et permet de regrouper des membres
- * (via {@code GroupMembership}). L'unicité du nom par organisation est un invariant
- * <em>set-based</em> garanti au niveau de l'application service.</p>
+ * <p>Un groupe appartient à une seule organisation et permet de regrouper des membres via {@code GroupMembership}.
+ * L'unicité du nom par organisation est un invariant garanti au niveau de l'application service.</p>
  */
 public final class Group extends AggregateRoot {
 
@@ -32,18 +31,17 @@ public final class Group extends AggregateRoot {
     /**
      * Crée un nouveau groupe dans une organisation.
      *
-     * <p>L'identifiant et la date de création sont générés automatiquement.</p>
-     *
      * <p>Émet {@link GroupCreated}.</p>
      *
      * @param organisationId l'identifiant de l'organisation de rattachement
      * @param name           le nom du groupe
+     * @param now            instant de l'opération
      * @return le nouveau groupe créé
      */
-    public static Group create(OrganisationId organisationId, GroupName name) {
-        Group group = new Group(GroupId.generate(), organisationId, name, Instant.now());
+    public static Group create(OrganisationId organisationId, GroupName name, Instant now) {
+        Group group = new Group(GroupId.generate(), organisationId, name, now);
 
-        group.registerEvent(new GroupCreated(group.organisationId, group.id, group.name));
+        group.registerEvent(new GroupCreated(group.organisationId, group.id, group.name, now));
         return group;
     }
 
@@ -66,17 +64,16 @@ public final class Group extends AggregateRoot {
     /**
      * Renomme le groupe.
      *
-     * <p>Émet {@link GroupRenamed}.</p>
-     *
      * @param name le nouveau nom du groupe
+     * @param now  instant de l'opération
      */
-    public void rename(GroupName name) {
+    public void rename(GroupName name, Instant now) {
         Objects.requireNonNull(name, "name must not be null");
         if (this.name.equals(name)) {
             return;
         }
         this.name = name;
-        registerEvent(new GroupRenamed(organisationId, id, name));
+        registerEvent(new GroupRenamed(organisationId, id, name, now));
     }
 
     public GroupId id() {

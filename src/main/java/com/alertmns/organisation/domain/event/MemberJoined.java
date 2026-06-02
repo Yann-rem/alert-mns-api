@@ -17,9 +17,4 @@ public record MemberJoined(
         UUID userId,
         MemberRole role,
         Instant occurredOn
-) implements DomainEvent {
-
-    public MemberJoined(OrganisationId organisationId, MemberId memberId, UUID userId, MemberRole role) {
-        this(organisationId, memberId, userId, role, Instant.now());
-    }
-}
+) implements DomainEvent {}

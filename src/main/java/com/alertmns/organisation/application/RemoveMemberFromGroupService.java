@@ -12,6 +12,7 @@ import com.alertmns.organisation.domain.port.outgoing.GroupMembershipRepository;
 import com.alertmns.shared.EventPublisher;
 import com.alertmns.shared.OrganisationId;
 
+import java.time.Clock;
 import java.util.List;
 import java.util.Objects;
 
@@ -29,16 +30,19 @@ public final class RemoveMemberFromGroupService implements RemoveMemberFromGroup
 
     private final GroupMembershipRepository groupMembershipRepository;
     private final EventPublisher publisher;
+    private final Clock clock;
 
     public RemoveMemberFromGroupService(
             GroupMembershipRepository groupMembershipRepository,
-            EventPublisher publisher
+            EventPublisher publisher,
+            Clock clock
     ) {
         this.groupMembershipRepository = Objects.requireNonNull(
                 groupMembershipRepository,
                 "groupMembershipRepository must not be null"
         );
         this.publisher = Objects.requireNonNull(publisher, "publisher must not be null");
+        this.clock = Objects.requireNonNull(clock, "clock must not be null");
     }
 
     @Override
@@ -56,6 +60,6 @@ public final class RemoveMemberFromGroupService implements RemoveMemberFromGroup
         }
 
         groupMembershipRepository.delete(membership);
-        publisher.publish(List.of(new MemberRemovedFromGroup(organisationId, membership.id())));
+        publisher.publish(List.of(new MemberRemovedFromGroup(organisationId, membership.id(), clock.instant())));
     }
 }

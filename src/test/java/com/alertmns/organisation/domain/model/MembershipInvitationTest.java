@@ -31,38 +31,37 @@ class MembershipInvitationTest {
     static final Email EMAIL = Email.of("invited@example.com");
     static final MemberRole ROLE = MemberRole.MEMBER;
     static final Duration TTL = Duration.ofDays(7);
+    static final Instant NOW = Instant.parse("2026-05-30T10:00:00Z");
 
     @Nested
     @DisplayName("Issuance")
     class Issuance {
 
         @Test
-        @DisplayName("should create an invitation in PENDING status")
+        @DisplayName("should create an invitation in PENDING status with createdAt = now")
         void shouldCreateAnInvitationInPendingStatus() {
-            MembershipInvitation invitation = MembershipInvitation.issue(ORG_ID, EMAIL, ROLE, TTL);
+            MembershipInvitation invitation = MembershipInvitation.issue(ORG_ID, EMAIL, ROLE, NOW, TTL);
 
             assertEquals(MembershipInvitationStatus.PENDING, invitation.status());
             assertEquals(ORG_ID, invitation.organisationId());
             assertEquals(EMAIL, invitation.invitedEmail());
             assertEquals(ROLE, invitation.role());
             assertNotNull(invitation.id());
-            assertNotNull(invitation.createdAt());
+            assertEquals(NOW, invitation.createdAt());
         }
 
         @Test
-        @DisplayName("should set expiresAt = createdAt + ttl")
+        @DisplayName("should set expiresAt = now + ttl")
         void shouldSetExpiresAtBasedOnTtl() {
-            MembershipInvitation invitation = MembershipInvitation.issue(ORG_ID, EMAIL, ROLE, TTL);
+            MembershipInvitation invitation = MembershipInvitation.issue(ORG_ID, EMAIL, ROLE, NOW, TTL);
 
-            // Allow for small drift between Instant.now() calls in the factory and the assertion.
-            Duration actualWindow = Duration.between(invitation.createdAt(), invitation.expiresAt());
-            assertEquals(TTL, actualWindow);
+            assertEquals(NOW.plus(TTL), invitation.expiresAt());
         }
 
         @Test
-        @DisplayName("should emit MembershipInvitationIssued")
+        @DisplayName("should emit MembershipInvitationIssued with occurredOn = now")
         void shouldEmitMembershipInvitationIssued() {
-            MembershipInvitation invitation = MembershipInvitation.issue(ORG_ID, EMAIL, ROLE, TTL);
+            MembershipInvitation invitation = MembershipInvitation.issue(ORG_ID, EMAIL, ROLE, NOW, TTL);
 
             List<DomainEvent> events = invitation.pullDomainEvents();
             assertEquals(1, events.size());
@@ -72,6 +71,7 @@ class MembershipInvitationTest {
             assertEquals(ORG_ID, event.organisationId());
             assertEquals(EMAIL, event.invitedEmail());
             assertEquals(ROLE, event.role());
+            assertEquals(NOW, event.occurredOn());
         }
     }
 
@@ -83,7 +83,7 @@ class MembershipInvitationTest {
         @DisplayName("should reconstitute without emitting any event")
         void shouldReconstituteWithoutEmittingAnyEvent() {
             MembershipInvitationId id = MembershipInvitationId.generate();
-            Instant createdAt = Instant.now();
+            Instant createdAt = NOW;
             Instant expiresAt = createdAt.plus(TTL);
 
             MembershipInvitation invitation = MembershipInvitation.reconstitute(
@@ -107,7 +107,7 @@ class MembershipInvitationTest {
 
         @BeforeEach
         void setUp() {
-            pendingInvitation = MembershipInvitation.issue(ORG_ID, EMAIL, ROLE, TTL);
+            pendingInvitation = MembershipInvitation.issue(ORG_ID, EMAIL, ROLE, NOW, TTL);
             pendingInvitation.pullDomainEvents(); // clear MembershipInvitationIssued
             userId = UUID.randomUUID();
         }
@@ -115,15 +115,16 @@ class MembershipInvitationTest {
         @Test
         @DisplayName("should transition PENDING to ACCEPTED")
         void shouldTransitionPendingToAccepted() {
-            pendingInvitation.accept(Instant.now(), userId);
+            pendingInvitation.accept(NOW, userId);
 
             assertEquals(MembershipInvitationStatus.ACCEPTED, pendingInvitation.status());
         }
 
         @Test
-        @DisplayName("should emit MembershipInvitationAccepted with userId and role")
+        @DisplayName("should emit MembershipInvitationAccepted with userId, role and occurredOn")
         void shouldEmitMembershipInvitationAccepted() {
-            pendingInvitation.accept(Instant.now(), userId);
+            Instant acceptedAt = NOW.plusSeconds(120);
+            pendingInvitation.accept(acceptedAt, userId);
 
             List<DomainEvent> events = pendingInvitation.pullDomainEvents();
             assertEquals(1, events.size());
@@ -133,6 +134,7 @@ class MembershipInvitationTest {
             assertEquals(ORG_ID, event.organisationId());
             assertEquals(userId, event.userId());
             assertEquals(ROLE, event.role());
+            assertEquals(acceptedAt, event.occurredOn());
         }
 
         @Test
@@ -160,11 +162,11 @@ class MembershipInvitationTest {
         @Test
         @DisplayName("should throw IllegalStateException when already ACCEPTED")
         void shouldThrowWhenAlreadyAccepted() {
-            pendingInvitation.accept(Instant.now(), userId);
+            pendingInvitation.accept(NOW, userId);
             pendingInvitation.pullDomainEvents();
 
             assertThrows(IllegalStateException.class,
-                    () -> pendingInvitation.accept(Instant.now(), UUID.randomUUID()));
+                    () -> pendingInvitation.accept(NOW, UUID.randomUUID()));
         }
 
         @Test
@@ -173,12 +175,12 @@ class MembershipInvitationTest {
             MembershipInvitation expired = MembershipInvitation.reconstitute(
                     MembershipInvitationId.generate(), ORG_ID, EMAIL, ROLE,
                     MembershipInvitationStatus.EXPIRED,
-                    Instant.now().minus(Duration.ofDays(10)),
-                    Instant.now().minus(Duration.ofDays(3))
+                    NOW.minus(Duration.ofDays(10)),
+                    NOW.minus(Duration.ofDays(3))
             );
 
             assertThrows(IllegalStateException.class,
-                    () -> expired.accept(Instant.now(), userId));
+                    () -> expired.accept(NOW, userId));
         }
 
         @Test
@@ -187,12 +189,12 @@ class MembershipInvitationTest {
             MembershipInvitation revoked = MembershipInvitation.reconstitute(
                     MembershipInvitationId.generate(), ORG_ID, EMAIL, ROLE,
                     MembershipInvitationStatus.REVOKED,
-                    Instant.now().minus(Duration.ofHours(1)),
-                    Instant.now().plus(Duration.ofDays(6))
+                    NOW.minus(Duration.ofHours(1)),
+                    NOW.plus(Duration.ofDays(6))
             );
 
             assertThrows(IllegalStateException.class,
-                    () -> revoked.accept(Instant.now(), userId));
+                    () -> revoked.accept(NOW, userId));
         }
 
         @Test
@@ -206,7 +208,7 @@ class MembershipInvitationTest {
         @DisplayName("should reject null userId")
         void shouldRejectNullUserId() {
             assertThrows(NullPointerException.class,
-                    () -> pendingInvitation.accept(Instant.now(), null));
+                    () -> pendingInvitation.accept(NOW, null));
         }
     }
 
@@ -218,49 +220,55 @@ class MembershipInvitationTest {
         @DisplayName("issue should reject null organisationId")
         void issueShouldRejectNullOrganisationId() {
             assertThrows(NullPointerException.class,
-                    () -> MembershipInvitation.issue(null, EMAIL, ROLE, TTL));
+                    () -> MembershipInvitation.issue(null, EMAIL, ROLE, NOW, TTL));
         }
 
         @Test
         @DisplayName("issue should reject null invitedEmail")
         void issueShouldRejectNullInvitedEmail() {
             assertThrows(NullPointerException.class,
-                    () -> MembershipInvitation.issue(ORG_ID, null, ROLE, TTL));
+                    () -> MembershipInvitation.issue(ORG_ID, null, ROLE, NOW, TTL));
         }
 
         @Test
         @DisplayName("issue should reject null role")
         void issueShouldRejectNullRole() {
             assertThrows(NullPointerException.class,
-                    () -> MembershipInvitation.issue(ORG_ID, EMAIL, null, TTL));
+                    () -> MembershipInvitation.issue(ORG_ID, EMAIL, null, NOW, TTL));
+        }
+
+        @Test
+        @DisplayName("issue should reject null now")
+        void issueShouldRejectNullNow() {
+            assertThrows(NullPointerException.class,
+                    () -> MembershipInvitation.issue(ORG_ID, EMAIL, ROLE, null, TTL));
         }
 
         @Test
         @DisplayName("issue should reject null ttl")
         void issueShouldRejectNullTtl() {
             assertThrows(NullPointerException.class,
-                    () -> MembershipInvitation.issue(ORG_ID, EMAIL, ROLE, null));
+                    () -> MembershipInvitation.issue(ORG_ID, EMAIL, ROLE, NOW, null));
         }
 
         @Test
         @DisplayName("reconstitute should reject null fields")
         void reconstituteShouldRejectNullFields() {
-            Instant now = Instant.now();
             MembershipInvitationId id = MembershipInvitationId.generate();
             assertThrows(NullPointerException.class, () -> MembershipInvitation.reconstitute(
-                    null, ORG_ID, EMAIL, ROLE, MembershipInvitationStatus.PENDING, now, now.plus(TTL)));
+                    null, ORG_ID, EMAIL, ROLE, MembershipInvitationStatus.PENDING, NOW, NOW.plus(TTL)));
             assertThrows(NullPointerException.class, () -> MembershipInvitation.reconstitute(
-                    id, null, EMAIL, ROLE, MembershipInvitationStatus.PENDING, now, now.plus(TTL)));
+                    id, null, EMAIL, ROLE, MembershipInvitationStatus.PENDING, NOW, NOW.plus(TTL)));
             assertThrows(NullPointerException.class, () -> MembershipInvitation.reconstitute(
-                    id, ORG_ID, null, ROLE, MembershipInvitationStatus.PENDING, now, now.plus(TTL)));
+                    id, ORG_ID, null, ROLE, MembershipInvitationStatus.PENDING, NOW, NOW.plus(TTL)));
             assertThrows(NullPointerException.class, () -> MembershipInvitation.reconstitute(
-                    id, ORG_ID, EMAIL, null, MembershipInvitationStatus.PENDING, now, now.plus(TTL)));
+                    id, ORG_ID, EMAIL, null, MembershipInvitationStatus.PENDING, NOW, NOW.plus(TTL)));
             assertThrows(NullPointerException.class, () -> MembershipInvitation.reconstitute(
-                    id, ORG_ID, EMAIL, ROLE, null, now, now.plus(TTL)));
+                    id, ORG_ID, EMAIL, ROLE, null, NOW, NOW.plus(TTL)));
             assertThrows(NullPointerException.class, () -> MembershipInvitation.reconstitute(
-                    id, ORG_ID, EMAIL, ROLE, MembershipInvitationStatus.PENDING, null, now.plus(TTL)));
+                    id, ORG_ID, EMAIL, ROLE, MembershipInvitationStatus.PENDING, null, NOW.plus(TTL)));
             assertThrows(NullPointerException.class, () -> MembershipInvitation.reconstitute(
-                    id, ORG_ID, EMAIL, ROLE, MembershipInvitationStatus.PENDING, now, null));
+                    id, ORG_ID, EMAIL, ROLE, MembershipInvitationStatus.PENDING, NOW, null));
         }
     }
 
@@ -272,12 +280,11 @@ class MembershipInvitationTest {
         @DisplayName("two invitations with same id should be equal")
         void twoInvitationsWithSameIdShouldBeEqual() {
             MembershipInvitationId id = MembershipInvitationId.generate();
-            Instant now = Instant.now();
 
             MembershipInvitation a = MembershipInvitation.reconstitute(
-                    id, ORG_ID, EMAIL, ROLE, MembershipInvitationStatus.PENDING, now, now.plus(TTL));
+                    id, ORG_ID, EMAIL, ROLE, MembershipInvitationStatus.PENDING, NOW, NOW.plus(TTL));
             MembershipInvitation b = MembershipInvitation.reconstitute(
-                    id, ORG_ID, EMAIL, ROLE, MembershipInvitationStatus.ACCEPTED, now, now.plus(TTL));
+                    id, ORG_ID, EMAIL, ROLE, MembershipInvitationStatus.ACCEPTED, NOW, NOW.plus(TTL));
 
             assertThat(a).isEqualTo(b);
             assertThat(a.hashCode()).isEqualTo(b.hashCode());
@@ -286,8 +293,8 @@ class MembershipInvitationTest {
         @Test
         @DisplayName("two invitations with different ids should not be equal")
         void twoInvitationsWithDifferentIdsShouldNotBeEqual() {
-            MembershipInvitation a = MembershipInvitation.issue(ORG_ID, EMAIL, ROLE, TTL);
-            MembershipInvitation b = MembershipInvitation.issue(ORG_ID, EMAIL, ROLE, TTL);
+            MembershipInvitation a = MembershipInvitation.issue(ORG_ID, EMAIL, ROLE, NOW, TTL);
+            MembershipInvitation b = MembershipInvitation.issue(ORG_ID, EMAIL, ROLE, NOW, TTL);
 
             assertThat(a).isNotEqualTo(b);
         }

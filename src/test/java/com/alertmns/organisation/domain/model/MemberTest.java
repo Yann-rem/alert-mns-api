@@ -26,27 +26,29 @@ class MemberTest {
 
     static final OrganisationId ORGANISATION_ID = OrganisationId.generate();
     static final UUID USER_ID = UUID.randomUUID();
+    static final Instant NOW = Instant.parse("2026-05-30T10:00:00Z");
+    static final Instant LATER = NOW.plusSeconds(60);
 
     @Nested
     @DisplayName("Creation")
     class Creation {
 
         @Test
-        @DisplayName("should create a new member directly ACTIVE via createActive")
+        @DisplayName("should create a new member directly ACTIVE via createActive, joinedAt = now")
         void shouldCreateANewMemberDirectlyActive() {
-            Member member = Member.createActive(ORGANISATION_ID, USER_ID, MemberRole.MEMBER);
+            Member member = Member.createActive(ORGANISATION_ID, USER_ID, MemberRole.MEMBER, NOW);
             assertEquals(MemberStatus.ACTIVE, member.status());
             assertEquals(MemberRole.MEMBER, member.role());
             assertEquals(ORGANISATION_ID, member.organisationId());
             assertEquals(USER_ID, member.userId());
             assertNotNull(member.id());
-            assertNotNull(member.joinedAt());
+            assertEquals(NOW, member.joinedAt());
         }
 
         @Test
         @DisplayName("createActive should preserve the ADMIN role")
         void createActiveShouldPreserveAdminRole() {
-            Member member = Member.createActive(ORGANISATION_ID, USER_ID, MemberRole.ADMIN);
+            Member member = Member.createActive(ORGANISATION_ID, USER_ID, MemberRole.ADMIN, NOW);
             assertEquals(MemberRole.ADMIN, member.role());
             assertEquals(MemberStatus.ACTIVE, member.status());
         }
@@ -79,21 +81,21 @@ class MemberTest {
         @DisplayName("createActive should reject null organisationId")
         void createActiveShouldRejectNullOrganisationId() {
             assertThrows(NullPointerException.class,
-                    () -> Member.createActive(null, USER_ID, MemberRole.MEMBER));
+                    () -> Member.createActive(null, USER_ID, MemberRole.MEMBER, NOW));
         }
 
         @Test
         @DisplayName("createActive should reject null userId")
         void createActiveShouldRejectNullUserId() {
             assertThrows(NullPointerException.class,
-                    () -> Member.createActive(ORGANISATION_ID, null, MemberRole.MEMBER));
+                    () -> Member.createActive(ORGANISATION_ID, null, MemberRole.MEMBER, NOW));
         }
 
         @Test
         @DisplayName("createActive should reject null role")
         void createActiveShouldRejectNullRole() {
             assertThrows(NullPointerException.class,
-                    () -> Member.createActive(ORGANISATION_ID, USER_ID, null));
+                    () -> Member.createActive(ORGANISATION_ID, USER_ID, null, NOW));
         }
     }
 
@@ -105,35 +107,35 @@ class MemberTest {
 
         @BeforeEach
         void setUp() {
-            member = Member.createActive(ORGANISATION_ID, USER_ID, MemberRole.MEMBER);
+            member = Member.createActive(ORGANISATION_ID, USER_ID, MemberRole.MEMBER, NOW);
         }
 
         @Test
         @DisplayName("suspend should transition ACTIVE to SUSPENDED")
         void suspendShouldTransitionACTIVEToSUSPENDED() {
-            member.suspend();
+            member.suspend(LATER);
             assertEquals(MemberStatus.SUSPENDED, member.status());
         }
 
         @Test
         @DisplayName("suspend should reject non-ACTIVE member")
         void suspendShouldRejectNonACTIVEMember() {
-            member.suspend();
-            assertThrows(IllegalStateException.class, () -> member.suspend());
+            member.suspend(LATER);
+            assertThrows(IllegalStateException.class, () -> member.suspend(LATER));
         }
 
         @Test
         @DisplayName("reactivate should transition SUSPENDED to ACTIVE")
         void reactivateShouldTransitionSUSPENDEDToACTIVE() {
-            member.suspend();
-            member.reactivate();
+            member.suspend(LATER);
+            member.reactivate(LATER.plusSeconds(60));
             assertEquals(MemberStatus.ACTIVE, member.status());
         }
 
         @Test
         @DisplayName("reactivate should reject non-SUSPENDED member")
         void reactivateShouldRejectNonSUSPENDEDMember() {
-            assertThrows(IllegalStateException.class, () -> member.reactivate());
+            assertThrows(IllegalStateException.class, () -> member.reactivate(LATER));
         }
     }
 
@@ -145,11 +147,11 @@ class MemberTest {
 
         @BeforeEach
         void setUp() {
-            member = Member.createActive(ORGANISATION_ID, USER_ID, MemberRole.MEMBER);
+            member = Member.createActive(ORGANISATION_ID, USER_ID, MemberRole.MEMBER, NOW);
         }
 
         @Test
-        @DisplayName("createActive should emit MemberJoined with organisationId, memberId, userId and role")
+        @DisplayName("createActive should emit MemberJoined with organisationId, memberId, userId, role and occurredOn")
         void createActiveShouldEmitMemberJoined() {
             List<DomainEvent> events = member.pullDomainEvents();
             assertEquals(1, events.size());
@@ -158,32 +160,36 @@ class MemberTest {
             assertEquals(member.id(), event.memberId());
             assertEquals(USER_ID, event.userId());
             assertEquals(MemberRole.MEMBER, event.role());
+            assertEquals(NOW, event.occurredOn());
         }
 
         @Test
-        @DisplayName("suspend should emit MemberSuspended")
+        @DisplayName("suspend should emit MemberSuspended with occurredOn = now")
         void suspendShouldEmitMemberSuspended() {
             member.pullDomainEvents();
-            member.suspend();
+            member.suspend(LATER);
             List<DomainEvent> events = member.pullDomainEvents();
             assertEquals(1, events.size());
             MemberSuspended event = assertInstanceOf(MemberSuspended.class, events.getFirst());
             assertEquals(ORGANISATION_ID, event.organisationId());
             assertEquals(member.id(), event.memberId());
+            assertEquals(LATER, event.occurredOn());
         }
 
         @Test
-        @DisplayName("reactivate should emit MemberReactivated")
+        @DisplayName("reactivate should emit MemberReactivated with occurredOn = now")
         void reactivateShouldEmitMemberReactivated() {
             member.pullDomainEvents();
-            member.suspend();
+            member.suspend(LATER);
             member.pullDomainEvents();
-            member.reactivate();
+            Instant reactivatedAt = LATER.plusSeconds(60);
+            member.reactivate(reactivatedAt);
             List<DomainEvent> events = member.pullDomainEvents();
             assertEquals(1, events.size());
             MemberReactivated event = assertInstanceOf(MemberReactivated.class, events.getFirst());
             assertEquals(ORGANISATION_ID, event.organisationId());
             assertEquals(member.id(), event.memberId());
+            assertEquals(reactivatedAt, event.occurredOn());
         }
 
         @Test
@@ -236,8 +242,8 @@ class MemberTest {
         @Test
         @DisplayName("two members with different ids should not be equal")
         void twoMembersWithDifferentIdsShouldNotBeEqual() {
-            Member member1 = Member.createActive(ORGANISATION_ID, USER_ID, MemberRole.MEMBER);
-            Member member2 = Member.createActive(ORGANISATION_ID, USER_ID, MemberRole.MEMBER);
+            Member member1 = Member.createActive(ORGANISATION_ID, USER_ID, MemberRole.MEMBER, NOW);
+            Member member2 = Member.createActive(ORGANISATION_ID, USER_ID, MemberRole.MEMBER, NOW);
             assertNotEquals(member1, member2);
         }
     }

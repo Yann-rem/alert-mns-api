@@ -13,9 +13,4 @@ public record MemberRemovedFromGroup(
         OrganisationId organisationId,
         GroupMembershipId groupMembershipId,
         Instant occurredOn
-) implements DomainEvent {
-
-    public MemberRemovedFromGroup(OrganisationId organisationId, GroupMembershipId groupMembershipId) {
-        this(organisationId, groupMembershipId, Instant.now());
-    }
-}
+) implements DomainEvent {}

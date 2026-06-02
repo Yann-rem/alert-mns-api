@@ -24,7 +24,9 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Clock;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -33,6 +35,7 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -48,6 +51,7 @@ class IssueMembershipInvitationServiceTest {
     private static final String LAST_NAME = "Doe";
     private static final String ROLE = "MEMBER";
     private static final Duration TTL = Duration.ofDays(7);
+    private static final Instant NOW = Instant.parse("2026-05-30T10:00:00Z");
 
     @Mock
     MembershipInvitationRepository invitationRepository;
@@ -61,12 +65,17 @@ class IssueMembershipInvitationServiceTest {
     @Mock
     EventPublisher publisher;
 
+    @Mock
+    Clock clock;
+
     IssueMembershipInvitationService service;
 
     @BeforeEach
     void setUp() {
         service = new IssueMembershipInvitationService(
-                invitationRepository, userRepository, registerPendingUserUseCase, publisher, TTL);
+                invitationRepository, userRepository, registerPendingUserUseCase, publisher, clock, TTL);
+        // lenient: les chemins d'erreur (cas B, double invitation, parsing) ne consultent pas l'horloge.
+        lenient().when(clock.instant()).thenReturn(NOW);
     }
 
     private IssueMembershipInvitationCommand command() {
@@ -95,7 +104,8 @@ class IssueMembershipInvitationServiceTest {
             assertEquals(Email.of(INVITED_EMAIL), saved.invitedEmail());
             assertEquals(MemberRole.MEMBER, saved.role());
             assertEquals(MembershipInvitationStatus.PENDING, saved.status());
-            assertEquals(TTL, Duration.between(saved.createdAt(), saved.expiresAt()));
+            assertEquals(NOW, saved.createdAt());
+            assertEquals(NOW.plus(TTL), saved.expiresAt());
         }
 
         @Test
@@ -134,6 +144,7 @@ class IssueMembershipInvitationServiceTest {
             assertEquals(OrganisationId.from(ORGANISATION_ID), event.organisationId());
             assertEquals(Email.of(INVITED_EMAIL), event.invitedEmail());
             assertEquals(MemberRole.MEMBER, event.role());
+            assertEquals(NOW, event.occurredOn());
         }
 
         @Test
@@ -212,35 +223,42 @@ class IssueMembershipInvitationServiceTest {
         @DisplayName("should reject null invitationRepository")
         void shouldRejectNullInvitationRepository() {
             assertThrows(NullPointerException.class, () -> new IssueMembershipInvitationService(
-                    null, userRepository, registerPendingUserUseCase, publisher, TTL));
+                    null, userRepository, registerPendingUserUseCase, publisher, clock, TTL));
         }
 
         @Test
         @DisplayName("should reject null userRepository")
         void shouldRejectNullUserRepository() {
             assertThrows(NullPointerException.class, () -> new IssueMembershipInvitationService(
-                    invitationRepository, null, registerPendingUserUseCase, publisher, TTL));
+                    invitationRepository, null, registerPendingUserUseCase, publisher, clock, TTL));
         }
 
         @Test
         @DisplayName("should reject null registerPendingUserUseCase")
         void shouldRejectNullRegisterPendingUserUseCase() {
             assertThrows(NullPointerException.class, () -> new IssueMembershipInvitationService(
-                    invitationRepository, userRepository, null, publisher, TTL));
+                    invitationRepository, userRepository, null, publisher, clock, TTL));
         }
 
         @Test
         @DisplayName("should reject null publisher")
         void shouldRejectNullPublisher() {
             assertThrows(NullPointerException.class, () -> new IssueMembershipInvitationService(
-                    invitationRepository, userRepository, registerPendingUserUseCase, null, TTL));
+                    invitationRepository, userRepository, registerPendingUserUseCase, null, clock, TTL));
+        }
+
+        @Test
+        @DisplayName("should reject null clock")
+        void shouldRejectNullClock() {
+            assertThrows(NullPointerException.class, () -> new IssueMembershipInvitationService(
+                    invitationRepository, userRepository, registerPendingUserUseCase, publisher, null, TTL));
         }
 
         @Test
         @DisplayName("should reject null ttl")
         void shouldRejectNullTtl() {
             assertThrows(NullPointerException.class, () -> new IssueMembershipInvitationService(
-                    invitationRepository, userRepository, registerPendingUserUseCase, publisher, null));
+                    invitationRepository, userRepository, registerPendingUserUseCase, publisher, clock, null));
         }
     }
 

@@ -15,9 +15,4 @@ public record GroupCreated(
         GroupId groupId,
         GroupName name,
         Instant occurredOn
-) implements DomainEvent {
-
-    public GroupCreated(OrganisationId organisationId, GroupId groupId, GroupName name) {
-        this(organisationId, groupId, name, Instant.now());
-    }
-}
+) implements DomainEvent {}

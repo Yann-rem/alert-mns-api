@@ -15,9 +15,4 @@ public record MemberReactivated(
         OrganisationId organisationId,
         MemberId memberId,
         Instant occurredOn
-) implements DomainEvent {
-
-    public MemberReactivated(OrganisationId organisationId, MemberId memberId) {
-        this(organisationId, memberId, Instant.now());
-    }
-}
+) implements DomainEvent {}

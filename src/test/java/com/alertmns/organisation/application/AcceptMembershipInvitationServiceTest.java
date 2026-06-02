@@ -27,6 +27,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -38,6 +39,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -51,6 +53,7 @@ class AcceptMembershipInvitationServiceTest {
     private static final OrganisationId ORG_ID = OrganisationId.generate();
     private static final Email INVITED_EMAIL = Email.of("invited@example.com");
     private static final Duration TTL = Duration.ofDays(7);
+    private static final Instant NOW = Instant.parse("2026-05-30T10:00:00Z");
 
     @Mock
     MembershipInvitationRepository invitationRepository;
@@ -61,6 +64,9 @@ class AcceptMembershipInvitationServiceTest {
     @Mock
     EventPublisher publisher;
 
+    @Mock
+    Clock clock;
+
     @InjectMocks
     AcceptMembershipInvitationService service;
 
@@ -70,14 +76,16 @@ class AcceptMembershipInvitationServiceTest {
     void setUp() {
         command = new AcceptMembershipInvitationCommand(
                 INVITATION_ID.value().toString(), USER_ID.toString());
+        // lenient: les chemins d'erreur (not found, parsing) ne consultent pas l'horloge.
+        lenient().when(clock.instant()).thenReturn(NOW);
     }
 
     private MembershipInvitation pendingInvitation(MemberRole role) {
-        Instant now = Instant.now();
+        // Fenêtre de validité large autour de NOW : l'invitation reste acceptable à l'instant injecté.
         MembershipInvitation invitation = MembershipInvitation.reconstitute(
                 INVITATION_ID, ORG_ID, INVITED_EMAIL, role,
                 MembershipInvitationStatus.PENDING,
-                now, now.plus(TTL)
+                NOW.minus(Duration.ofHours(1)), NOW.plus(TTL)
         );
         // No event to clear : reconstitute does not emit.
         return invitation;
@@ -151,6 +159,7 @@ class AcceptMembershipInvitationServiceTest {
             assertEquals(ORG_ID, event.organisationId());
             assertEquals(USER_ID, event.userId());
             assertEquals(MemberRole.ADMIN, event.role());
+            assertEquals(NOW, event.occurredOn());
         }
 
         @Test
@@ -171,6 +180,7 @@ class AcceptMembershipInvitationServiceTest {
             assertEquals(ORG_ID, event.organisationId());
             assertEquals(USER_ID, event.userId());
             assertEquals(MemberRole.ADMIN, event.role());
+            assertEquals(NOW, event.occurredOn());
         }
     }
 
@@ -206,11 +216,11 @@ class AcceptMembershipInvitationServiceTest {
         @Test
         @DisplayName("should propagate InvitationExpiredException from the aggregate")
         void shouldPropagateInvitationExpiredException() {
-            Instant past = Instant.now().minus(Duration.ofDays(10));
+            // expiresAt fixé 1 jour avant NOW (l'instant injecté par le clock du service).
             MembershipInvitation expired = MembershipInvitation.reconstitute(
                     INVITATION_ID, ORG_ID, INVITED_EMAIL, MemberRole.MEMBER,
                     MembershipInvitationStatus.PENDING,
-                    past, past.plus(Duration.ofDays(1)) // expired 9 days ago
+                    NOW.minus(Duration.ofDays(8)), NOW.minus(Duration.ofDays(1))
             );
             when(invitationRepository.findById(INVITATION_ID)).thenReturn(Optional.of(expired));
 
@@ -220,11 +230,10 @@ class AcceptMembershipInvitationServiceTest {
         @Test
         @DisplayName("should not save the invitation, not create a Member, not publish")
         void shouldNotSaveCreateOrPublishWhenExpired() {
-            Instant past = Instant.now().minus(Duration.ofDays(10));
             MembershipInvitation expired = MembershipInvitation.reconstitute(
                     INVITATION_ID, ORG_ID, INVITED_EMAIL, MemberRole.MEMBER,
                     MembershipInvitationStatus.PENDING,
-                    past, past.plus(Duration.ofDays(1))
+                    NOW.minus(Duration.ofDays(8)), NOW.minus(Duration.ofDays(1))
             );
             when(invitationRepository.findById(INVITATION_ID)).thenReturn(Optional.of(expired));
 
@@ -243,11 +252,10 @@ class AcceptMembershipInvitationServiceTest {
         @Test
         @DisplayName("should propagate IllegalStateException when invitation is ACCEPTED")
         void shouldPropagateWhenAlreadyAccepted() {
-            Instant now = Instant.now();
             MembershipInvitation accepted = MembershipInvitation.reconstitute(
                     INVITATION_ID, ORG_ID, INVITED_EMAIL, MemberRole.MEMBER,
                     MembershipInvitationStatus.ACCEPTED,
-                    now, now.plus(TTL)
+                    NOW, NOW.plus(TTL)
             );
             when(invitationRepository.findById(INVITATION_ID)).thenReturn(Optional.of(accepted));
 
@@ -267,21 +275,28 @@ class AcceptMembershipInvitationServiceTest {
         @DisplayName("should reject null invitationRepository")
         void shouldRejectNullInvitationRepository() {
             assertThrows(NullPointerException.class,
-                    () -> new AcceptMembershipInvitationService(null, memberRepository, publisher));
+                    () -> new AcceptMembershipInvitationService(null, memberRepository, publisher, clock));
         }
 
         @Test
         @DisplayName("should reject null memberRepository")
         void shouldRejectNullMemberRepository() {
             assertThrows(NullPointerException.class,
-                    () -> new AcceptMembershipInvitationService(invitationRepository, null, publisher));
+                    () -> new AcceptMembershipInvitationService(invitationRepository, null, publisher, clock));
         }
 
         @Test
         @DisplayName("should reject null publisher")
         void shouldRejectNullPublisher() {
             assertThrows(NullPointerException.class,
-                    () -> new AcceptMembershipInvitationService(invitationRepository, memberRepository, null));
+                    () -> new AcceptMembershipInvitationService(invitationRepository, memberRepository, null, clock));
+        }
+
+        @Test
+        @DisplayName("should reject null clock")
+        void shouldRejectNullClock() {
+            assertThrows(NullPointerException.class,
+                    () -> new AcceptMembershipInvitationService(invitationRepository, memberRepository, publisher, null));
         }
     }
 

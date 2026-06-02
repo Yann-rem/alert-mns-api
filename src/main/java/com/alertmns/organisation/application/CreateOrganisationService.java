@@ -9,6 +9,7 @@ import com.alertmns.organisation.domain.port.outgoing.OrganisationRepository;
 import com.alertmns.shared.EventPublisher;
 import com.alertmns.shared.OrganisationId;
 
+import java.time.Clock;
 import java.util.Objects;
 
 /**
@@ -20,10 +21,12 @@ public final class CreateOrganisationService implements CreateOrganisationUseCas
 
     private final OrganisationRepository repository;
     private final EventPublisher publisher;
+    private final Clock clock;
 
-    public CreateOrganisationService(OrganisationRepository repository, EventPublisher publisher) {
+    public CreateOrganisationService(OrganisationRepository repository, EventPublisher publisher, Clock clock) {
         this.repository = Objects.requireNonNull(repository, "repository must not be null");
         this.publisher = Objects.requireNonNull(publisher, "publisher must not be null");
+        this.clock = Objects.requireNonNull(clock, "clock must not be null");
     }
 
     @Override
@@ -34,7 +37,7 @@ public final class CreateOrganisationService implements CreateOrganisationUseCas
             throw new OrganisationNameAlreadyExistsException(name);
         }
 
-        Organisation organisation = Organisation.create(name);
+        Organisation organisation = Organisation.create(name, clock.instant());
         repository.save(organisation);
         publisher.publish(organisation.pullDomainEvents());
         return organisation.id();

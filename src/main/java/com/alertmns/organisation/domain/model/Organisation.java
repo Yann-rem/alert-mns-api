@@ -10,14 +10,9 @@ import java.util.Objects;
 /**
  * Agrégat racine représentant une organisation dans le BC Organisation.
  *
- * <p>Une organisation est l'unité de cloisonnement multi-tenant : membres et groupes
- * appartiennent à une seule organisation. Son identifiant {@link OrganisationId} fait
- * partie du <em>shared kernel</em> et est porté par les autres bounded contexts (notamment
- * Identity) comme simple référence, sans clé étrangère physique.</p>
- *
- * <p>L'unicité du nom ({@link OrganisationName}) est un invariant <em>set-based</em> qui ne peut
- * pas être validé par l'agrégat seul : il est garanti au niveau de l'application service (via
- * une vérification au repository) et renforcé par une contrainte UNIQUE en base de données.</p>
+ * <p>Une organisation est l'unité de cloisonnement multi-tenant : membres et groupes appartiennent à une seule
+ * organisation. Son identifiant {@link OrganisationId} fait partie du <em>shared kernel</em> et est porté par les
+ * autres bounded contexts comme simple référence.</p>
  */
 public final class Organisation extends AggregateRoot {
 
@@ -34,23 +29,20 @@ public final class Organisation extends AggregateRoot {
     /**
      * Crée une nouvelle organisation.
      *
-     * <p>L'identifiant et la date de création sont générés automatiquement.
-     * L'unicité du nom n'est pas vérifiée à ce niveau : elle relève de l'application
-     * service, qui doit interroger le repository avant d'appeler cette factory.</p>
-     *
      * <p>Émet {@link OrganisationCreated}.</p>
      *
      * @param name le nom de l'organisation
+     * @param now  instant de l'opération
      * @return la nouvelle organisation créée
      */
-    public static Organisation create(OrganisationName name) {
+    public static Organisation create(OrganisationName name, Instant now) {
         Organisation organisation = new Organisation(
                 OrganisationId.generate(),
                 name,
-                Instant.now()
+                now
         );
 
-        organisation.registerEvent(new OrganisationCreated(organisation.id));
+        organisation.registerEvent(new OrganisationCreated(organisation.id, now));
         return organisation;
     }
 

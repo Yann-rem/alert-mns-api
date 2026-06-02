@@ -16,6 +16,7 @@ import com.alertmns.organisation.domain.port.outgoing.MemberRepository;
 import com.alertmns.shared.EventPublisher;
 import com.alertmns.shared.OrganisationId;
 
+import java.time.Clock;
 import java.util.Objects;
 
 /**
@@ -33,12 +34,14 @@ public final class AddMemberToGroupService implements AddMemberToGroupUseCase {
     private final MemberRepository memberRepository;
     private final GroupMembershipRepository groupMembershipRepository;
     private final EventPublisher publisher;
+    private final Clock clock;
 
     public AddMemberToGroupService(
             GroupRepository groupRepository,
             MemberRepository memberRepository,
             GroupMembershipRepository groupMembershipRepository,
-            EventPublisher publisher
+            EventPublisher publisher,
+            Clock clock
     ) {
         this.groupRepository = Objects.requireNonNull(groupRepository, "groupRepository must not be null");
         this.memberRepository = Objects.requireNonNull(memberRepository, "memberRepository must not be null");
@@ -47,6 +50,7 @@ public final class AddMemberToGroupService implements AddMemberToGroupUseCase {
                 "groupMembershipRepository must not be null"
         );
         this.publisher = Objects.requireNonNull(publisher, "publisher must not be null");
+        this.clock = Objects.requireNonNull(clock, "clock must not be null");
     }
 
     @Override
@@ -68,7 +72,7 @@ public final class AddMemberToGroupService implements AddMemberToGroupUseCase {
             return;
         }
 
-        GroupMembership groupMembership = GroupMembership.add(organisationId, groupId, memberId);
+        GroupMembership groupMembership = GroupMembership.add(organisationId, groupId, memberId, clock.instant());
         groupMembershipRepository.save(groupMembership);
         publisher.publish(groupMembership.pullDomainEvents());
     }

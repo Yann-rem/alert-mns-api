@@ -10,9 +10,8 @@ import java.util.Objects;
 /**
  * Agrégat racine représentant l'appartenance d'un membre à un groupe dans le BC Organisation.
  *
- * <p>Modélise la relation N-N entre {@link Member} et {@link Group}. L'unicité de la paire
- * ({@code memberId}, {@code groupId}) est un invariant <em>set-based</em> garanti au niveau
- * de l'application service et renforcé par une contrainte UNIQUE en base de données.</p>
+ * <p>Modélise la relation N-N entre {@link Member} et {@link Group}. L'unicité de la paire ({@code memberId},
+ * {@code groupId}) est un invariant garanti au niveau de l'application service.</p>
  */
 public final class GroupMembership extends AggregateRoot {
 
@@ -39,25 +38,24 @@ public final class GroupMembership extends AggregateRoot {
     /**
      * Ajoute un membre à un groupe.
      *
-     * <p>L'identifiant et la date d'adhésion sont générés automatiquement.</p>
-     *
      * <p>Émet {@link MemberAddedToGroup}.</p>
      *
      * @param organisationId l'identifiant de l'organisation de rattachement
      * @param groupId        l'identifiant du groupe
      * @param memberId       l'identifiant du membre
+     * @param now            instant de l'opération
      * @return la nouvelle appartenance créée
      */
-    public static GroupMembership add(OrganisationId organisationId, GroupId groupId, MemberId memberId) {
+    public static GroupMembership add(OrganisationId organisationId, GroupId groupId, MemberId memberId, Instant now) {
         GroupMembership groupMembership = new GroupMembership(
                 GroupMembershipId.generate(),
                 organisationId,
                 groupId,
                 memberId,
-                Instant.now()
+                now
         );
 
-        groupMembership.registerEvent(new MemberAddedToGroup(organisationId, groupMembership.id));
+        groupMembership.registerEvent(new MemberAddedToGroup(organisationId, groupMembership.id, now));
         return groupMembership;
     }
 

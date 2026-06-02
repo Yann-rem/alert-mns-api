@@ -53,12 +53,14 @@ public final class Member extends AggregateRoot {
      * @param organisationId organisation rejointe
      * @param userId         utilisateur qui rejoint
      * @param role           rôle attribué
+     * @param now            instant de l'opération
      * @return le nouveau membre, en statut ACTIVE
      */
     public static Member createActive(
             OrganisationId organisationId,
             UUID userId,
-            MemberRole role
+            MemberRole role,
+            Instant now
     ) {
         Member member = new Member(
                 MemberId.generate(),
@@ -66,9 +68,9 @@ public final class Member extends AggregateRoot {
                 userId,
                 role,
                 MemberStatus.ACTIVE,
-                Instant.now()
+                now
         );
-        member.registerEvent(new MemberJoined(organisationId, member.id, userId, role));
+        member.registerEvent(new MemberJoined(organisationId, member.id, userId, role, now));
         return member;
     }
 
@@ -102,12 +104,13 @@ public final class Member extends AggregateRoot {
      *
      * <p>Émet {@link MemberReactivated}.</p>
      *
+     * @param now instant de l'opération
      * @throws IllegalStateException si le statut n'est pas {@link MemberStatus#SUSPENDED}
      */
-    public void reactivate() {
+    public void reactivate(Instant now) {
         requireStatus(MemberStatus.SUSPENDED, "reactivate");
         status = MemberStatus.ACTIVE;
-        registerEvent(new MemberReactivated(organisationId, id));
+        registerEvent(new MemberReactivated(organisationId, id, now));
     }
 
     /**
@@ -115,12 +118,13 @@ public final class Member extends AggregateRoot {
      *
      * <p>Émet {@link MemberSuspended}.</p>
      *
+     * @param now instant de l'opération
      * @throws IllegalStateException si le statut n'est pas {@link MemberStatus#ACTIVE}
      */
-    public void suspend() {
+    public void suspend(Instant now) {
         requireStatus(MemberStatus.ACTIVE, "suspend");
         status = MemberStatus.SUSPENDED;
-        registerEvent(new MemberSuspended(organisationId, id));
+        registerEvent(new MemberSuspended(organisationId, id, now));
     }
 
     private void requireStatus(MemberStatus expected, String action) {

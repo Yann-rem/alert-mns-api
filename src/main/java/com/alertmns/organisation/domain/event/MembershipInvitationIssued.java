@@ -17,14 +17,4 @@ public record MembershipInvitationIssued(
         Email invitedEmail,
         MemberRole role,
         Instant occurredOn
-) implements DomainEvent {
-
-    public MembershipInvitationIssued(
-            MembershipInvitationId invitationId,
-            OrganisationId organisationId,
-            Email invitedEmail,
-            MemberRole role
-    ) {
-        this(invitationId, organisationId, invitedEmail, role, Instant.now());
-    }
-}
+) implements DomainEvent {}

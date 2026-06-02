@@ -18,14 +18,4 @@ public record MembershipInvitationAccepted(
         UUID userId,
         MemberRole role,
         Instant occurredOn
-) implements DomainEvent {
-
-    public MembershipInvitationAccepted(
-            MembershipInvitationId invitationId,
-            OrganisationId organisationId,
-            UUID userId,
-            MemberRole role
-    ) {
-        this(invitationId, organisationId, userId, role, Instant.now());
-    }
-}
+) implements DomainEvent {}

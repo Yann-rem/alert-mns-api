@@ -13,6 +13,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,6 +24,8 @@ import static org.mockito.Mockito.when;
 @DisplayName("MemberUserAuthoritiesAdapter")
 @ExtendWith(MockitoExtension.class)
 class MemberUserAuthoritiesAdapterTest {
+
+    static final Instant NOW = Instant.parse("2026-05-30T10:00:00Z");
 
     @Mock
     MemberRepository memberRepository;
@@ -38,7 +41,7 @@ class MemberUserAuthoritiesAdapterTest {
         @DisplayName("should return ROLE_ADMIN when Member role is ADMIN")
         void shouldReturnRoleAdminWhenMemberRoleIsAdmin() {
             UserId userId = UserId.generate();
-            Member adminMember = Member.createActive(OrganisationId.generate(), userId.value(), MemberRole.ADMIN);
+            Member adminMember = Member.createActive(OrganisationId.generate(), userId.value(), MemberRole.ADMIN, NOW);
             when(memberRepository.findByUserId(userId.value())).thenReturn(Optional.of(adminMember));
 
             List<String> authorities = adapter.findAuthorities(userId);
@@ -50,7 +53,7 @@ class MemberUserAuthoritiesAdapterTest {
         @DisplayName("should return ROLE_MEMBER when Member role is MEMBER")
         void shouldReturnRoleMemberWhenMemberRoleIsMember() {
             UserId userId = UserId.generate();
-            Member regularMember = Member.createActive(OrganisationId.generate(), userId.value(), MemberRole.MEMBER);
+            Member regularMember = Member.createActive(OrganisationId.generate(), userId.value(), MemberRole.MEMBER, NOW);
             when(memberRepository.findByUserId(userId.value())).thenReturn(Optional.of(regularMember));
 
             List<String> authorities = adapter.findAuthorities(userId);
@@ -73,7 +76,7 @@ class MemberUserAuthoritiesAdapterTest {
         @DisplayName("should query the repository with the raw userId UUID")
         void shouldQueryRepositoryWithRawUserId() {
             UserId userId = UserId.generate();
-            Member member = Member.createActive(OrganisationId.generate(), userId.value(), MemberRole.MEMBER);
+            Member member = Member.createActive(OrganisationId.generate(), userId.value(), MemberRole.MEMBER, NOW);
             when(memberRepository.findByUserId(userId.value())).thenReturn(Optional.of(member));
 
             adapter.findAuthorities(userId);

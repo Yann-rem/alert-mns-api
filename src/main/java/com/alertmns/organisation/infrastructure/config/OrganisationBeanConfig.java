@@ -33,6 +33,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.time.Clock;
 import java.time.Duration;
 
 @Configuration
@@ -72,29 +73,38 @@ public class OrganisationBeanConfig {
     @Bean
     public CreateOrganisationService createOrganisationService(
             OrganisationRepository repository,
-            EventPublisher publisher
+            EventPublisher publisher,
+            Clock clock
     ) {
-        return new CreateOrganisationService(repository, publisher);
+        return new CreateOrganisationService(repository, publisher, clock);
     }
 
     @Bean
-    public CreateGroupService createGroupService(GroupRepository repository, EventPublisher publisher) {
-        return new CreateGroupService(repository, publisher);
+    public CreateGroupService createGroupService(GroupRepository repository, EventPublisher publisher, Clock clock) {
+        return new CreateGroupService(repository, publisher, clock);
     }
 
     @Bean
-    public RenameGroupService renameGroupService(GroupRepository repository, EventPublisher publisher) {
-        return new RenameGroupService(repository, publisher);
+    public RenameGroupService renameGroupService(GroupRepository repository, EventPublisher publisher, Clock clock) {
+        return new RenameGroupService(repository, publisher, clock);
     }
 
     @Bean
-    public ReactivateMemberService reactivateMemberService(MemberRepository repository, EventPublisher publisher) {
-        return new ReactivateMemberService(repository, publisher);
+    public ReactivateMemberService reactivateMemberService(
+            MemberRepository repository,
+            EventPublisher publisher,
+            Clock clock
+    ) {
+        return new ReactivateMemberService(repository, publisher, clock);
     }
 
     @Bean
-    public SuspendMemberService suspendMemberService(MemberRepository repository, EventPublisher publisher) {
-        return new SuspendMemberService(repository, publisher);
+    public SuspendMemberService suspendMemberService(
+            MemberRepository repository,
+            EventPublisher publisher,
+            Clock clock
+    ) {
+        return new SuspendMemberService(repository, publisher, clock);
     }
 
     @Bean
@@ -102,17 +112,25 @@ public class OrganisationBeanConfig {
             GroupRepository groupRepository,
             MemberRepository memberRepository,
             GroupMembershipRepository groupMembershipRepository,
-            EventPublisher publisher
+            EventPublisher publisher,
+            Clock clock
     ) {
-        return new AddMemberToGroupService(groupRepository, memberRepository, groupMembershipRepository, publisher);
+        return new AddMemberToGroupService(
+                groupRepository,
+                memberRepository,
+                groupMembershipRepository,
+                publisher,
+                clock
+        );
     }
 
     @Bean
     public RemoveMemberFromGroupService removeMemberFromGroupService(
             GroupMembershipRepository repository,
-            EventPublisher publisher
+            EventPublisher publisher,
+            Clock clock
     ) {
-        return new RemoveMemberFromGroupService(repository, publisher);
+        return new RemoveMemberFromGroupService(repository, publisher, clock);
     }
 
     @Bean
@@ -121,19 +139,21 @@ public class OrganisationBeanConfig {
             UserRepository userRepository,
             RegisterPendingUserUseCase registerPendingUserUseCase,
             EventPublisher publisher,
+            Clock clock,
             @Value("${alertmns.organisation.invitation.ttl}") Duration ttl
     ) {
         return new IssueMembershipInvitationService(
-                invitationRepository, userRepository, registerPendingUserUseCase, publisher, ttl);
+                invitationRepository, userRepository, registerPendingUserUseCase, publisher, clock, ttl);
     }
 
     @Bean
     public AcceptMembershipInvitationService acceptMembershipInvitationService(
             MembershipInvitationRepository invitationRepository,
             MemberRepository memberRepository,
-            EventPublisher publisher
+            EventPublisher publisher,
+            Clock clock
     ) {
-        return new AcceptMembershipInvitationService(invitationRepository, memberRepository, publisher);
+        return new AcceptMembershipInvitationService(invitationRepository, memberRepository, publisher, clock);
     }
 
     // --- Event listeners ---

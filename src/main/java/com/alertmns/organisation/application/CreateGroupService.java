@@ -10,6 +10,7 @@ import com.alertmns.organisation.domain.port.outgoing.GroupRepository;
 import com.alertmns.shared.EventPublisher;
 import com.alertmns.shared.OrganisationId;
 
+import java.time.Clock;
 import java.util.Objects;
 
 /**
@@ -21,10 +22,12 @@ public final class CreateGroupService implements CreateGroupUseCase {
 
     private final GroupRepository repository;
     private final EventPublisher publisher;
+    private final Clock clock;
 
-    public CreateGroupService(GroupRepository repository, EventPublisher publisher) {
+    public CreateGroupService(GroupRepository repository, EventPublisher publisher, Clock clock) {
         this.repository = Objects.requireNonNull(repository, "repository must not be null");
         this.publisher = Objects.requireNonNull(publisher, "publisher must not be null");
+        this.clock = Objects.requireNonNull(clock, "clock must not be null");
     }
 
     @Override
@@ -36,7 +39,7 @@ public final class CreateGroupService implements CreateGroupUseCase {
             throw new GroupNameAlreadyExistsException(organisationId, name);
         }
 
-        Group group = Group.create(organisationId, name);
+        Group group = Group.create(organisationId, name, clock.instant());
         repository.save(group);
         publisher.publish(group.pullDomainEvents());
         return group.id();

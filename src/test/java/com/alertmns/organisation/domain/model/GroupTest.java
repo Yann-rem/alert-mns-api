@@ -23,19 +23,21 @@ class GroupTest {
 
     static final OrganisationId ORGANISATION_ID = OrganisationId.generate();
     static final GroupName NAME = GroupName.of("Développeurs");
+    static final Instant NOW = Instant.parse("2026-05-30T10:00:00Z");
+    static final Instant LATER = NOW.plusSeconds(60);
 
     @Nested
     @DisplayName("Creation")
     class Creation {
 
         @Test
-        @DisplayName("should create a new group")
+        @DisplayName("should create a new group with createdAt = now")
         void shouldCreateANewGroup() {
-            Group group = Group.create(ORGANISATION_ID, NAME);
+            Group group = Group.create(ORGANISATION_ID, NAME, NOW);
             assertEquals(NAME, group.name());
             assertEquals(ORGANISATION_ID, group.organisationId());
             assertNotNull(group.id());
-            assertNotNull(group.createdAt());
+            assertEquals(NOW, group.createdAt());
         }
 
         @Test
@@ -61,14 +63,14 @@ class GroupTest {
         @DisplayName("should reject null name")
         void shouldRejectNullName() {
             assertThrows(NullPointerException.class,
-                    () -> Group.create(ORGANISATION_ID, null));
+                    () -> Group.create(ORGANISATION_ID, null, NOW));
         }
 
         @Test
         @DisplayName("should reject null organisationId")
         void shouldRejectNullOrganisationId() {
             assertThrows(NullPointerException.class,
-                    () -> Group.create(null, NAME));
+                    () -> Group.create(null, NAME, NOW));
         }
 
         @Test
@@ -113,25 +115,25 @@ class GroupTest {
         @Test
         @DisplayName("rename should update the group name")
         void renameShouldUpdateTheGroupName() {
-            Group group = Group.create(ORGANISATION_ID, NAME);
+            Group group = Group.create(ORGANISATION_ID, NAME, NOW);
             GroupName newName = GroupName.of("Designers");
-            group.rename(newName);
+            group.rename(newName, LATER);
             assertEquals(newName, group.name());
         }
 
         @Test
         @DisplayName("rename should not change the name when already unchanged")
         void renameShouldNotChangeTheNameWhenAlreadyUnchanged() {
-            Group group = Group.create(ORGANISATION_ID, NAME);
-            group.rename(NAME);
+            Group group = Group.create(ORGANISATION_ID, NAME, NOW);
+            group.rename(NAME, LATER);
             assertEquals(NAME, group.name());
         }
 
         @Test
         @DisplayName("rename should reject null name")
         void renameShouldRejectNullName() {
-            Group group = Group.create(ORGANISATION_ID, NAME);
-            assertThrows(NullPointerException.class, () -> group.rename(null));
+            Group group = Group.create(ORGANISATION_ID, NAME, NOW);
+            assertThrows(NullPointerException.class, () -> group.rename(null, LATER));
         }
     }
 
@@ -140,9 +142,9 @@ class GroupTest {
     class DomainEvents {
 
         @Test
-        @DisplayName("create should emit GroupCreated")
+        @DisplayName("create should emit GroupCreated with occurredOn = now")
         void createShouldEmitGroupCreated() {
-            Group group = Group.create(ORGANISATION_ID, NAME);
+            Group group = Group.create(ORGANISATION_ID, NAME, NOW);
 
             List<DomainEvent> events = group.pullDomainEvents();
             assertEquals(1, events.size());
@@ -150,16 +152,17 @@ class GroupTest {
             assertEquals(group.id(), event.groupId());
             assertEquals(group.name(), event.name());
             assertEquals(group.organisationId(), event.organisationId());
+            assertEquals(NOW, event.occurredOn());
         }
 
         @Test
-        @DisplayName("rename should emit GroupRenamed")
+        @DisplayName("rename should emit GroupRenamed with occurredOn = now")
         void renameShouldEmitGroupRenamed() {
-            Group group = Group.create(ORGANISATION_ID, NAME);
+            Group group = Group.create(ORGANISATION_ID, NAME, NOW);
             group.pullDomainEvents();
 
             GroupName newName = GroupName.of("Designers");
-            group.rename(newName);
+            group.rename(newName, LATER);
 
             List<DomainEvent> events = group.pullDomainEvents();
             assertEquals(1, events.size());
@@ -167,15 +170,16 @@ class GroupTest {
             assertEquals(ORGANISATION_ID, event.organisationId());
             assertEquals(group.id(), event.groupId());
             assertEquals(newName, event.name());
+            assertEquals(LATER, event.occurredOn());
         }
 
         @Test
         @DisplayName("rename should not emit any event when name is unchanged")
         void renameShouldNotEmitAnyEventWhenNameIsUnchanged() {
-            Group group = Group.create(ORGANISATION_ID, NAME);
+            Group group = Group.create(ORGANISATION_ID, NAME, NOW);
             group.pullDomainEvents();
 
-            group.rename(NAME);
+            group.rename(NAME, LATER);
 
             List<DomainEvent> events = group.pullDomainEvents();
             assertTrue(events.isEmpty());
@@ -185,7 +189,7 @@ class GroupTest {
         @DisplayName("reconstitute should not emit any event")
         void reconstituteShouldNotEmitAnyEvent() {
             GroupId id = GroupId.generate();
-            Instant createdAt = Instant.now();
+            Instant createdAt = NOW;
 
             Group group = Group.reconstitute(id, ORGANISATION_ID, NAME, createdAt);
 
@@ -196,7 +200,7 @@ class GroupTest {
         @Test
         @DisplayName("pullDomainEvents should clear events after pull")
         void pullDomainEventsShouldClearEventsAfterPull() {
-            Group group = Group.create(ORGANISATION_ID, NAME);
+            Group group = Group.create(ORGANISATION_ID, NAME, NOW);
             group.pullDomainEvents();
             List<DomainEvent> events = group.pullDomainEvents();
             assertTrue(events.isEmpty());
@@ -222,8 +226,8 @@ class GroupTest {
         @Test
         @DisplayName("two groups with different ids should not be equal")
         void twoGroupsWithDifferentIdsShouldNotBeEqual() {
-            Group group1 = Group.create(ORGANISATION_ID, NAME);
-            Group group2 = Group.create(ORGANISATION_ID, NAME);
+            Group group1 = Group.create(ORGANISATION_ID, NAME, NOW);
+            Group group2 = Group.create(ORGANISATION_ID, NAME, NOW);
             assertNotEquals(group1, group2);
         }
     }

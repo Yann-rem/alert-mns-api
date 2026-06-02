@@ -8,6 +8,7 @@ import com.alertmns.organisation.domain.port.incoming.command.CreateOrganisation
 import com.alertmns.organisation.domain.port.outgoing.OrganisationRepository;
 import com.alertmns.shared.DomainEvent;
 import com.alertmns.shared.EventPublisher;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -17,6 +18,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -24,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -32,14 +36,25 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class CreateOrganisationServiceTest {
 
+    static final Instant NOW = Instant.parse("2026-05-30T10:00:00Z");
+
     @Mock
     OrganisationRepository repository;
 
     @Mock
     EventPublisher publisher;
 
+    @Mock
+    Clock clock;
+
     @InjectMocks
     CreateOrganisationService service;
+
+    @BeforeEach
+    void stubClock() {
+        // lenient: les tests d'erreur (nom déjà pris) et d'invariants ne consultent pas l'horloge.
+        lenient().when(clock.instant()).thenReturn(NOW);
+    }
 
     @Nested
     @DisplayName("Creation")
@@ -79,6 +94,7 @@ class CreateOrganisationServiceTest {
             assertEquals(1, events.size());
             OrganisationCreated event = assertInstanceOf(OrganisationCreated.class, events.getFirst());
             assertEquals(saved.id(), event.organisationId());
+            assertEquals(NOW, event.occurredOn());
         }
 
         @Test
@@ -102,14 +118,21 @@ class CreateOrganisationServiceTest {
         @DisplayName("should reject null repository")
         void shouldRejectNullRepository() {
             assertThrows(NullPointerException.class,
-                    () -> new CreateOrganisationService(null, publisher));
+                    () -> new CreateOrganisationService(null, publisher, clock));
         }
 
         @Test
         @DisplayName("should reject null publisher")
         void shouldRejectNullPublisher() {
             assertThrows(NullPointerException.class,
-                    () -> new CreateOrganisationService(repository, null));
+                    () -> new CreateOrganisationService(repository, null, clock));
+        }
+
+        @Test
+        @DisplayName("should reject null clock")
+        void shouldRejectNullClock() {
+            assertThrows(NullPointerException.class,
+                    () -> new CreateOrganisationService(repository, publisher, null));
         }
     }
 }

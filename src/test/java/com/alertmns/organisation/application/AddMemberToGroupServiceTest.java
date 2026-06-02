@@ -29,6 +29,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -39,6 +40,7 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -49,6 +51,7 @@ class AddMemberToGroupServiceTest {
 
     static final OrganisationId ORGANISATION_ID = OrganisationId.generate();
     static final OrganisationId OTHER_ORGANISATION_ID = OrganisationId.generate();
+    static final Instant NOW = Instant.parse("2026-05-30T10:00:00Z");
 
     @Mock
     GroupRepository groupRepository;
@@ -61,6 +64,9 @@ class AddMemberToGroupServiceTest {
 
     @Mock
     EventPublisher publisher;
+
+    @Mock
+    Clock clock;
 
     @InjectMocks
     AddMemberToGroupService service;
@@ -78,12 +84,13 @@ class AddMemberToGroupServiceTest {
         void setUp() {
             groupId = GroupId.generate();
             memberId = MemberId.generate();
+            lenient().when(clock.instant()).thenReturn(NOW);
 
             group = Group.reconstitute(
                     groupId,
                     ORGANISATION_ID,
                     GroupName.of("Développeurs"),
-                    Instant.now()
+                    NOW
             );
 
             member = Member.reconstitute(
@@ -92,7 +99,7 @@ class AddMemberToGroupServiceTest {
                     UUID.randomUUID(),
                     MemberRole.MEMBER,
                     MemberStatus.ACTIVE,
-                    Instant.now()
+                    NOW
             );
         }
 
@@ -135,6 +142,7 @@ class AddMemberToGroupServiceTest {
             assertEquals(1, events.size());
             MemberAddedToGroup event = assertInstanceOf(MemberAddedToGroup.class, events.getFirst());
             assertEquals(ORGANISATION_ID, event.organisationId());
+            assertEquals(NOW, event.occurredOn());
         }
 
         @Test
@@ -175,7 +183,7 @@ class AddMemberToGroupServiceTest {
                     UUID.randomUUID(),
                     MemberRole.MEMBER,
                     MemberStatus.ACTIVE,
-                    Instant.now()
+                    NOW
             );
 
             when(groupRepository.findById(any())).thenReturn(Optional.of(group));
@@ -193,7 +201,7 @@ class AddMemberToGroupServiceTest {
         @Test
         @DisplayName("should be idempotent and do nothing when the member is already in the group")
         void shouldBeIdempotentWhenMembershipAlreadyExists() {
-            GroupMembership existing = GroupMembership.add(ORGANISATION_ID, groupId, memberId);
+            GroupMembership existing = GroupMembership.add(ORGANISATION_ID, groupId, memberId, NOW);
             when(groupRepository.findById(any())).thenReturn(Optional.of(group));
             when(memberRepository.findById(any())).thenReturn(Optional.of(member));
             when(groupMembershipRepository.findByGroupIdAndMemberId(any(), any())).thenReturn(Optional.of(existing));
@@ -241,28 +249,37 @@ class AddMemberToGroupServiceTest {
         @DisplayName("should reject null groupRepository")
         void shouldRejectNullGroupRepository() {
             assertThrows(NullPointerException.class,
-                    () -> new AddMemberToGroupService(null, memberRepository, groupMembershipRepository, publisher));
+                    () -> new AddMemberToGroupService(null, memberRepository, groupMembershipRepository, publisher, clock));
         }
 
         @Test
         @DisplayName("should reject null memberRepository")
         void shouldRejectNullMemberRepository() {
             assertThrows(NullPointerException.class,
-                    () -> new AddMemberToGroupService(groupRepository, null, groupMembershipRepository, publisher));
+                    () -> new AddMemberToGroupService(groupRepository, null, groupMembershipRepository, publisher, clock));
         }
 
         @Test
         @DisplayName("should reject null groupMembershipRepository")
         void shouldRejectNullGroupMembershipRepository() {
             assertThrows(NullPointerException.class,
-                    () -> new AddMemberToGroupService(groupRepository, memberRepository, null, publisher));
+                    () -> new AddMemberToGroupService(groupRepository, memberRepository, null, publisher, clock));
         }
 
         @Test
         @DisplayName("should reject null publisher")
         void shouldRejectNullPublisher() {
             assertThrows(NullPointerException.class,
-                    () -> new AddMemberToGroupService(groupRepository, memberRepository, groupMembershipRepository, null));
+                    () -> new AddMemberToGroupService(
+                            groupRepository, memberRepository, groupMembershipRepository, null, clock));
+        }
+
+        @Test
+        @DisplayName("should reject null clock")
+        void shouldRejectNullClock() {
+            assertThrows(NullPointerException.class,
+                    () -> new AddMemberToGroupService(
+                            groupRepository, memberRepository, groupMembershipRepository, publisher, null));
         }
 
         @Test

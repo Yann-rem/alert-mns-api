@@ -55,14 +55,12 @@ public final class MembershipInvitation extends AggregateRoot {
     /**
      * Émet une nouvelle invitation en statut {@link MembershipInvitationStatus#PENDING}.
      *
-     * <p>L'identifiant et les timestamps sont générés automatiquement.
-     * {@code expiresAt = createdAt + ttl}.</p>
-     *
      * <p>Émet {@link MembershipInvitationIssued}.</p>
      *
      * @param organisationId organisation cible
-     * @param invitedEmail   email de l'invité (clé fonctionnelle)
+     * @param invitedEmail   email de l'invité
      * @param role           rôle qui sera accordé à l'acceptation
+     * @param now            instant de l'opération
      * @param ttl            durée de validité de l'invitation
      * @return la nouvelle invitation créée
      */
@@ -70,10 +68,11 @@ public final class MembershipInvitation extends AggregateRoot {
             OrganisationId organisationId,
             Email invitedEmail,
             MemberRole role,
+            Instant now,
             Duration ttl
     ) {
+        Objects.requireNonNull(now, "now must not be null");
         Objects.requireNonNull(ttl, "ttl must not be null");
-        Instant now = Instant.now();
         MembershipInvitation invitation = new MembershipInvitation(
                 MembershipInvitationId.generate(),
                 organisationId,
@@ -84,7 +83,13 @@ public final class MembershipInvitation extends AggregateRoot {
                 now.plus(ttl)
         );
 
-        invitation.registerEvent(new MembershipInvitationIssued(invitation.id, organisationId, invitedEmail, role));
+        invitation.registerEvent(new MembershipInvitationIssued(
+                invitation.id,
+                organisationId,
+                invitedEmail,
+                role,
+                now
+        ));
         return invitation;
     }
 
@@ -128,7 +133,7 @@ public final class MembershipInvitation extends AggregateRoot {
             throw new InvitationExpiredException(id);
         }
         this.status = MembershipInvitationStatus.ACCEPTED;
-        registerEvent(new MembershipInvitationAccepted(id, organisationId, userId, role));
+        registerEvent(new MembershipInvitationAccepted(id, organisationId, userId, role, now));
     }
 
     public MembershipInvitationId id() {

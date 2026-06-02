@@ -12,21 +12,25 @@ import com.alertmns.organisation.domain.port.outgoing.GroupRepository;
 import com.alertmns.shared.EventPublisher;
 import com.alertmns.shared.OrganisationId;
 
+import java.time.Clock;
 import java.util.Objects;
 
 /**
  * Service applicatif représentant l'orchestration du renommage des groupes.
  *
- * <p>Parse (VOs) → load (agrégat) → check (tenant + idempotence + unicité du nouveau nom) → act (rename) → save → publish.</p>
+ * <p>Parse (VOs) → load (agrégat) → check (tenant + idempotence + unicité du nouveau nom) → act (rename) → save →
+ * publish.</p>
  */
 public final class RenameGroupService implements RenameGroupUseCase {
 
     private final GroupRepository repository;
     private final EventPublisher publisher;
+    private final Clock clock;
 
-    public RenameGroupService(GroupRepository repository, EventPublisher publisher) {
+    public RenameGroupService(GroupRepository repository, EventPublisher publisher, Clock clock) {
         this.repository = Objects.requireNonNull(repository, "repository must not be null");
         this.publisher = Objects.requireNonNull(publisher, "publisher must not be null");
+        this.clock = Objects.requireNonNull(clock, "clock must not be null");
     }
 
     @Override
@@ -46,7 +50,7 @@ public final class RenameGroupService implements RenameGroupUseCase {
             throw new GroupNameAlreadyExistsException(group.organisationId(), name);
         }
 
-        group.rename(name);
+        group.rename(name, clock.instant());
         repository.save(group);
         publisher.publish(group.pullDomainEvents());
     }

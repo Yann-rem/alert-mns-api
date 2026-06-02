@@ -10,6 +10,7 @@ import com.alertmns.organisation.domain.port.outgoing.MemberRepository;
 import com.alertmns.shared.EventPublisher;
 import com.alertmns.shared.OrganisationId;
 
+import java.time.Clock;
 import java.util.Objects;
 
 /**
@@ -21,10 +22,12 @@ public final class ReactivateMemberService implements ReactivateMemberUseCase {
 
     private final MemberRepository repository;
     private final EventPublisher publisher;
+    private final Clock clock;
 
-    public ReactivateMemberService(MemberRepository repository, EventPublisher publisher) {
+    public ReactivateMemberService(MemberRepository repository, EventPublisher publisher, Clock clock) {
         this.repository = Objects.requireNonNull(repository, "repository must not be null");
         this.publisher = Objects.requireNonNull(publisher, "publisher must not be null");
+        this.clock = Objects.requireNonNull(clock, "clock must not be null");
     }
 
     @Override
@@ -37,7 +40,7 @@ public final class ReactivateMemberService implements ReactivateMemberUseCase {
             throw new OrganisationMismatchException(member.organisationId(), organisationId);
         }
 
-        member.reactivate();
+        member.reactivate(clock.instant());
         repository.save(member);
         publisher.publish(member.pullDomainEvents());
     }

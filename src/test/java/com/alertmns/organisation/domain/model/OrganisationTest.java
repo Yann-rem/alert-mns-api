@@ -21,18 +21,19 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class OrganisationTest {
 
     static final OrganisationName NAME = OrganisationName.of("Metz Numeric School");
+    static final Instant NOW = Instant.parse("2026-05-30T10:00:00Z");
 
     @Nested
     @DisplayName("Creation")
     class Creation {
 
         @Test
-        @DisplayName("should create a new organisation")
+        @DisplayName("should create a new organisation with createdAt = now")
         void shouldCreateANewOrganisation() {
-            Organisation organisation = Organisation.create(NAME);
+            Organisation organisation = Organisation.create(NAME, NOW);
             assertEquals(NAME, organisation.name());
             assertNotNull(organisation.id());
-            assertNotNull(organisation.createdAt());
+            assertEquals(NOW, organisation.createdAt());
         }
 
         @Test
@@ -57,7 +58,7 @@ class OrganisationTest {
         @DisplayName("should reject null name")
         void shouldRejectNullName() {
             assertThrows(NullPointerException.class,
-                    () -> Organisation.create(null));
+                    () -> Organisation.create(null, NOW));
         }
 
         @Test
@@ -91,14 +92,15 @@ class OrganisationTest {
     class DomainEvents {
 
         @Test
-        @DisplayName("create should emit OrganisationCreated")
+        @DisplayName("create should emit OrganisationCreated with occurredOn = now")
         void createShouldEmitOrganisationCreated() {
-            Organisation organisation = Organisation.create(NAME);
+            Organisation organisation = Organisation.create(NAME, NOW);
 
             List<DomainEvent> events = organisation.pullDomainEvents();
             assertEquals(1, events.size());
             OrganisationCreated event = assertInstanceOf(OrganisationCreated.class, events.getFirst());
             assertEquals(organisation.id(), event.organisationId());
+            assertEquals(NOW, event.occurredOn());
         }
 
         @Test
@@ -116,7 +118,7 @@ class OrganisationTest {
         @Test
         @DisplayName("pullDomainEvents should clear events after pull")
         void pullDomainEventsShouldClearEventsAfterPull() {
-            Organisation organisation = Organisation.create(NAME);
+            Organisation organisation = Organisation.create(NAME, NOW);
             organisation.pullDomainEvents();
             List<DomainEvent> events = organisation.pullDomainEvents();
             assertTrue(events.isEmpty());
@@ -142,8 +144,8 @@ class OrganisationTest {
         @Test
         @DisplayName("two organisations with different ids should not be equal")
         void twoOrganisationsWithDifferentIdsShouldNotBeEqual() {
-            Organisation organisation1 = Organisation.create(NAME);
-            Organisation organisation2 = Organisation.create(NAME);
+            Organisation organisation1 = Organisation.create(NAME, NOW);
+            Organisation organisation2 = Organisation.create(NAME, NOW);
             assertNotEquals(organisation1, organisation2);
         }
     }

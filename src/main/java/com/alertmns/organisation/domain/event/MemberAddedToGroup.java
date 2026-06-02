@@ -13,9 +13,4 @@ public record MemberAddedToGroup(
         OrganisationId organisationId,
         GroupMembershipId groupMembershipId,
         Instant occurredOn
-) implements DomainEvent {
-
-    public MemberAddedToGroup(OrganisationId organisationId, GroupMembershipId groupMembershipId) {
-        this(organisationId, groupMembershipId, Instant.now());
-    }
-}
+) implements DomainEvent {}

@@ -23,19 +23,20 @@ class GroupMembershipTest {
     static final OrganisationId ORGANISATION_ID = OrganisationId.generate();
     static final MemberId MEMBER_ID = MemberId.generate();
     static final GroupId GROUP_ID = GroupId.generate();
+    static final Instant NOW = Instant.parse("2026-05-30T10:00:00Z");
 
     @Nested
     @DisplayName("Creation")
     class Creation {
 
         @Test
-        @DisplayName("should add a member to a group")
+        @DisplayName("should add a member to a group with joinedAt = now")
         void shouldAddAMemberToAGroup() {
-            GroupMembership membership = GroupMembership.add(ORGANISATION_ID, GROUP_ID, MEMBER_ID);
+            GroupMembership membership = GroupMembership.add(ORGANISATION_ID, GROUP_ID, MEMBER_ID, NOW);
             assertEquals(MEMBER_ID, membership.memberId());
             assertEquals(GROUP_ID, membership.groupId());
             assertNotNull(membership.id());
-            assertNotNull(membership.joinedAt());
+            assertEquals(NOW, membership.joinedAt());
         }
 
         @Test
@@ -63,21 +64,21 @@ class GroupMembershipTest {
         @DisplayName("should reject null organisationId")
         void shouldRejectNullOrganisationId() {
             assertThrows(NullPointerException.class,
-                    () -> GroupMembership.add(null, GROUP_ID, MEMBER_ID));
+                    () -> GroupMembership.add(null, GROUP_ID, MEMBER_ID, NOW));
         }
 
         @Test
         @DisplayName("should reject null groupId")
         void shouldRejectNullGroupId() {
             assertThrows(NullPointerException.class,
-                    () -> GroupMembership.add(ORGANISATION_ID, null, MEMBER_ID));
+                    () -> GroupMembership.add(ORGANISATION_ID, null, MEMBER_ID, NOW));
         }
 
         @Test
         @DisplayName("should reject null memberId")
         void shouldRejectNullMemberId() {
             assertThrows(NullPointerException.class,
-                    () -> GroupMembership.add(ORGANISATION_ID, GROUP_ID, null));
+                    () -> GroupMembership.add(ORGANISATION_ID, GROUP_ID, null, NOW));
         }
 
         @Test
@@ -129,15 +130,16 @@ class GroupMembershipTest {
     class DomainEvents {
 
         @Test
-        @DisplayName("add should emit MemberAddedToGroup")
+        @DisplayName("add should emit MemberAddedToGroup with occurredOn = now")
         void addShouldEmitMemberAddedToGroup() {
-            GroupMembership membership = GroupMembership.add(ORGANISATION_ID, GROUP_ID, MEMBER_ID);
+            GroupMembership membership = GroupMembership.add(ORGANISATION_ID, GROUP_ID, MEMBER_ID, NOW);
 
             List<DomainEvent> events = membership.pullDomainEvents();
             assertEquals(1, events.size());
             MemberAddedToGroup event = assertInstanceOf(MemberAddedToGroup.class, events.getFirst());
             assertEquals(ORGANISATION_ID, event.organisationId());
             assertEquals(membership.id(), event.groupMembershipId());
+            assertEquals(NOW, event.occurredOn());
         }
 
         @Test
@@ -157,7 +159,7 @@ class GroupMembershipTest {
         @Test
         @DisplayName("pullDomainEvents should clear events after pull")
         void pullDomainEventsShouldClearEventsAfterPull() {
-            GroupMembership membership = GroupMembership.add(ORGANISATION_ID, GROUP_ID, MEMBER_ID);
+            GroupMembership membership = GroupMembership.add(ORGANISATION_ID, GROUP_ID, MEMBER_ID, NOW);
             membership.pullDomainEvents();
             List<DomainEvent> events = membership.pullDomainEvents();
             assertTrue(events.isEmpty());
@@ -188,8 +190,8 @@ class GroupMembershipTest {
         @Test
         @DisplayName("two group memberships with different ids should not be equal")
         void twoGroupMembershipsWithDifferentIdsShouldNotBeEqual() {
-            GroupMembership membership1 = GroupMembership.add(ORGANISATION_ID, GROUP_ID, MEMBER_ID);
-            GroupMembership membership2 = GroupMembership.add(ORGANISATION_ID, GROUP_ID, MEMBER_ID);
+            GroupMembership membership1 = GroupMembership.add(ORGANISATION_ID, GROUP_ID, MEMBER_ID, NOW);
+            GroupMembership membership2 = GroupMembership.add(ORGANISATION_ID, GROUP_ID, MEMBER_ID, NOW);
             assertNotEquals(membership1, membership2);
         }
     }

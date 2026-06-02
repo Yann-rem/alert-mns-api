@@ -22,6 +22,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -31,6 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -41,12 +43,16 @@ class RemoveMemberFromGroupServiceTest {
 
     static final OrganisationId ORGANISATION_ID = OrganisationId.generate();
     static final OrganisationId OTHER_ORGANISATION_ID = OrganisationId.generate();
+    static final Instant NOW = Instant.parse("2026-05-30T10:00:00Z");
 
     @Mock
     GroupMembershipRepository groupMembershipRepository;
 
     @Mock
     EventPublisher publisher;
+
+    @Mock
+    Clock clock;
 
     @InjectMocks
     RemoveMemberFromGroupService service;
@@ -63,7 +69,8 @@ class RemoveMemberFromGroupServiceTest {
         void setUp() {
             groupId = GroupId.generate();
             memberId = MemberId.generate();
-            membership = GroupMembership.add(ORGANISATION_ID, groupId, memberId);
+            lenient().when(clock.instant()).thenReturn(NOW);
+            membership = GroupMembership.add(ORGANISATION_ID, groupId, memberId, NOW);
         }
 
         @Test
@@ -102,6 +109,7 @@ class RemoveMemberFromGroupServiceTest {
             MemberRemovedFromGroup event = assertInstanceOf(MemberRemovedFromGroup.class, events.getFirst());
             assertEquals(ORGANISATION_ID, event.organisationId());
             assertEquals(membership.id(), event.groupMembershipId());
+            assertEquals(NOW, event.occurredOn());
         }
 
         @Test
@@ -127,7 +135,7 @@ class RemoveMemberFromGroupServiceTest {
                     OTHER_ORGANISATION_ID,
                     groupId,
                     memberId,
-                    Instant.now()
+                    NOW
             );
             when(groupMembershipRepository.findByGroupIdAndMemberId(any(), any()))
                     .thenReturn(Optional.of(crossOrgMembership));
@@ -174,14 +182,21 @@ class RemoveMemberFromGroupServiceTest {
         @DisplayName("should reject null groupMembershipRepository")
         void shouldRejectNullGroupMembershipRepository() {
             assertThrows(NullPointerException.class,
-                    () -> new RemoveMemberFromGroupService(null, publisher));
+                    () -> new RemoveMemberFromGroupService(null, publisher, clock));
         }
 
         @Test
         @DisplayName("should reject null publisher")
         void shouldRejectNullPublisher() {
             assertThrows(NullPointerException.class,
-                    () -> new RemoveMemberFromGroupService(groupMembershipRepository, null));
+                    () -> new RemoveMemberFromGroupService(groupMembershipRepository, null, clock));
+        }
+
+        @Test
+        @DisplayName("should reject null clock")
+        void shouldRejectNullClock() {
+            assertThrows(NullPointerException.class,
+                    () -> new RemoveMemberFromGroupService(groupMembershipRepository, publisher, null));
         }
 
         @Test

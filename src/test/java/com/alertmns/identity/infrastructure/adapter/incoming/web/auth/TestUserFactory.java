@@ -169,7 +169,8 @@ public final class TestUserFactory {
         Member member = Member.createActive(
                 OrganisationId.from(DEFAULT_ORGANISATION_ID),
                 userId.value(),
-                role
+                role,
+                Instant.now()
         );
         memberRepository.save(member);
         publisher.publish(member.pullDomainEvents());

@@ -12,6 +12,7 @@ import com.alertmns.shared.DomainEvent;
 import com.alertmns.shared.EventPublisher;
 import com.alertmns.shared.MembershipInvitationId;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,16 +31,19 @@ public final class AcceptMembershipInvitationService implements AcceptMembership
     private final MembershipInvitationRepository invitationRepository;
     private final MemberRepository memberRepository;
     private final EventPublisher publisher;
+    private final Clock clock;
 
     public AcceptMembershipInvitationService(
             MembershipInvitationRepository invitationRepository,
             MemberRepository memberRepository,
-            EventPublisher publisher
+            EventPublisher publisher,
+            Clock clock
     ) {
         this.invitationRepository = Objects.requireNonNull(
                 invitationRepository, "invitationRepository must not be null");
         this.memberRepository = Objects.requireNonNull(memberRepository, "memberRepository must not be null");
         this.publisher = Objects.requireNonNull(publisher, "publisher must not be null");
+        this.clock = Objects.requireNonNull(clock, "clock must not be null");
     }
 
     @Override
@@ -50,10 +54,11 @@ public final class AcceptMembershipInvitationService implements AcceptMembership
         MembershipInvitation invitation = invitationRepository.findById(invitationId)
                 .orElseThrow(() -> new MembershipInvitationNotFoundException(invitationId));
 
-        invitation.accept(Instant.now(), userId);
+        Instant now = clock.instant();
+        invitation.accept(now, userId);
         invitationRepository.save(invitation);
 
-        Member member = Member.createActive(invitation.organisationId(), userId, invitation.role());
+        Member member = Member.createActive(invitation.organisationId(), userId, invitation.role(), now);
         memberRepository.save(member);
 
         List<DomainEvent> events = new ArrayList<>();

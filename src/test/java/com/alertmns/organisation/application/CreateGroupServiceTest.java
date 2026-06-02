@@ -9,6 +9,7 @@ import com.alertmns.organisation.domain.port.outgoing.GroupRepository;
 import com.alertmns.shared.DomainEvent;
 import com.alertmns.shared.EventPublisher;
 import com.alertmns.shared.OrganisationId;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -18,6 +19,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -25,6 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -34,6 +38,7 @@ import static org.mockito.Mockito.when;
 class CreateGroupServiceTest {
 
     static final OrganisationId ORGANISATION_ID = OrganisationId.generate();
+    static final Instant NOW = Instant.parse("2026-05-30T10:00:00Z");
 
     @Mock
     GroupRepository repository;
@@ -41,8 +46,16 @@ class CreateGroupServiceTest {
     @Mock
     EventPublisher publisher;
 
+    @Mock
+    Clock clock;
+
     @InjectMocks
     CreateGroupService service;
+
+    @BeforeEach
+    void stubClock() {
+        lenient().when(clock.instant()).thenReturn(NOW);
+    }
 
     @Nested
     @DisplayName("Creation")
@@ -84,6 +97,7 @@ class CreateGroupServiceTest {
             GroupCreated event = assertInstanceOf(GroupCreated.class, events.getFirst());
             assertEquals(GroupName.of("Développeurs"), event.name());
             assertEquals(ORGANISATION_ID, event.organisationId());
+            assertEquals(NOW, event.occurredOn());
         }
 
         @Test
@@ -119,14 +133,21 @@ class CreateGroupServiceTest {
         @DisplayName("should reject null repository")
         void shouldRejectNullRepository() {
             assertThrows(NullPointerException.class,
-                    () -> new CreateGroupService(null, publisher));
+                    () -> new CreateGroupService(null, publisher, clock));
         }
 
         @Test
         @DisplayName("should reject null publisher")
         void shouldRejectNullPublisher() {
             assertThrows(NullPointerException.class,
-                    () -> new CreateGroupService(repository, null));
+                    () -> new CreateGroupService(repository, null, clock));
+        }
+
+        @Test
+        @DisplayName("should reject null clock")
+        void shouldRejectNullClock() {
+            assertThrows(NullPointerException.class,
+                    () -> new CreateGroupService(repository, publisher, null));
         }
 
         @Test

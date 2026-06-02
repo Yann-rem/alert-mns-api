@@ -14,6 +14,7 @@ import com.alertmns.shared.EventPublisher;
 import com.alertmns.shared.MembershipInvitationId;
 import com.alertmns.shared.OrganisationId;
 
+import java.time.Clock;
 import java.time.Duration;
 import java.util.Objects;
 
@@ -29,6 +30,7 @@ public final class IssueMembershipInvitationService implements IssueMembershipIn
     private final UserRepository userRepository;
     private final RegisterPendingUserUseCase registerPendingUserUseCase;
     private final EventPublisher publisher;
+    private final Clock clock;
     private final Duration ttl;
 
     public IssueMembershipInvitationService(
@@ -36,6 +38,7 @@ public final class IssueMembershipInvitationService implements IssueMembershipIn
             UserRepository userRepository,
             RegisterPendingUserUseCase registerPendingUserUseCase,
             EventPublisher publisher,
+            Clock clock,
             Duration ttl
     ) {
         this.invitationRepository = Objects.requireNonNull(
@@ -44,6 +47,7 @@ public final class IssueMembershipInvitationService implements IssueMembershipIn
         this.registerPendingUserUseCase = Objects.requireNonNull(
                 registerPendingUserUseCase, "registerPendingUserUseCase must not be null");
         this.publisher = Objects.requireNonNull(publisher, "publisher must not be null");
+        this.clock = Objects.requireNonNull(clock, "clock must not be null");
         this.ttl = Objects.requireNonNull(ttl, "ttl must not be null");
     }
 
@@ -69,7 +73,7 @@ public final class IssueMembershipInvitationService implements IssueMembershipIn
         ));
 
         MembershipInvitation invitation = MembershipInvitation.issue(
-                organisationId, invitedEmail, role, ttl);
+                organisationId, invitedEmail, role, clock.instant(), ttl);
         invitationRepository.save(invitation);
         publisher.publish(invitation.pullDomainEvents());
 
