@@ -40,8 +40,8 @@ import java.util.stream.Stream;
  * en cache l'ApplicationContext entre classes de test partageant la même config : le second run pointerait sur un
  * container déjà arrêté. Le pattern singleton garantit un container vivant tant que la JVM tourne.</p>
  *
- * <p>Le profil {@code test} désactive {@code DevSeedConfig} et {@code SwaggerSecurityConfig} (tous deux en
- * {@code @Profile("dev")}) — le test contrôle entièrement la creation des users.</p>
+ * <p>Le profil {@code test} désactive {@code SwaggerSecurityConfig} ({@code @Profile("dev")}) — le test contrôle
+ * entièrement la création des users.</p>
  *
  * <p>Le schema est recréé avant chaque suite ({@code create-drop}). Les users sont nettoyés apres chaque test pour
  * garantir l'isolation.</p>
