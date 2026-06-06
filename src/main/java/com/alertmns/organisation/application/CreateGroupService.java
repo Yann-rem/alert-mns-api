@@ -16,7 +16,7 @@ import java.util.Objects;
 /**
  * Service applicatif représentant l'orchestration de la création des groupes.
  *
- * <p>Parse (VOs) → check (unicité du nom dans l'organisation) → act (Group.create) → save → publish.</p>
+ * <p>Parse (VOs) → check (unicité du nom dans l'organisation) → act (Group.createStandard) → save → publish.</p>
  */
 public final class CreateGroupService implements CreateGroupUseCase {
 
@@ -39,7 +39,7 @@ public final class CreateGroupService implements CreateGroupUseCase {
             throw new GroupNameAlreadyExistsException(organisationId, name);
         }
 
-        Group group = Group.create(organisationId, name, clock.instant());
+        Group group = Group.createStandard(organisationId, name, clock.instant());
         repository.save(group);
         publisher.publish(group.pullDomainEvents());
         return group.id();

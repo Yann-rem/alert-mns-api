@@ -3,6 +3,7 @@ package com.alertmns.organisation.application;
 import com.alertmns.organisation.domain.event.GroupCreated;
 import com.alertmns.organisation.domain.exception.GroupNameAlreadyExistsException;
 import com.alertmns.organisation.domain.model.Group;
+import com.alertmns.organisation.domain.model.GroupKind;
 import com.alertmns.organisation.domain.model.GroupName;
 import com.alertmns.organisation.domain.port.incoming.command.CreateGroupCommand;
 import com.alertmns.organisation.domain.port.outgoing.GroupRepository;
@@ -77,6 +78,7 @@ class CreateGroupServiceTest {
             Group saved = groupCaptor.getValue();
             assertEquals(GroupName.of("Développeurs"), saved.name());
             assertEquals(ORGANISATION_ID, saved.organisationId());
+            assertEquals(GroupKind.STANDARD, saved.kind());
         }
 
         @Test
@@ -97,6 +99,7 @@ class CreateGroupServiceTest {
             GroupCreated event = assertInstanceOf(GroupCreated.class, events.getFirst());
             assertEquals(GroupName.of("Développeurs"), event.name());
             assertEquals(ORGANISATION_ID, event.organisationId());
+            assertEquals(GroupKind.STANDARD, event.kind());
             assertEquals(NOW, event.occurredOn());
         }
 

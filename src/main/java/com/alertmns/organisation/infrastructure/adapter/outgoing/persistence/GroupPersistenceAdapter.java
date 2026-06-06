@@ -2,6 +2,7 @@ package com.alertmns.organisation.infrastructure.adapter.outgoing.persistence;
 
 import com.alertmns.organisation.domain.model.Group;
 import com.alertmns.organisation.domain.model.GroupId;
+import com.alertmns.organisation.domain.model.GroupKind;
 import com.alertmns.organisation.domain.model.GroupName;
 import com.alertmns.organisation.domain.port.outgoing.GroupRepository;
 import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.mapper.GroupPersistenceMapper;
@@ -30,7 +31,19 @@ public final class GroupPersistenceAdapter implements GroupRepository {
     }
 
     @Override
+    public Optional<Group> findGeneralByOrganisationId(OrganisationId organisationId) {
+        return jpaRepository
+                .findByOrganisationIdAndKind(organisationId.value(), GroupKind.GENERAL)
+                .map(GroupPersistenceMapper::toDomain);
+    }
+
+    @Override
     public boolean existsByOrganisationIdAndGroupName(OrganisationId organisationId, GroupName name) {
         return jpaRepository.existsByOrganisationIdAndName(organisationId.value(), name.value());
+    }
+
+    @Override
+    public boolean existsGeneralByOrganisationId(OrganisationId organisationId) {
+        return jpaRepository.existsByOrganisationIdAndKind(organisationId.value(), GroupKind.GENERAL);
     }
 }

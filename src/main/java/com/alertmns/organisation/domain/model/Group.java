@@ -13,35 +13,58 @@ import java.util.Objects;
  *
  * <p>Un groupe appartient à une seule organisation et permet de regrouper des membres via {@code GroupMembership}.
  * L'unicité du nom par organisation est un invariant garanti au niveau de l'application service.</p>
+ *
+ * <p>Son {@link GroupKind} distingue le canal {@link GroupKind#GENERAL} unique par organisation, provisionné au
+ * bootstrap, des groupes {@link GroupKind#STANDARD} créés à la demande. Le {@code kind} est fixé à la création et
+ * n'est jamais modifié.</p>
  */
 public final class Group extends AggregateRoot {
 
     private final GroupId id;
     private final OrganisationId organisationId;
     private GroupName name;
+    private final GroupKind kind;
     private final Instant createdAt;
 
-    private Group(GroupId id, OrganisationId organisationId, GroupName name, Instant createdAt) {
+    private Group(GroupId id, OrganisationId organisationId, GroupName name, GroupKind kind, Instant createdAt) {
         this.id = Objects.requireNonNull(id, "id must not be null");
         this.organisationId = Objects.requireNonNull(organisationId, "organisationId must not be null");
         this.name = Objects.requireNonNull(name, "name must not be null");
+        this.kind = Objects.requireNonNull(kind, "kind must not be null");
         this.createdAt = Objects.requireNonNull(createdAt, "createdAt must not be null");
     }
 
     /**
-     * Crée un nouveau groupe dans une organisation.
+     * Crée un groupe {@link GroupKind#STANDARD}
      *
      * <p>Émet {@link GroupCreated}.</p>
      *
      * @param organisationId l'identifiant de l'organisation de rattachement
      * @param name           le nom du groupe
      * @param now            instant de l'opération
-     * @return le nouveau groupe créé
+     * @return le nouveau groupe créé, de kind STANDARD
      */
-    public static Group create(OrganisationId organisationId, GroupName name, Instant now) {
-        Group group = new Group(GroupId.generate(), organisationId, name, now);
+    public static Group createStandard(OrganisationId organisationId, GroupName name, Instant now) {
+        Group group = new Group(GroupId.generate(), organisationId, name, GroupKind.STANDARD, now);
 
-        group.registerEvent(new GroupCreated(group.organisationId, group.id, group.name, now));
+        group.registerEvent(new GroupCreated(group.organisationId, group.id, group.name, group.kind, now));
+        return group;
+    }
+
+    /**
+     * Crée le groupe {@link GroupKind#GENERAL} d'une organisation.
+     *
+     * <p>Émet {@link GroupCreated}.</p>
+     *
+     * @param organisationId l'identifiant de l'organisation de rattachement
+     * @param name           le nom du canal général
+     * @param now            instant de l'opération
+     * @return le nouveau groupe créé, de kind GENERAL
+     */
+    public static Group createGeneral(OrganisationId organisationId, GroupName name, Instant now) {
+        Group group = new Group(GroupId.generate(), organisationId, name, GroupKind.GENERAL, now);
+
+        group.registerEvent(new GroupCreated(group.organisationId, group.id, group.name, group.kind, now));
         return group;
     }
 
@@ -56,9 +79,10 @@ public final class Group extends AggregateRoot {
             GroupId id,
             OrganisationId organisationId,
             GroupName name,
+            GroupKind kind,
             Instant createdAt
     ) {
-        return new Group(id, organisationId, name, createdAt);
+        return new Group(id, organisationId, name, kind, createdAt);
     }
 
     /**
@@ -88,6 +112,10 @@ public final class Group extends AggregateRoot {
         return name;
     }
 
+    public GroupKind kind() {
+        return kind;
+    }
+
     public Instant createdAt() {
         return createdAt;
     }
@@ -110,6 +138,7 @@ public final class Group extends AggregateRoot {
                 "id=" + id +
                 ", organisationId=" + organisationId +
                 ", name=" + name +
+                ", kind=" + kind +
                 '}';
     }
 }

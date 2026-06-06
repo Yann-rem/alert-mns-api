@@ -15,6 +15,7 @@ public final class GroupPersistenceMapper {
                 GroupId.from(entity.getId()),
                 OrganisationId.from(entity.getOrganisationId()),
                 GroupName.of(entity.getName()),
+                entity.getKind(),
                 entity.getCreatedAt()
         );
     }
@@ -24,6 +25,7 @@ public final class GroupPersistenceMapper {
                 domain.id().value(),
                 domain.organisationId().value(),
                 domain.name().value(),
+                domain.kind(),
                 domain.createdAt()
         );
     }

@@ -6,6 +6,7 @@ import com.alertmns.organisation.domain.exception.MemberNotFoundException;
 import com.alertmns.organisation.domain.exception.OrganisationMismatchException;
 import com.alertmns.organisation.domain.model.Group;
 import com.alertmns.organisation.domain.model.GroupId;
+import com.alertmns.organisation.domain.model.GroupKind;
 import com.alertmns.organisation.domain.model.GroupMembership;
 import com.alertmns.organisation.domain.model.GroupName;
 import com.alertmns.organisation.domain.model.Member;
@@ -90,6 +91,7 @@ class AddMemberToGroupServiceTest {
                     groupId,
                     ORGANISATION_ID,
                     GroupName.of("Développeurs"),
+                    GroupKind.STANDARD,
                     NOW
             );
 

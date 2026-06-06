@@ -6,6 +6,7 @@ import com.alertmns.organisation.domain.exception.GroupNotFoundException;
 import com.alertmns.organisation.domain.exception.OrganisationMismatchException;
 import com.alertmns.organisation.domain.model.Group;
 import com.alertmns.organisation.domain.model.GroupId;
+import com.alertmns.organisation.domain.model.GroupKind;
 import com.alertmns.organisation.domain.model.GroupName;
 import com.alertmns.organisation.domain.port.incoming.command.RenameGroupCommand;
 import com.alertmns.organisation.domain.port.outgoing.GroupRepository;
@@ -73,6 +74,7 @@ class RenameGroupServiceTest {
                     id,
                     ORGANISATION_ID,
                     GroupName.of("Développeurs"),
+                    GroupKind.STANDARD,
                     NOW
             );
         }
