@@ -2,6 +2,7 @@ package com.alertmns.bootstrap;
 
 import com.alertmns.identity.domain.port.incoming.IssueActivationTokenUseCase;
 import com.alertmns.identity.domain.port.outgoing.UserRepository;
+import com.alertmns.organisation.domain.port.incoming.CreateGeneralGroupUseCase;
 import com.alertmns.organisation.domain.port.incoming.CreateOrganisationUseCase;
 import com.alertmns.organisation.domain.port.incoming.IssueMembershipInvitationUseCase;
 import com.alertmns.organisation.domain.port.outgoing.OrganisationRepository;
@@ -33,6 +34,7 @@ public class BootstrapBeanConfig {
             OrganisationRepository organisationRepository,
             UserRepository userRepository,
             CreateOrganisationUseCase createOrganisation,
+            CreateGeneralGroupUseCase createGeneralGroup,
             IssueMembershipInvitationUseCase issueMembershipInvitation,
             IssueActivationTokenUseCase issueActivationToken
     ) {
@@ -41,6 +43,7 @@ public class BootstrapBeanConfig {
                 organisationRepository,
                 userRepository,
                 createOrganisation,
+                createGeneralGroup,
                 issueMembershipInvitation,
                 issueActivationToken
         );

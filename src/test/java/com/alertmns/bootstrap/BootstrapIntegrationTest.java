@@ -11,12 +11,16 @@ import com.alertmns.identity.infrastructure.adapter.outgoing.persistence.Activat
 import com.alertmns.identity.infrastructure.adapter.outgoing.persistence.ActivationTokenJpaRepository;
 import com.alertmns.identity.infrastructure.adapter.outgoing.persistence.UserJpaEntity;
 import com.alertmns.identity.infrastructure.adapter.outgoing.persistence.UserJpaRepository;
+import com.alertmns.organisation.domain.model.GroupKind;
 import com.alertmns.organisation.domain.model.MembershipInvitationStatus;
 import com.alertmns.organisation.domain.model.OrganisationName;
 import com.alertmns.organisation.domain.port.outgoing.OrganisationRepository;
+import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.GroupJpaEntity;
+import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.GroupJpaRepository;
 import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.MemberJpaRepository;
 import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.MembershipInvitationJpaRepository;
 import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.OrganisationJpaRepository;
+import com.alertmns.shared.OrganisationId;
 import com.alertmns.shared.UserId;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -56,6 +60,7 @@ import static org.mockito.Mockito.verify;
 @TestPropertySource(properties = {
         "alertmns.bootstrap.enabled=true",
         "alertmns.bootstrap.organisation.name=Bootstrap Test Org",
+        "alertmns.bootstrap.general-group.name=Canal Général Test",
         "alertmns.bootstrap.admin.email=bootstrap.admin@alertmns.local",
         "alertmns.bootstrap.admin.first-name=Bootstrap",
         "alertmns.bootstrap.admin.last-name=Admin"
@@ -63,6 +68,7 @@ import static org.mockito.Mockito.verify;
 class BootstrapIntegrationTest {
 
     private static final String EXPECTED_ORG_NAME = "Bootstrap Test Org";
+    private static final String EXPECTED_GENERAL_GROUP_NAME = "Canal Général Test";
     private static final String EXPECTED_ADMIN_EMAIL = "bootstrap.admin@alertmns.local";
 
     @ServiceConnection
@@ -97,6 +103,9 @@ class BootstrapIntegrationTest {
     private MembershipInvitationJpaRepository membershipInvitationJpaRepository;
 
     @Autowired
+    private GroupJpaRepository groupJpaRepository;
+
+    @Autowired
     private ActivationTokenJpaRepository activationTokenJpaRepository;
 
     @Autowired
@@ -121,6 +130,7 @@ class BootstrapIntegrationTest {
         membershipInvitationJpaRepository.deleteAll();
         memberJpaRepository.deleteAll();
         userJpaRepository.deleteAll();
+        groupJpaRepository.deleteAll();
         organisationJpaRepository.deleteAll();
     }
 
@@ -155,6 +165,18 @@ class BootstrapIntegrationTest {
     }
 
     @Test
+    @DisplayName("First boot provisions the GENERAL group for the organisation with the configured name")
+    void firstBootProvisionsGeneralGroup() {
+        OrganisationId orgId = organisationRepository.findByName(OrganisationName.of(EXPECTED_ORG_NAME))
+                .orElseThrow().id();
+
+        GroupJpaEntity general = groupJpaRepository
+                .findByOrganisationIdAndKind(orgId.value(), GroupKind.GENERAL)
+                .orElseThrow();
+        assertThat(general.getName()).isEqualTo(EXPECTED_GENERAL_GROUP_NAME);
+    }
+
+    @Test
     @DisplayName("Second boot is idempotent: no duplicate aggregates, magic-link reissued because admin is still PENDING")
     void secondBootIsIdempotentAndReissuesMagicLink() {
         // État initial : le bootstrap a tourné une fois au démarrage du contexte.
@@ -162,6 +184,7 @@ class BootstrapIntegrationTest {
         long orgCountBefore = organisationJpaRepository.count();
         long userCountBefore = userJpaRepository.count();
         long memberCountBefore = memberJpaRepository.count();
+        long groupCountBefore = groupJpaRepository.count();
 
         Mockito.clearInvocations(mailer);
         bootstrap.run();
@@ -175,6 +198,9 @@ class BootstrapIntegrationTest {
         assertThat(memberJpaRepository.count())
                 .as("No duplicate admin member must be created")
                 .isEqualTo(memberCountBefore);
+        assertThat(groupJpaRepository.count())
+                .as("No duplicate group must be created")
+                .isEqualTo(groupCountBefore);
 
         List<ActivationTokenJpaEntity> tokens = activationTokenJpaRepository.findAll();
         assertThat(tokens)

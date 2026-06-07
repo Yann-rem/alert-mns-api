@@ -15,12 +15,14 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  *
  * @param enabled      interrupteur global du bootstrap
  * @param organisation paramètres de l'unique organisation à provisionner
+ * @param generalGroup paramètres du canal général provisionné au bootstrap
  * @param admin        paramètres de l'admin initial
  */
 @ConfigurationProperties(prefix = "alertmns.bootstrap")
 public record BootstrapProperties(
         boolean enabled,
         Organisation organisation,
+        GeneralGroup generalGroup,
         Admin admin
 ) {
 
@@ -28,6 +30,11 @@ public record BootstrapProperties(
      * @param name nom métier de l'organisation (unique)
      */
     public record Organisation(@NotBlank String name) {}
+
+    /**
+     * @param name nom du canal général provisionné au bootstrap
+     */
+    public record GeneralGroup(@NotBlank String name) {}
 
     /**
      * @param email     email de l'admin initial

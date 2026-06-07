@@ -3,6 +3,8 @@ alertmns:
     enabled: true
     organisation:
       name: "Metz Numeric School"
+    general-group:
+      name: "Général"
     admin:
       email: "remyyannick@sfr.fr"
       first-name: "Yannick"

@@ -6,8 +6,10 @@ import com.alertmns.identity.domain.port.incoming.command.IssueActivationTokenCo
 import com.alertmns.identity.domain.port.outgoing.UserRepository;
 import com.alertmns.organisation.domain.model.MemberRole;
 import com.alertmns.organisation.domain.model.OrganisationName;
+import com.alertmns.organisation.domain.port.incoming.CreateGeneralGroupUseCase;
 import com.alertmns.organisation.domain.port.incoming.CreateOrganisationUseCase;
 import com.alertmns.organisation.domain.port.incoming.IssueMembershipInvitationUseCase;
+import com.alertmns.organisation.domain.port.incoming.command.CreateGeneralGroupCommand;
 import com.alertmns.organisation.domain.port.incoming.command.CreateOrganisationCommand;
 import com.alertmns.organisation.domain.port.incoming.command.IssueMembershipInvitationCommand;
 import com.alertmns.organisation.domain.port.outgoing.OrganisationRepository;
@@ -25,13 +27,14 @@ import java.util.Objects;
  * <p>À chaque appel à {@link #run()}, garantit, dans cet ordre :</p>
  * <ol>
  *     <li>L'unique {@code Organisation} existe (créée si absente, par nom configuré).</li>
+ *     <li>Le groupe {@code GENERAL} (canal « Général ») de l'organisation existe (créé si absent ; no-op sinon).</li>
  *     <li>L'admin initial est invité (création de l'invitation + User PENDING si absent ; no-op si User déjà
  *     présent).</li>
  *     <li>Si l'admin n'est pas encore {@code ACTIVE}, réémet un magic-link d'activation (self-healing).</li>
  * </ol>
  *
  * <p><b>Idempotence</b> : chaque étape vérifie l'existence préalable. Aucun doublon n'est créé. Au second démarrage,
- * seules les vérifications passent ; la 3ᵉ étape réémet un token <em>tant que</em> l'admin n'est pas {@code ACTIVE},
+ * seules les vérifications passent ; la 4ᵉ étape réémet un token <em>tant que</em> l'admin n'est pas {@code ACTIVE},
  * puis devient no-op.</p>
  *
  * <p><b>Activation/désactivation</b> : via la propriété {@code alertmns.bootstrap.enabled}. Désactivé en environnement
@@ -45,6 +48,7 @@ public final class OrganisationBootstrap {
     private final OrganisationRepository organisationRepository;
     private final UserRepository userRepository;
     private final CreateOrganisationUseCase createOrganisation;
+    private final CreateGeneralGroupUseCase createGeneralGroup;
     private final IssueMembershipInvitationUseCase issueMembershipInvitation;
     private final IssueActivationTokenUseCase issueActivationToken;
 
@@ -53,6 +57,7 @@ public final class OrganisationBootstrap {
             OrganisationRepository organisationRepository,
             UserRepository userRepository,
             CreateOrganisationUseCase createOrganisation,
+            CreateGeneralGroupUseCase createGeneralGroup,
             IssueMembershipInvitationUseCase issueMembershipInvitation,
             IssueActivationTokenUseCase issueActivationToken
     ) {
@@ -61,6 +66,7 @@ public final class OrganisationBootstrap {
                 organisationRepository, "organisationRepository must not be null");
         this.userRepository = Objects.requireNonNull(userRepository, "userRepository must not be null");
         this.createOrganisation = Objects.requireNonNull(createOrganisation, "createOrganisation must not be null");
+        this.createGeneralGroup = Objects.requireNonNull(createGeneralGroup, "createGeneralGroup must not be null");
         this.issueMembershipInvitation = Objects.requireNonNull(
                 issueMembershipInvitation, "issueMembershipInvitation must not be null");
         this.issueActivationToken = Objects.requireNonNull(
@@ -74,6 +80,7 @@ public final class OrganisationBootstrap {
         }
 
         OrganisationId organisationId = ensureOrganisation();
+        ensureGeneralGroup(organisationId);
         UserId adminId = ensureAdminInvitation(organisationId);
         reissueMagicLinkIfAdminNotActive(adminId);
     }
@@ -89,6 +96,15 @@ public final class OrganisationBootstrap {
                     log.info("Organisation created with name {}", name.value());
                     return createOrganisation.create(new CreateOrganisationCommand(name.value()));
                 });
+    }
+
+    private void ensureGeneralGroup(OrganisationId organisationId) {
+        log.info("Ensuring general group '{}' for organisation {}",
+                properties.generalGroup().name(), organisationId.value());
+        createGeneralGroup.create(new CreateGeneralGroupCommand(
+                organisationId.value().toString(),
+                properties.generalGroup().name()
+        ));
     }
 
     private UserId ensureAdminInvitation(OrganisationId organisationId) {

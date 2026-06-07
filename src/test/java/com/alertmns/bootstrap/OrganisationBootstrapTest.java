@@ -7,8 +7,10 @@ import com.alertmns.identity.domain.port.incoming.command.IssueActivationTokenCo
 import com.alertmns.identity.domain.port.outgoing.UserRepository;
 import com.alertmns.organisation.domain.model.MemberRole;
 import com.alertmns.organisation.domain.model.Organisation;
+import com.alertmns.organisation.domain.port.incoming.CreateGeneralGroupUseCase;
 import com.alertmns.organisation.domain.port.incoming.CreateOrganisationUseCase;
 import com.alertmns.organisation.domain.port.incoming.IssueMembershipInvitationUseCase;
+import com.alertmns.organisation.domain.port.incoming.command.CreateGeneralGroupCommand;
 import com.alertmns.organisation.domain.port.incoming.command.CreateOrganisationCommand;
 import com.alertmns.organisation.domain.port.incoming.command.IssueMembershipInvitationCommand;
 import com.alertmns.organisation.domain.port.outgoing.OrganisationRepository;
@@ -43,6 +45,7 @@ import static org.mockito.Mockito.when;
 class OrganisationBootstrapTest {
 
     private static final String ORG_NAME = "Metz Numeric School";
+    private static final String GENERAL_GROUP_NAME = "Général";
     private static final String ADMIN_EMAIL = "admin@metz-numeric-school.com";
     private static final String ADMIN_FIRST_NAME = "Admin";
     private static final String ADMIN_LAST_NAME = "Système";
@@ -58,6 +61,9 @@ class OrganisationBootstrapTest {
     CreateOrganisationUseCase createOrganisation;
 
     @Mock
+    CreateGeneralGroupUseCase createGeneralGroup;
+
+    @Mock
     IssueMembershipInvitationUseCase issueMembershipInvitation;
 
     @Mock
@@ -67,9 +73,14 @@ class OrganisationBootstrapTest {
 
     @BeforeEach
     void setUp() {
-        enabledProperties = new BootstrapProperties(
-                true,
+        enabledProperties = properties(true);
+    }
+
+    private BootstrapProperties properties(boolean enabled) {
+        return new BootstrapProperties(
+                enabled,
                 new BootstrapProperties.Organisation(ORG_NAME),
+                new BootstrapProperties.GeneralGroup(GENERAL_GROUP_NAME),
                 new BootstrapProperties.Admin(ADMIN_EMAIL, ADMIN_FIRST_NAME, ADMIN_LAST_NAME)
         );
     }
@@ -80,9 +91,27 @@ class OrganisationBootstrapTest {
                 organisationRepository,
                 userRepository,
                 createOrganisation,
+                createGeneralGroup,
                 issueMembershipInvitation,
                 issueActivationToken
         );
+    }
+
+    /** Prépare les stubs d'un premier boot (BD vide, admin créé puis PENDING). */
+    private UserId stubFirstBoot(OrganisationId createdOrgId) {
+        UserId createdUserId = UserId.generate();
+        User pendingAdmin = mock(User.class);
+        when(pendingAdmin.id()).thenReturn(createdUserId);
+        when(pendingAdmin.status()).thenReturn(UserStatus.PENDING);
+
+        when(organisationRepository.findByName(any())).thenReturn(Optional.empty());
+        when(createOrganisation.create(any())).thenReturn(createdOrgId);
+        when(userRepository.findByEmail(ADMIN_EMAIL_VO))
+                .thenReturn(Optional.empty())
+                .thenReturn(Optional.of(pendingAdmin));
+        when(issueMembershipInvitation.issue(any())).thenReturn(MembershipInvitationId.generate());
+        when(userRepository.findById(createdUserId)).thenReturn(Optional.of(pendingAdmin));
+        return createdUserId;
     }
 
     @Nested
@@ -92,18 +121,13 @@ class OrganisationBootstrapTest {
         @Test
         @DisplayName("should be a no-op when alertmns.bootstrap.enabled=false")
         void shouldBeNoOpWhenDisabled() {
-            BootstrapProperties disabled = new BootstrapProperties(
-                    false,
-                    new BootstrapProperties.Organisation(ORG_NAME),
-                    new BootstrapProperties.Admin(ADMIN_EMAIL, ADMIN_FIRST_NAME, ADMIN_LAST_NAME)
-            );
-
-            newBootstrap(disabled).run();
+            newBootstrap(properties(false)).run();
 
             verifyNoInteractions(
                     organisationRepository,
                     userRepository,
                     createOrganisation,
+                    createGeneralGroup,
                     issueMembershipInvitation,
                     issueActivationToken
             );
@@ -118,20 +142,7 @@ class OrganisationBootstrapTest {
         @DisplayName("should create the organisation, issue the admin invitation, and rely on the listener for the magic-link")
         void shouldCreateOrgAndIssueAdminInvitation() {
             OrganisationId createdOrgId = OrganisationId.generate();
-            UserId createdUserId = UserId.generate();
-            User pendingAdmin = mock(User.class);
-            when(pendingAdmin.id()).thenReturn(createdUserId);
-            when(pendingAdmin.status()).thenReturn(UserStatus.PENDING);
-
-            when(organisationRepository.findByName(any())).thenReturn(Optional.empty());
-            when(createOrganisation.create(any())).thenReturn(createdOrgId);
-            // findByEmail is called twice in ensureAdminInvitation: once before issue (empty),
-            // once after issue (returns the newly-created user).
-            when(userRepository.findByEmail(ADMIN_EMAIL_VO))
-                    .thenReturn(Optional.empty())
-                    .thenReturn(Optional.of(pendingAdmin));
-            when(issueMembershipInvitation.issue(any())).thenReturn(MembershipInvitationId.generate());
-            when(userRepository.findById(createdUserId)).thenReturn(Optional.of(pendingAdmin));
+            stubFirstBoot(createdOrgId);
 
             newBootstrap(enabledProperties).run();
 
@@ -150,21 +161,25 @@ class OrganisationBootstrapTest {
         }
 
         @Test
+        @DisplayName("should provision the general group for the organisation using the configured name")
+        void shouldProvisionGeneralGroup() {
+            OrganisationId createdOrgId = OrganisationId.generate();
+            stubFirstBoot(createdOrgId);
+
+            newBootstrap(enabledProperties).run();
+
+            ArgumentCaptor<CreateGeneralGroupCommand> ggCmd =
+                    ArgumentCaptor.forClass(CreateGeneralGroupCommand.class);
+            verify(createGeneralGroup).create(ggCmd.capture());
+            assertThat(ggCmd.getValue().organisationId()).isEqualTo(createdOrgId.value().toString());
+            assertThat(ggCmd.getValue().name()).isEqualTo(GENERAL_GROUP_NAME);
+        }
+
+        @Test
         @DisplayName("should reissue a magic-link because the freshly created admin is still PENDING")
         void shouldReissueMagicLinkWhenAdminIsPending() {
             OrganisationId createdOrgId = OrganisationId.generate();
-            UserId createdUserId = UserId.generate();
-            User pendingAdmin = mock(User.class);
-            when(pendingAdmin.id()).thenReturn(createdUserId);
-            when(pendingAdmin.status()).thenReturn(UserStatus.PENDING);
-
-            when(organisationRepository.findByName(any())).thenReturn(Optional.empty());
-            when(createOrganisation.create(any())).thenReturn(createdOrgId);
-            when(userRepository.findByEmail(ADMIN_EMAIL_VO))
-                    .thenReturn(Optional.empty())
-                    .thenReturn(Optional.of(pendingAdmin));
-            when(issueMembershipInvitation.issue(any())).thenReturn(MembershipInvitationId.generate());
-            when(userRepository.findById(createdUserId)).thenReturn(Optional.of(pendingAdmin));
+            UserId createdUserId = stubFirstBoot(createdOrgId);
 
             newBootstrap(enabledProperties).run();
 
@@ -175,26 +190,17 @@ class OrganisationBootstrapTest {
         }
 
         @Test
-        @DisplayName("should execute the 3 bootstrap steps in order: organisation → invitation → reissue")
+        @DisplayName("should execute the steps in order: organisation → general group → invitation → reissue")
         void shouldExecuteStepsInOrder() {
             OrganisationId createdOrgId = OrganisationId.generate();
-            UserId createdUserId = UserId.generate();
-            User pendingAdmin = mock(User.class);
-            when(pendingAdmin.id()).thenReturn(createdUserId);
-            when(pendingAdmin.status()).thenReturn(UserStatus.PENDING);
-
-            when(organisationRepository.findByName(any())).thenReturn(Optional.empty());
-            when(createOrganisation.create(any())).thenReturn(createdOrgId);
-            when(userRepository.findByEmail(ADMIN_EMAIL_VO))
-                    .thenReturn(Optional.empty())
-                    .thenReturn(Optional.of(pendingAdmin));
-            when(issueMembershipInvitation.issue(any())).thenReturn(MembershipInvitationId.generate());
-            when(userRepository.findById(createdUserId)).thenReturn(Optional.of(pendingAdmin));
+            stubFirstBoot(createdOrgId);
 
             newBootstrap(enabledProperties).run();
 
-            InOrder inOrder = inOrder(createOrganisation, issueMembershipInvitation, issueActivationToken);
+            InOrder inOrder = inOrder(
+                    createOrganisation, createGeneralGroup, issueMembershipInvitation, issueActivationToken);
             inOrder.verify(createOrganisation).create(any());
+            inOrder.verify(createGeneralGroup).create(any());
             inOrder.verify(issueMembershipInvitation).issue(any());
             inOrder.verify(issueActivationToken).issue(any());
         }
@@ -290,8 +296,8 @@ class OrganisationBootstrapTest {
     class SecondBootAdminActive {
 
         @Test
-        @DisplayName("should be fully idempotent: no creation, no reissue")
-        void shouldBeFullyNoOpWhenAdminActive() {
+        @DisplayName("should not recreate the organisation nor reissue a magic-link")
+        void shouldNotRecreateNorReissueWhenAdminActive() {
             OrganisationId existingOrgId = OrganisationId.generate();
             Organisation existingOrg = mock(Organisation.class);
             when(existingOrg.id()).thenReturn(existingOrgId);
@@ -309,6 +315,8 @@ class OrganisationBootstrapTest {
             verify(createOrganisation, never()).create(any());
             verify(issueMembershipInvitation, never()).issue(any());
             verifyNoInteractions(issueActivationToken);
+            // ensureGeneralGroup is still invoked every boot — idempotence is handled inside the service.
+            verify(createGeneralGroup).create(any());
         }
     }
 
@@ -321,7 +329,7 @@ class OrganisationBootstrapTest {
         void shouldRejectNullProperties() {
             assertThrows(NullPointerException.class, () -> new OrganisationBootstrap(
                     null, organisationRepository, userRepository,
-                    createOrganisation, issueMembershipInvitation, issueActivationToken));
+                    createOrganisation, createGeneralGroup, issueMembershipInvitation, issueActivationToken));
         }
 
         @Test
@@ -329,7 +337,7 @@ class OrganisationBootstrapTest {
         void shouldRejectNullOrganisationRepository() {
             assertThrows(NullPointerException.class, () -> new OrganisationBootstrap(
                     enabledProperties, null, userRepository,
-                    createOrganisation, issueMembershipInvitation, issueActivationToken));
+                    createOrganisation, createGeneralGroup, issueMembershipInvitation, issueActivationToken));
         }
 
         @Test
@@ -337,7 +345,7 @@ class OrganisationBootstrapTest {
         void shouldRejectNullUserRepository() {
             assertThrows(NullPointerException.class, () -> new OrganisationBootstrap(
                     enabledProperties, organisationRepository, null,
-                    createOrganisation, issueMembershipInvitation, issueActivationToken));
+                    createOrganisation, createGeneralGroup, issueMembershipInvitation, issueActivationToken));
         }
 
         @Test
@@ -345,7 +353,15 @@ class OrganisationBootstrapTest {
         void shouldRejectNullCreateOrganisationUseCase() {
             assertThrows(NullPointerException.class, () -> new OrganisationBootstrap(
                     enabledProperties, organisationRepository, userRepository,
-                    null, issueMembershipInvitation, issueActivationToken));
+                    null, createGeneralGroup, issueMembershipInvitation, issueActivationToken));
+        }
+
+        @Test
+        @DisplayName("should reject null CreateGeneralGroupUseCase")
+        void shouldRejectNullCreateGeneralGroupUseCase() {
+            assertThrows(NullPointerException.class, () -> new OrganisationBootstrap(
+                    enabledProperties, organisationRepository, userRepository,
+                    createOrganisation, null, issueMembershipInvitation, issueActivationToken));
         }
 
         @Test
@@ -353,7 +369,7 @@ class OrganisationBootstrapTest {
         void shouldRejectNullIssueMembershipInvitationUseCase() {
             assertThrows(NullPointerException.class, () -> new OrganisationBootstrap(
                     enabledProperties, organisationRepository, userRepository,
-                    createOrganisation, null, issueActivationToken));
+                    createOrganisation, createGeneralGroup, null, issueActivationToken));
         }
 
         @Test
@@ -361,7 +377,7 @@ class OrganisationBootstrapTest {
         void shouldRejectNullIssueActivationTokenUseCase() {
             assertThrows(NullPointerException.class, () -> new OrganisationBootstrap(
                     enabledProperties, organisationRepository, userRepository,
-                    createOrganisation, issueMembershipInvitation, null));
+                    createOrganisation, createGeneralGroup, issueMembershipInvitation, null));
         }
     }
 }
