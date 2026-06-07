@@ -8,9 +8,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      DOCKER_HOST: "unix:///var/run/docker.sock"
-      TESTCONTAINERS_RYUK_DISABLED: "true"
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
