@@ -4,6 +4,7 @@ import com.alertmns.identity.domain.port.incoming.RegisterPendingUserUseCase;
 import com.alertmns.identity.domain.port.outgoing.UserRepository;
 import com.alertmns.organisation.application.AcceptMembershipInvitationService;
 import com.alertmns.organisation.application.AddMemberToGroupService;
+import com.alertmns.organisation.application.CreateGeneralGroupService;
 import com.alertmns.organisation.application.CreateGroupService;
 import com.alertmns.organisation.application.CreateOrganisationService;
 import com.alertmns.organisation.application.IssueMembershipInvitationService;
@@ -77,6 +78,15 @@ public class OrganisationBeanConfig {
             Clock clock
     ) {
         return new CreateOrganisationService(repository, publisher, clock);
+    }
+
+    @Bean
+    public CreateGeneralGroupService createGeneralGroupService(
+            GroupRepository repository,
+            EventPublisher publisher,
+            Clock clock
+    ) {
+        return new CreateGeneralGroupService(repository, publisher, clock);
     }
 
     @Bean
@@ -164,6 +174,8 @@ public class OrganisationBeanConfig {
             AcceptMembershipInvitationUseCase acceptMembershipInvitationUseCase
     ) {
         return new AcceptMembershipInvitationOnUserActivatedListener(
-                invitationRepository, acceptMembershipInvitationUseCase);
+                invitationRepository,
+                acceptMembershipInvitationUseCase
+        );
     }
 }
