@@ -117,9 +117,11 @@
                     <argLine>
                         -javaagent:${settings.localRepository}/org/mockito/mockito-core/${mockito.version}/mockito-core-${mockito.version}.jar
                     </argLine>
-                    <!--  Force docker-java à parler l'API Docker 1.52 (compatible Docker Engine 29+). -->
+                    <!--  Force docker-java à parler une version d'API supportée par le daemon.
+                          1.48 = max du runner CI (Docker Engine 28) et rétrocompatible avec Docker 29 en local.
+                          Ne jamais forcer une version PLUS récente que le Docker cible (sinon le daemon la rejette). -->
                     <systemPropertyVariables>
-                        <api.version>1.52</api.version>
+                        <api.version>1.48</api.version>
                     </systemPropertyVariables>
                 </configuration>
             </plugin>
