@@ -2,7 +2,6 @@ package com.alertmns.identity.infrastructure.adapter.incoming.web.exception;
 
 import com.alertmns.identity.domain.exception.ActivationTokenExpiredException;
 import com.alertmns.identity.domain.exception.ActivationTokenNotFoundException;
-import com.alertmns.identity.domain.exception.BannedUserCannotBeReactivatedException;
 import com.alertmns.identity.domain.exception.EmailAlreadyExistsException;
 import com.alertmns.identity.domain.exception.UserNotFoundException;
 import org.springframework.http.HttpStatus;
@@ -34,11 +33,6 @@ public class IamExceptionHandler {
     @ExceptionHandler(ActivationTokenExpiredException.class)
     public ProblemDetail handleActivationTokenExpired(ActivationTokenExpiredException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.GONE, "Activation link is no longer valid");
-    }
-
-    @ExceptionHandler(BannedUserCannotBeReactivatedException.class)
-    public ProblemDetail handleBannedUserCannotBeReactivated(BannedUserCannotBeReactivatedException ex) {
-        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
     }
 
     @ExceptionHandler(BadCredentialsException.class)

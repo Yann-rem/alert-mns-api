@@ -23,7 +23,7 @@ import java.util.Objects;
  * <p>Mapping des statuts :</p>
  * <ul>
  *   <li>{@link #isEnabled()} : compte ACTIVE et non anonymisé</li>
- *   <li>{@link #isAccountNonLocked()} : compte ni SUSPENDED ni BANNED</li>
+ *   <li>{@link #isAccountNonLocked()} : compte non SUSPENDED</li>
  * </ul>
  */
 public final class DomainUserDetails implements UserDetails {
@@ -65,7 +65,7 @@ public final class DomainUserDetails implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return user.status() != UserStatus.SUSPENDED && user.status() != UserStatus.BANNED;
+        return user.status() != UserStatus.SUSPENDED;
     }
 
     @Override

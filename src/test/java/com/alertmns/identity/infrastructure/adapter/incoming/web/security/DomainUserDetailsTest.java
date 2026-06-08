@@ -129,7 +129,7 @@ class DomainUserDetailsTest {
         }
 
         @ParameterizedTest
-        @EnumSource(value = UserStatus.class, names = {"PENDING", "SUSPENDED", "BANNED"})
+        @EnumSource(value = UserStatus.class, names = {"PENDING", "SUSPENDED"})
         @DisplayName("should be false when status is not ACTIVE")
         void shouldBeFalseWhenNotActive(UserStatus status) {
             DomainUserDetails details = new DomainUserDetails(
@@ -153,12 +153,11 @@ class DomainUserDetailsTest {
             assertTrue(details.isAccountNonLocked());
         }
 
-        @ParameterizedTest
-        @EnumSource(value = UserStatus.class, names = {"SUSPENDED", "BANNED"})
-        @DisplayName("should be false when status is SUSPENDED or BANNED")
-        void shouldBeFalseWhenSuspendedOrBanned(UserStatus status) {
+        @Test
+        @DisplayName("should be false when status is SUSPENDED")
+        void shouldBeFalseWhenSuspended() {
             DomainUserDetails details = new DomainUserDetails(
-                    userWith(status, false), ROLE_MEMBER);
+                    userWith(UserStatus.SUSPENDED, false), ROLE_MEMBER);
 
             assertFalse(details.isAccountNonLocked());
         }
