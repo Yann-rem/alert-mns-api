@@ -5,6 +5,5 @@ package com.alertmns.organisation.domain.model;
  */
 public enum MemberStatus {
     ACTIVE,
-    SUSPENDED,
-    BANNED
+    SUSPENDED
 }

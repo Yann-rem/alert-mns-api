@@ -6,7 +6,6 @@ import com.alertmns.identity.domain.event.UserActivated;
 import com.alertmns.identity.domain.event.UserReactivated;
 import com.alertmns.identity.domain.event.UserRegistered;
 import com.alertmns.identity.domain.event.UserSuspended;
-import com.alertmns.identity.domain.exception.BannedUserCannotBeReactivatedException;
 import com.alertmns.shared.AggregateRoot;
 import com.alertmns.shared.Email;
 import com.alertmns.shared.UserId;
@@ -17,11 +16,11 @@ import java.util.Objects;
 /**
  * Agrégat racine représentant un utilisateur dans le BC Identity.
  *
- * <p>Représente un utilisateur avec son cycle de vie et ses règles métier. Un utilisateur suit le cycle :
- * PENDING → ACTIVE → SUSPENDED → ACTIVE (réactivation). BANNED est terminal.</p>
+ * <p>Représente un utilisateur avec son cycle de vie et ses règles métier. Un utilisateur suit le cycle : PENDING →
+ * ACTIVE → SUSPENDED → ACTIVE (réactivation).</p>
  *
- * <p>L'attribut {@code isAnonymized} est orthogonal au statut : il marque l'effacement effectif des PII pour
- * conformité RGPD.</p>
+ * <p>L'attribut {@code isAnonymized} est orthogonal au statut : il marque l'effacement effectif des données
+ * personnelles pour conformité RGPD.</p>
  */
 public final class User extends AggregateRoot {
 
@@ -168,18 +167,12 @@ public final class User extends AggregateRoot {
     /**
      * Réactive un compte suspendu (SUSPENDED → ACTIVE).
      *
-     * <p>Le statut {@link UserStatus#BANNED} est terminal : la réactivation y est refusée via une exception métier nommée.</p>
-     *
      * <p>Émet {@link UserReactivated}.</p>
      *
      * @param now instant de l'opération
-     * @throws BannedUserCannotBeReactivatedException si le statut est {@link UserStatus#BANNED}
-     * @throws IllegalStateException                  si le statut n'est ni {@link UserStatus#SUSPENDED} ni {@link UserStatus#BANNED}
+     * @throws IllegalStateException si le statut n'est pas {@link UserStatus#SUSPENDED}
      */
     public void reactivate(Instant now) {
-        if (status == UserStatus.BANNED) {
-            throw new BannedUserCannotBeReactivatedException(id);
-        }
         requireStatus(UserStatus.SUSPENDED, "reactivate");
         status = UserStatus.ACTIVE;
         registerEvent(new UserReactivated(id, now));

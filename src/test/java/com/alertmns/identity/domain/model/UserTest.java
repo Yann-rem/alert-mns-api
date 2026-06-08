@@ -6,7 +6,6 @@ import com.alertmns.identity.domain.event.UserActivated;
 import com.alertmns.identity.domain.event.UserReactivated;
 import com.alertmns.identity.domain.event.UserRegistered;
 import com.alertmns.identity.domain.event.UserSuspended;
-import com.alertmns.identity.domain.exception.BannedUserCannotBeReactivatedException;
 import com.alertmns.shared.DomainEvent;
 import com.alertmns.shared.Email;
 import com.alertmns.shared.UserId;
@@ -235,23 +234,6 @@ class UserTest {
         void reactivateShouldRejectNonSUSPENDEDAccount() {
             assertThrows(IllegalStateException.class, () -> user.reactivate(NOW));
         }
-
-        @Test
-        @DisplayName("reactivate should reject BANNED account with named domain exception")
-        void reactivateShouldRejectBANNEDAccount() {
-            User bannedUser = User.reconstitute(
-                    UserId.generate(),
-                    Email.of("banned@example.com"),
-                    HashedPassword.of(BCRYPT_HASH),
-                    Profile.of(FirstName.of("John"), LastName.of("Doe")),
-                    UserStatus.BANNED,
-                    false,
-                    NOW
-            );
-
-            assertThrows(BannedUserCannotBeReactivatedException.class, () -> bannedUser.reactivate(NOW));
-            assertEquals(UserStatus.BANNED, bannedUser.status());
-        }
     }
 
     @Nested
@@ -358,23 +340,6 @@ class UserTest {
             UserReactivated event = assertInstanceOf(UserReactivated.class, events.getFirst());
             assertEquals(user.id(), event.userId());
             assertEquals(LATER, event.occurredOn());
-        }
-
-        @Test
-        @DisplayName("reactivate on BANNED account should not emit any event")
-        void reactivateOnBANNEDShouldNotEmitAnyEvent() {
-            User bannedUser = User.reconstitute(
-                    UserId.generate(),
-                    Email.of("banned@example.com"),
-                    HashedPassword.of(BCRYPT_HASH),
-                    Profile.of(FirstName.of("John"), LastName.of("Doe")),
-                    UserStatus.BANNED,
-                    false,
-                    NOW
-            );
-
-            assertThrows(BannedUserCannotBeReactivatedException.class, () -> bannedUser.reactivate(NOW));
-            assertTrue(bannedUser.pullDomainEvents().isEmpty());
         }
 
         @Test
