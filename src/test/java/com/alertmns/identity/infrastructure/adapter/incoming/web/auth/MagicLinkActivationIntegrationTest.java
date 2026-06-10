@@ -10,7 +10,11 @@ import com.alertmns.identity.infrastructure.adapter.outgoing.persistence.Activat
 import com.alertmns.identity.infrastructure.adapter.outgoing.persistence.ActivationTokenJpaRepository;
 import com.alertmns.identity.infrastructure.adapter.outgoing.persistence.UserJpaEntity;
 import com.alertmns.identity.infrastructure.adapter.outgoing.persistence.UserJpaRepository;
+import com.alertmns.organisation.domain.model.GroupKind;
 import com.alertmns.organisation.domain.model.MemberStatus;
+import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.GroupJpaEntity;
+import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.GroupJpaRepository;
+import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.GroupMembershipJpaRepository;
 import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.MemberJpaEntity;
 import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.MemberJpaRepository;
 import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.MembershipInvitationJpaRepository;
@@ -66,6 +70,12 @@ class MagicLinkActivationIntegrationTest extends AbstractAuthIntegrationTest {
 
     @Autowired
     private MembershipInvitationJpaRepository membershipInvitationJpaRepository;
+
+    @Autowired
+    private GroupJpaRepository groupJpaRepository;
+
+    @Autowired
+    private GroupMembershipJpaRepository groupMembershipJpaRepository;
 
     /**
      * Nettoie les artefacts spécifiques à ce test (tokens + invitations). Les Members et Users sont nettoyés par
@@ -152,6 +162,14 @@ class MagicLinkActivationIntegrationTest extends AbstractAuthIntegrationTest {
         // Cascade UserActivated → AcceptMembershipInvitation → Member ACTIVE créé par l'acceptation
         MemberJpaEntity member = memberJpaRepository.findByUserId(pending.userId().value()).orElseThrow();
         assertThat(member.getStatus()).isEqualTo(MemberStatus.ACTIVE);
+
+        // Cascade MemberJoined → AddMemberToGeneralGroup : le nouveau membre est rattaché au canal général
+        GroupJpaEntity general = groupJpaRepository
+                .findByOrganisationIdAndKind(UUID.fromString(TestUserFactory.DEFAULT_ORGANISATION_ID), GroupKind.GENERAL)
+                .orElseThrow();
+        assertThat(groupMembershipJpaRepository.findByGroupIdAndMemberId(general.getId(), member.getId()))
+                .as("the new member must be auto-added to the GENERAL group")
+                .isPresent();
     }
 
     @Test
