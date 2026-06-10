@@ -5,11 +5,16 @@ import com.alertmns.identity.application.SuspendUserService;
 import com.alertmns.identity.domain.port.outgoing.PasswordHasher;
 import com.alertmns.identity.domain.port.outgoing.UserRepository;
 import com.alertmns.identity.infrastructure.adapter.outgoing.persistence.UserJpaRepository;
+import com.alertmns.organisation.domain.port.incoming.CreateGeneralGroupUseCase;
 import com.alertmns.organisation.domain.port.incoming.IssueMembershipInvitationUseCase;
+import com.alertmns.organisation.domain.port.incoming.command.CreateGeneralGroupCommand;
 import com.alertmns.organisation.domain.port.outgoing.MemberRepository;
+import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.GroupJpaRepository;
+import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.GroupMembershipJpaRepository;
 import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.MemberJpaRepository;
 import com.alertmns.shared.EventPublisher;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -70,14 +75,38 @@ abstract class AbstractAuthIntegrationTest {
     @Autowired
     private MemberJpaRepository memberJpaRepository;
 
+    @Autowired
+    private CreateGeneralGroupUseCase createGeneralGroupUseCase;
+
+    @Autowired
+    private GroupJpaRepository groupJpaRepository;
+
+    @Autowired
+    private GroupMembershipJpaRepository groupMembershipJpaRepository;
+
     /**
-     * Nettoie d'abord les Members (cross-BC dependency vers la table users via {@code userId}) puis les users.
-     * Depuis D14, {@link TestUserFactory#registerActive(String, String)} et {@code registerActiveAdmin} créent un
-     * Member pour le sourcing des autorités Spring Security : le cleanup est donc obligatoire entre tests.
+     * Provisionne le GeneralGroup de l'organisation de test avant chaque test, à l'image du bootstrap en prod.
+     *
+     * <p>Indispensable depuis la cascade {@code MemberJoined → AddMemberToGeneralGroup} : toute création de Member
+     * (via les fixtures {@code registerActive*} ou via le redeem du magic-link) résout le GENERAL group de
+     * l'organisation et échoue en {@code IllegalStateException} s'il est absent. L'opération est idempotente.</p>
+     */
+    @BeforeEach
+    void provisionGeneralGroup() {
+        createGeneralGroupUseCase.create(
+                new CreateGeneralGroupCommand(TestUserFactory.DEFAULT_ORGANISATION_ID, "Général"));
+    }
+
+    /**
+     * Nettoie dans l'ordre des dépendances : adhésions de groupe → Members → Groups → Users.
+     * Depuis D14, les fixtures créent un Member pour le sourcing des autorités Spring Security ; depuis la cascade
+     * GeneralGroup, le redeem crée aussi un GroupMembership et un GeneralGroup est provisionné en {@link BeforeEach}.
      */
     @AfterEach
     void cleanDatabase() {
+        groupMembershipJpaRepository.deleteAll();
         memberJpaRepository.deleteAll();
+        groupJpaRepository.deleteAll();
         userJpaRepository.deleteAll();
     }
 

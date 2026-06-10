@@ -13,12 +13,14 @@ import com.alertmns.organisation.application.RemoveMemberFromGroupService;
 import com.alertmns.organisation.application.RenameGroupService;
 import com.alertmns.organisation.application.SuspendMemberService;
 import com.alertmns.organisation.domain.port.incoming.AcceptMembershipInvitationUseCase;
+import com.alertmns.organisation.domain.port.incoming.AddMemberToGroupUseCase;
 import com.alertmns.organisation.domain.port.outgoing.GroupMembershipRepository;
 import com.alertmns.organisation.domain.port.outgoing.GroupRepository;
 import com.alertmns.organisation.domain.port.outgoing.MemberRepository;
 import com.alertmns.organisation.domain.port.outgoing.MembershipInvitationRepository;
 import com.alertmns.organisation.domain.port.outgoing.OrganisationRepository;
 import com.alertmns.organisation.infrastructure.adapter.incoming.event.AcceptMembershipInvitationOnUserActivatedListener;
+import com.alertmns.organisation.infrastructure.adapter.incoming.event.AddMemberToGeneralGroupOnMemberJoinedListener;
 import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.GroupJpaRepository;
 import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.GroupMembershipJpaRepository;
 import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.GroupMembershipPersistenceAdapter;
@@ -177,5 +179,13 @@ public class OrganisationBeanConfig {
                 invitationRepository,
                 acceptMembershipInvitationUseCase
         );
+    }
+
+    @Bean
+    public AddMemberToGeneralGroupOnMemberJoinedListener addMemberToGeneralGroupOnMemberJoinedListener(
+            GroupRepository groupRepository,
+            AddMemberToGroupUseCase addMemberToGroupUseCase
+    ) {
+        return new AddMemberToGeneralGroupOnMemberJoinedListener(groupRepository, addMemberToGroupUseCase);
     }
 }
