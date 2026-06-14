@@ -1,6 +1,7 @@
 package com.alertmns.messaging.domain.model;
 
 import com.alertmns.messaging.domain.event.ConversationCreated;
+import com.alertmns.messaging.domain.event.ConversationRenamed;
 import com.alertmns.shared.DomainEvent;
 import com.alertmns.shared.OrganisationId;
 import org.junit.jupiter.api.DisplayName;
@@ -25,6 +26,7 @@ class ConversationTest {
     static final UUID GROUP_ID = UUID.randomUUID();
     static final ConversationName NAME = ConversationName.of("Général");
     static final Instant NOW = Instant.parse("2026-05-30T10:00:00Z");
+    static final Instant LATER = NOW.plusSeconds(60);
 
     @Nested
     @DisplayName("Creation")
@@ -74,6 +76,50 @@ class ConversationTest {
             assertEquals(id, conversation.id());
             assertEquals(ConversationKind.GROUP, conversation.kind());
             assertTrue(conversation.pullDomainEvents().isEmpty());
+        }
+    }
+
+    @Nested
+    @DisplayName("Renaming")
+    class Renaming {
+
+        @Test
+        @DisplayName("rename should change the name and emit ConversationRenamed")
+        void renameShouldChangeNameAndEmitEvent() {
+            Conversation conversation = Conversation.createForGroup(ORGANISATION_ID, GROUP_ID, NAME, NOW);
+            conversation.pullDomainEvents();
+
+            ConversationName newName = ConversationName.of("Backend");
+            conversation.rename(newName, LATER);
+
+            assertEquals(newName, conversation.name());
+            List<DomainEvent> events = conversation.pullDomainEvents();
+            assertEquals(1, events.size());
+            ConversationRenamed event = assertInstanceOf(ConversationRenamed.class, events.getFirst());
+            assertEquals(conversation.id(), event.conversationId());
+            assertEquals(ORGANISATION_ID, event.organisationId());
+            assertEquals(newName, event.name());
+            assertEquals(LATER, event.occurredOn());
+        }
+
+        @Test
+        @DisplayName("rename to the same name should be a no-op without event")
+        void renameToSameNameShouldBeNoOp() {
+            Conversation conversation = Conversation.createForGroup(ORGANISATION_ID, GROUP_ID, NAME, NOW);
+            conversation.pullDomainEvents();
+
+            conversation.rename(NAME, LATER);
+
+            assertEquals(NAME, conversation.name());
+            assertTrue(conversation.pullDomainEvents().isEmpty());
+        }
+
+        @Test
+        @DisplayName("rename should reject null name")
+        void renameShouldRejectNullName() {
+            Conversation conversation = Conversation.createForGroup(ORGANISATION_ID, GROUP_ID, NAME, NOW);
+
+            assertThrows(NullPointerException.class, () -> conversation.rename(null, LATER));
         }
     }
 
