@@ -1,9 +1,12 @@
 package com.alertmns.messaging.infrastructure.config;
 
 import com.alertmns.messaging.application.CreateConversationFromGroupService;
+import com.alertmns.messaging.application.RenameConversationService;
 import com.alertmns.messaging.domain.port.incoming.CreateConversationFromGroupUseCase;
+import com.alertmns.messaging.domain.port.incoming.RenameConversationUseCase;
 import com.alertmns.messaging.domain.port.outgoing.ConversationRepository;
 import com.alertmns.messaging.infrastructure.adapter.incoming.event.CreateConversationOnGroupCreatedListener;
+import com.alertmns.messaging.infrastructure.adapter.incoming.event.RenameConversationOnGroupRenamedListener;
 import com.alertmns.messaging.infrastructure.adapter.outgoing.persistence.ConversationJpaRepository;
 import com.alertmns.messaging.infrastructure.adapter.outgoing.persistence.ConversationPersistenceAdapter;
 import com.alertmns.shared.EventPublisher;
@@ -33,11 +36,26 @@ public class MessagingBeanConfig {
         return new CreateConversationFromGroupService(repository, publisher, clock);
     }
 
+    @Bean
+    public RenameConversationService renameConversationService(
+            ConversationRepository repository,
+            EventPublisher publisher,
+            Clock clock
+    ) {
+        return new RenameConversationService(repository, publisher, clock);
+    }
+
     // --- Event listeners ---
 
     @Bean
     public CreateConversationOnGroupCreatedListener createConversationOnGroupCreatedListener(
             CreateConversationFromGroupUseCase createConversationFromGroupUseCase) {
         return new CreateConversationOnGroupCreatedListener(createConversationFromGroupUseCase);
+    }
+
+    @Bean
+    public RenameConversationOnGroupRenamedListener renameConversationOnGroupRenamedListener(
+            RenameConversationUseCase renameConversationUseCase) {
+        return new RenameConversationOnGroupRenamedListener(renameConversationUseCase);
     }
 }
