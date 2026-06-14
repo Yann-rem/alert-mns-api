@@ -11,6 +11,7 @@ import com.alertmns.identity.infrastructure.adapter.outgoing.persistence.Activat
 import com.alertmns.identity.infrastructure.adapter.outgoing.persistence.ActivationTokenJpaRepository;
 import com.alertmns.identity.infrastructure.adapter.outgoing.persistence.UserJpaEntity;
 import com.alertmns.identity.infrastructure.adapter.outgoing.persistence.UserJpaRepository;
+import com.alertmns.messaging.infrastructure.adapter.outgoing.persistence.ConversationJpaRepository;
 import com.alertmns.organisation.domain.model.GroupKind;
 import com.alertmns.organisation.domain.model.MembershipInvitationStatus;
 import com.alertmns.organisation.domain.model.OrganisationName;
@@ -106,6 +107,9 @@ class BootstrapIntegrationTest {
     private GroupJpaRepository groupJpaRepository;
 
     @Autowired
+    private ConversationJpaRepository conversationJpaRepository;
+
+    @Autowired
     private ActivationTokenJpaRepository activationTokenJpaRepository;
 
     @Autowired
@@ -126,6 +130,7 @@ class BootstrapIntegrationTest {
 
     @AfterEach
     void cleanDatabase() {
+        conversationJpaRepository.deleteAll();
         activationTokenJpaRepository.deleteAll();
         membershipInvitationJpaRepository.deleteAll();
         memberJpaRepository.deleteAll();

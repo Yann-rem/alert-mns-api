@@ -5,6 +5,7 @@ import com.alertmns.identity.application.SuspendUserService;
 import com.alertmns.identity.domain.port.outgoing.PasswordHasher;
 import com.alertmns.identity.domain.port.outgoing.UserRepository;
 import com.alertmns.identity.infrastructure.adapter.outgoing.persistence.UserJpaRepository;
+import com.alertmns.messaging.infrastructure.adapter.outgoing.persistence.ConversationJpaRepository;
 import com.alertmns.organisation.domain.port.incoming.CreateGeneralGroupUseCase;
 import com.alertmns.organisation.domain.port.incoming.IssueMembershipInvitationUseCase;
 import com.alertmns.organisation.domain.port.incoming.command.CreateGeneralGroupCommand;
@@ -84,6 +85,9 @@ abstract class AbstractAuthIntegrationTest {
     @Autowired
     private GroupMembershipJpaRepository groupMembershipJpaRepository;
 
+    @Autowired
+    private ConversationJpaRepository conversationJpaRepository;
+
     /**
      * Provisionne le GeneralGroup de l'organisation de test avant chaque test, à l'image du bootstrap en prod.
      *
@@ -104,6 +108,7 @@ abstract class AbstractAuthIntegrationTest {
      */
     @AfterEach
     void cleanDatabase() {
+        conversationJpaRepository.deleteAll();
         groupMembershipJpaRepository.deleteAll();
         memberJpaRepository.deleteAll();
         groupJpaRepository.deleteAll();
