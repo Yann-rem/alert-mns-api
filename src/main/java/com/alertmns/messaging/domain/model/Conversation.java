@@ -1,6 +1,7 @@
 package com.alertmns.messaging.domain.model;
 
 import com.alertmns.messaging.domain.event.ConversationCreated;
+import com.alertmns.messaging.domain.event.ConversationRenamed;
 import com.alertmns.shared.AggregateRoot;
 import com.alertmns.shared.OrganisationId;
 
@@ -93,6 +94,22 @@ public final class Conversation extends AggregateRoot {
             Instant createdAt
     ) {
         return new Conversation(id, organisationId, groupId, name, kind, createdAt);
+    }
+
+    /**
+     * Renomme la conversation.
+     *
+     * <p>Émet {@link ConversationRenamed}. Idempotent : no-op si le nom est inchangé.</p>
+     *
+     * @param now instant de l'opération
+     */
+    public void rename(ConversationName name, Instant now) {
+        Objects.requireNonNull(name, "name must not be null");
+        if (this.name.equals(name)) {
+            return;
+        }
+        this.name = name;
+        registerEvent(new ConversationRenamed(id, organisationId, name, now));
     }
 
     public ConversationId id() {
