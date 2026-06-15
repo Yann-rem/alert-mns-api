@@ -11,23 +11,29 @@ public final class ConversationPersistenceMapper {
     private ConversationPersistenceMapper() {}
 
     public static Conversation toDomain(ConversationJpaEntity entity) {
+        String rawName = entity.getName();
         return Conversation.reconstitute(
                 ConversationId.from(entity.getId()),
                 OrganisationId.from(entity.getOrganisationId()),
                 entity.getGroupId(),
-                ConversationName.of(entity.getName()),
+                rawName == null ? null : ConversationName.of(rawName),
                 entity.getKind(),
+                entity.getParticipantLow(),
+                entity.getParticipantHigh(),
                 entity.getCreatedAt()
         );
     }
 
     public static ConversationJpaEntity toEntity(Conversation domain) {
+        ConversationName name = domain.name();
         return new ConversationJpaEntity(
                 domain.id().value(),
                 domain.organisationId().value(),
                 domain.groupId(),
                 domain.kind(),
-                domain.name().value(),
+                name == null ? null : name.value(),
+                domain.participantLow(),
+                domain.participantHigh(),
                 domain.createdAt()
         );
     }
