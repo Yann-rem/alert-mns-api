@@ -10,4 +10,6 @@ public interface ConversationJpaRepository extends JpaRepository<ConversationJpa
     Optional<ConversationJpaEntity> findByGroupId(UUID groupId);
 
     boolean existsByGroupId(UUID groupId);
+
+    Optional<ConversationJpaEntity> findByParticipantLowAndParticipantHigh(UUID participantLow, UUID participantHigh);
 }

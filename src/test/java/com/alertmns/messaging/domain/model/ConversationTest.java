@@ -2,6 +2,7 @@ package com.alertmns.messaging.domain.model;
 
 import com.alertmns.messaging.domain.event.ConversationCreated;
 import com.alertmns.messaging.domain.event.ConversationRenamed;
+import com.alertmns.messaging.domain.event.DirectConversationCreated;
 import com.alertmns.shared.DomainEvent;
 import com.alertmns.shared.OrganisationId;
 import org.junit.jupiter.api.DisplayName;
@@ -16,6 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -24,6 +26,8 @@ class ConversationTest {
 
     static final OrganisationId ORGANISATION_ID = OrganisationId.generate();
     static final UUID GROUP_ID = UUID.randomUUID();
+    static final UUID MEMBER_A = UUID.randomUUID();
+    static final UUID MEMBER_B = UUID.randomUUID();
     static final ConversationName NAME = ConversationName.of("Général");
     static final Instant NOW = Instant.parse("2026-05-30T10:00:00Z");
     static final Instant LATER = NOW.plusSeconds(60);
@@ -42,6 +46,7 @@ class ConversationTest {
             assertEquals(GROUP_ID, conversation.groupId());
             assertEquals(NAME, conversation.name());
             assertEquals(ConversationKind.GROUP, conversation.kind());
+            assertNull(conversation.participantPair());
             assertEquals(NOW, conversation.createdAt());
         }
 
@@ -62,6 +67,50 @@ class ConversationTest {
     }
 
     @Nested
+    @DisplayName("Direct creation")
+    class DirectCreation {
+
+        @Test
+        @DisplayName("should create a DIRECT conversation with the participant pair and no group/name")
+        void shouldCreateADirectConversation() {
+            ParticipantPair pair = ParticipantPair.of(MEMBER_A, MEMBER_B);
+
+            Conversation conversation = Conversation.createDirect(ORGANISATION_ID, pair, NOW);
+
+            assertNotNull(conversation.id());
+            assertEquals(ORGANISATION_ID, conversation.organisationId());
+            assertEquals(ConversationKind.DIRECT, conversation.kind());
+            assertEquals(pair, conversation.participantPair());
+            assertNull(conversation.groupId());
+            assertNull(conversation.name());
+            assertEquals(NOW, conversation.createdAt());
+        }
+
+        @Test
+        @DisplayName("should emit DirectConversationCreated with the participant pair and occurredOn = now")
+        void shouldEmitDirectConversationCreated() {
+            ParticipantPair pair = ParticipantPair.of(MEMBER_A, MEMBER_B);
+
+            Conversation conversation = Conversation.createDirect(ORGANISATION_ID, pair, NOW);
+
+            List<DomainEvent> events = conversation.pullDomainEvents();
+            assertEquals(1, events.size());
+            DirectConversationCreated event = assertInstanceOf(DirectConversationCreated.class, events.getFirst());
+            assertEquals(conversation.id(), event.conversationId());
+            assertEquals(ORGANISATION_ID, event.organisationId());
+            assertEquals(pair, event.participantPair());
+            assertEquals(NOW, event.occurredOn());
+        }
+
+        @Test
+        @DisplayName("should reject a null participant pair")
+        void shouldRejectNullPair() {
+            assertThrows(NullPointerException.class,
+                    () -> Conversation.createDirect(ORGANISATION_ID, null, NOW));
+        }
+    }
+
+    @Nested
     @DisplayName("Reconstitution")
     class Reconstitution {
 
@@ -71,7 +120,7 @@ class ConversationTest {
             ConversationId id = ConversationId.generate();
 
             Conversation conversation = Conversation.reconstitute(
-                    id, ORGANISATION_ID, GROUP_ID, NAME, ConversationKind.GROUP, NOW);
+                    id, ORGANISATION_ID, GROUP_ID, NAME, ConversationKind.GROUP, null, NOW);
 
             assertEquals(id, conversation.id());
             assertEquals(ConversationKind.GROUP, conversation.kind());
@@ -147,10 +196,10 @@ class ConversationTest {
         void twoConversationsWithSameIdShouldBeEqual() {
             ConversationId id = ConversationId.generate();
             Conversation a = Conversation.reconstitute(
-                    id, ORGANISATION_ID, GROUP_ID, NAME, ConversationKind.GROUP, NOW);
+                    id, ORGANISATION_ID, GROUP_ID, NAME, ConversationKind.GROUP, null, NOW);
             Conversation b = Conversation.reconstitute(
                     id, OrganisationId.generate(), UUID.randomUUID(),
-                    ConversationName.of("Autre"), ConversationKind.GROUP, NOW);
+                    ConversationName.of("Autre"), ConversationKind.GROUP, null, NOW);
 
             assertEquals(a, b);
             assertEquals(a.hashCode(), b.hashCode());
@@ -160,9 +209,9 @@ class ConversationTest {
         @DisplayName("two conversations with different ids should not be equal")
         void twoConversationsWithDifferentIdsShouldNotBeEqual() {
             Conversation a = Conversation.reconstitute(
-                    ConversationId.generate(), ORGANISATION_ID, GROUP_ID, NAME, ConversationKind.GROUP, NOW);
+                    ConversationId.generate(), ORGANISATION_ID, GROUP_ID, NAME, ConversationKind.GROUP, null, NOW);
             Conversation b = Conversation.reconstitute(
-                    ConversationId.generate(), ORGANISATION_ID, GROUP_ID, NAME, ConversationKind.GROUP, NOW);
+                    ConversationId.generate(), ORGANISATION_ID, GROUP_ID, NAME, ConversationKind.GROUP, null, NOW);
 
             assertNotEquals(a, b);
         }

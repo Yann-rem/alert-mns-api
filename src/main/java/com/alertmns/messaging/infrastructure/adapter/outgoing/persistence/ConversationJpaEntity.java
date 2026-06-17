@@ -22,10 +22,13 @@ import java.util.UUID;
 @Entity
 @Table(
         name = "conversations",
-        uniqueConstraints = @UniqueConstraint(
-                name = "uk_conversation_group",
-                columnNames = "group_id"
-        )
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uk_conversation_group", columnNames = "group_id"),
+                @UniqueConstraint(
+                        name = "uk_conversation_direct_pair",
+                        columnNames = {"participant_low", "participant_high"}
+                )
+        }
 )
 public class ConversationJpaEntity {
 
@@ -42,8 +45,14 @@ public class ConversationJpaEntity {
     @Column(nullable = false, length = 20)
     private ConversationKind kind;
 
-    @Column(length = 150)
+    @Column(length = 150, nullable = true)
     private String name;
+
+    @Column(nullable = true)
+    private UUID participantLow;
+
+    @Column(nullable = true)
+    private UUID participantHigh;
 
     @Column(nullable = false)
     private Instant createdAt;

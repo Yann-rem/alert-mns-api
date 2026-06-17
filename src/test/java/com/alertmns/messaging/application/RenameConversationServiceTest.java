@@ -69,7 +69,8 @@ class RenameConversationServiceTest {
     }
 
     private Conversation existingConversation(ConversationId id) {
-        return Conversation.reconstitute(id, ORGANISATION_ID, GROUP_ID, OLD_NAME, ConversationKind.GROUP, CREATED_AT);
+        return Conversation.reconstitute(
+                id, ORGANISATION_ID, GROUP_ID, OLD_NAME, ConversationKind.GROUP, null, CREATED_AT);
     }
 
     @Nested
