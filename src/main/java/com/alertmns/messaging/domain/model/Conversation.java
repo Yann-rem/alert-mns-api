@@ -14,8 +14,8 @@ import java.util.UUID;
  * Agrégat racine représentant une conversation dans le BC Messaging.
  *
  * <p>Une conversation est rattachée à une seule organisation. Son {@link ConversationKind} distingue les conversations
- * {@link ConversationKind#GROUP}, adossées à un {@code Group} du BC Organisation (relation 1:1), des conversations
- * {@link ConversationKind#DIRECT} (messages directs entre deux membres). Le {@code kind} est fixé à la création.</p>
+ * {@link ConversationKind#GROUP}, adossées à un groupe du BC Organisation (relation 1:1), des conversations
+ * {@link ConversationKind#DIRECT} entre deux membres. Le genre d'une conversation est fixé à la création.</p>
  *
  * <p>Événements : {@link ConversationCreated}, {@link ConversationRenamed}, {@link DirectConversationCreated}.</p>
  */
@@ -26,8 +26,7 @@ public final class Conversation extends AggregateRoot {
     private final UUID groupId;
     private ConversationName name;
     private final ConversationKind kind;
-    private final UUID participantLow;
-    private final UUID participantHigh;
+    private final ParticipantPair participantPair;
     private final Instant createdAt;
 
     private Conversation(
@@ -36,8 +35,7 @@ public final class Conversation extends AggregateRoot {
             UUID groupId,
             ConversationName name,
             ConversationKind kind,
-            UUID participantLow,
-            UUID participantHigh,
+            ParticipantPair participantPair,
             Instant createdAt
     ) {
         this.id = Objects.requireNonNull(id, "id must not be null");
@@ -45,21 +43,20 @@ public final class Conversation extends AggregateRoot {
         this.groupId = groupId;
         this.name = name;
         this.kind = Objects.requireNonNull(kind, "kind must not be null");
-        this.participantLow = participantLow;
-        this.participantHigh = participantHigh;
+        this.participantPair = participantPair;
         this.createdAt = Objects.requireNonNull(createdAt, "createdAt must not be null");
     }
 
     /**
-     * Crée la conversation adossée à un groupe
+     * Crée la conversation d'un groupe.
      *
      * <p>Émet {@link ConversationCreated}.</p>
      *
      * @param organisationId l'identifiant de l'organisation de rattachement
-     * @param groupId        l'identifiant du groupe source
+     * @param groupId        l'identifiant du groupe
      * @param name           le nom de la conversation, hérité du groupe
      * @param now            instant de l'opération
-     * @return la nouvelle conversation créée, de genre GROUP
+     * @return la nouvelle conversation de genre GROUP
      */
     public static Conversation createForGroup(
             OrganisationId organisationId,
@@ -77,7 +74,6 @@ public final class Conversation extends AggregateRoot {
                 name,
                 ConversationKind.GROUP,
                 null,
-                null,
                 now
         );
 
@@ -94,33 +90,20 @@ public final class Conversation extends AggregateRoot {
     /**
      * Crée une conversation directe entre deux membres.
      *
-     * <p>Les deux participants sont stockés dans un ordre canonique (plus petit identifiant en premier), ce qui
-     * garantit l'unicité de la paire quel que soit l'initiateur : {@code DM(A,B)} et {@code DM(B,A)} désignent la
-     * même conversation.</p>
+     * <p>Émet {@link DirectConversationCreated}. La paire est déjà distincte et rangée dans un ordre canonique : c'est
+     * l'invariant porté par {@link ParticipantPair}.</p>
      *
-     * <p>Émet {@link DirectConversationCreated}</p>
-     *
-     * @param organisationId l'identifiant de l'organisation de rattachement
-     * @param firstMemberId  l'identifiant d'un des deux membres (l'ordre des deux n'importe pas)
-     * @param secondMemberId l'identifiant de l'autre membre
-     * @param now            instant de l'opération
-     * @return la nouvelle conversation directe, de genre DIRECT
-     * @throws IllegalArgumentException si les deux membres sont identiques
+     * @param organisationId  l'identifiant de l'organisation de rattachement
+     * @param participantPair la paire ordonnée des deux participants
+     * @param now             instant de l'opération
+     * @return la nouvelle conversation de genre DIRECT
      */
     public static Conversation createDirect(
             OrganisationId organisationId,
-            UUID firstMemberId,
-            UUID secondMemberId,
+            ParticipantPair participantPair,
             Instant now
     ) {
-        Objects.requireNonNull(firstMemberId, "firstMemberId must not be null");
-        Objects.requireNonNull(secondMemberId, "secondMemberId must not be null");
-        if (firstMemberId.equals(secondMemberId)) {
-            throw new IllegalArgumentException("A direct conversation requires two distinct members");
-        }
-
-        UUID participantLow = firstMemberId.compareTo(secondMemberId) < 0 ? firstMemberId : secondMemberId;
-        UUID participantHigh = participantLow == firstMemberId ? secondMemberId : firstMemberId;
+        Objects.requireNonNull(participantPair, "participantPair must not be null");
 
         Conversation conversation = new Conversation(
                 ConversationId.generate(),
@@ -128,16 +111,14 @@ public final class Conversation extends AggregateRoot {
                 null,
                 null,
                 ConversationKind.DIRECT,
-                participantLow,
-                participantHigh,
+                participantPair,
                 now
         );
 
         conversation.registerEvent(new DirectConversationCreated(
                 conversation.id,
                 organisationId,
-                participantLow,
-                participantHigh,
+                participantPair,
                 now
         ));
         return conversation;
@@ -156,15 +137,14 @@ public final class Conversation extends AggregateRoot {
             UUID groupId,
             ConversationName name,
             ConversationKind kind,
-            UUID participantLow,
-            UUID participantHigh,
+            ParticipantPair participantPair,
             Instant createdAt
     ) {
-        return new Conversation(id, organisationId, groupId, name, kind, participantLow, participantHigh, createdAt);
+        return new Conversation(id, organisationId, groupId, name, kind, participantPair, createdAt);
     }
 
     /**
-     * Renomme la conversation.
+     * Renomme la conversation d'un groupe.
      *
      * <p>Émet {@link ConversationRenamed}. Idempotent : no-op si le nom est inchangé.</p>
      *
@@ -199,12 +179,8 @@ public final class Conversation extends AggregateRoot {
         return kind;
     }
 
-    public UUID participantLow() {
-        return participantLow;
-    }
-
-    public UUID participantHigh() {
-        return participantHigh;
+    public ParticipantPair participantPair() {
+        return participantPair;
     }
 
     public Instant createdAt() {
@@ -231,8 +207,7 @@ public final class Conversation extends AggregateRoot {
                 ", kind=" + kind +
                 ", groupId=" + groupId +
                 ", name=" + name +
-                ", participantLow=" + participantLow +
-                ", participantHigh=" + participantHigh +
+                ", participantPair=" + participantPair +
                 '}';
     }
 }
