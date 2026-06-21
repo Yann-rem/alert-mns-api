@@ -80,6 +80,13 @@ public final class Message extends AggregateRoot {
         return new Message(id, conversationId, authorId, content, replyTo, sentAt);
     }
 
+    /**
+     * Indique si un message appartient à la conversation donnée.
+     */
+    public boolean belongsTo(ConversationId conversationId) {
+        return this.conversationId.equals(conversationId);
+    }
+
     public MessageId id() {
         return id;
     }

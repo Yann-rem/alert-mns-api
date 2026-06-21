@@ -1,6 +1,7 @@
 package com.alertmns.messaging.infrastructure.adapter.outgoing.persistence;
 
 import com.alertmns.messaging.domain.model.Conversation;
+import com.alertmns.messaging.domain.model.ConversationId;
 import com.alertmns.messaging.domain.model.ParticipantPair;
 import com.alertmns.messaging.domain.port.outgoing.ConversationRepository;
 import com.alertmns.messaging.infrastructure.adapter.outgoing.persistence.mapper.ConversationPersistenceMapper;
@@ -19,6 +20,11 @@ public final class ConversationPersistenceAdapter implements ConversationReposit
     @Override
     public void save(Conversation conversation) {
         jpaRepository.save(ConversationPersistenceMapper.toEntity(conversation));
+    }
+
+    @Override
+    public Optional<Conversation> findById(ConversationId conversationId) {
+        return jpaRepository.findById(conversationId.value()).map(ConversationPersistenceMapper::toDomain);
     }
 
     @Override

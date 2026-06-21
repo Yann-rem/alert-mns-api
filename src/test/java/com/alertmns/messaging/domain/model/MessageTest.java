@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -81,6 +82,27 @@ class MessageTest {
             assertEquals(id, message.id());
             assertEquals(REPLY_TO, message.replyTo());
             assertTrue(message.pullDomainEvents().isEmpty());
+        }
+    }
+
+    @Nested
+    @DisplayName("Belonging")
+    class Belonging {
+
+        @Test
+        @DisplayName("belongsTo should return true for its own conversation")
+        void belongsToOwnConversation() {
+            Message message = Message.post(CONVERSATION_ID, AUTHOR_ID, CONTENT, null, NOW);
+
+            assertTrue(message.belongsTo(CONVERSATION_ID));
+        }
+
+        @Test
+        @DisplayName("belongsTo should return false for another conversation")
+        void belongsToAnotherConversation() {
+            Message message = Message.post(CONVERSATION_ID, AUTHOR_ID, CONTENT, null, NOW);
+
+            assertFalse(message.belongsTo(ConversationId.generate()));
         }
     }
 

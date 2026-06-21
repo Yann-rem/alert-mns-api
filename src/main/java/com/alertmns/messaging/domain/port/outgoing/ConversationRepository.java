@@ -1,6 +1,7 @@
 package com.alertmns.messaging.domain.port.outgoing;
 
 import com.alertmns.messaging.domain.model.Conversation;
+import com.alertmns.messaging.domain.model.ConversationId;
 import com.alertmns.messaging.domain.model.ParticipantPair;
 
 import java.util.Optional;
@@ -12,6 +13,8 @@ import java.util.UUID;
 public interface ConversationRepository {
 
     void save(Conversation conversation);
+
+    Optional<Conversation> findById(ConversationId conversationId);
 
     Optional<Conversation> findByGroupId(UUID groupId);
 

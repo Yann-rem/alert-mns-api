@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -39,6 +40,30 @@ class ParticipantPairTest {
             UUID memberB = UUID.randomUUID();
 
             assertEquals(ParticipantPair.of(memberA, memberB), ParticipantPair.of(memberB, memberA));
+        }
+    }
+
+    @Nested
+    @DisplayName("Containment")
+    class Containment {
+
+        @Test
+        @DisplayName("contains should return true for either member of the pair")
+        void containsShouldReturnTrueForEitherMember() {
+            UUID memberA = UUID.randomUUID();
+            UUID memberB = UUID.randomUUID();
+            ParticipantPair pair = ParticipantPair.of(memberA, memberB);
+
+            assertTrue(pair.contains(memberA));
+            assertTrue(pair.contains(memberB));
+        }
+
+        @Test
+        @DisplayName("contains should return false for a member outside the pair")
+        void containsShouldReturnFalseForOutsider() {
+            ParticipantPair pair = ParticipantPair.of(UUID.randomUUID(), UUID.randomUUID());
+
+            assertFalse(pair.contains(UUID.randomUUID()));
         }
     }
 

@@ -3,6 +3,7 @@ package com.alertmns.messaging.domain.model;
 import com.alertmns.messaging.domain.event.ConversationCreated;
 import com.alertmns.messaging.domain.event.ConversationRenamed;
 import com.alertmns.messaging.domain.event.DirectConversationCreated;
+import com.alertmns.messaging.domain.port.outgoing.GroupMembershipChecker;
 import com.alertmns.shared.AggregateRoot;
 import com.alertmns.shared.OrganisationId;
 
@@ -157,6 +158,24 @@ public final class Conversation extends AggregateRoot {
         }
         this.name = name;
         registerEvent(new ConversationRenamed(id, organisationId, name, now));
+    }
+
+    /**
+     * Indique si le membre donné peut participer à cette conversation.
+     *
+     * <p>Pour une conversation {@link ConversationKind#DIRECT}, le membre doit appartenir à la
+     * {@link ParticipantPair}. Pour une conversation {@link ConversationKind#GROUP}, l'appartenance est déléguée au
+     * {@link GroupMembershipChecker}.</p>
+     *
+     * @param groupMembership port d'accès à l'appartenance aux groupes
+     */
+    public boolean isParticipant(UUID memberId, GroupMembershipChecker groupMembership) {
+        Objects.requireNonNull(memberId, "memberId must not be null");
+        Objects.requireNonNull(groupMembership, "groupMembership must not be null");
+        return switch (kind) {
+            case DIRECT -> participantPair.contains(memberId);
+            case GROUP -> groupMembership.isMember(groupId, memberId);
+        };
     }
 
     public ConversationId id() {

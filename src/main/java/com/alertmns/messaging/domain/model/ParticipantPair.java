@@ -31,4 +31,11 @@ public record ParticipantPair(UUID low, UUID high) {
         UUID high = low == firstMemberId ? secondMemberId : firstMemberId;
         return new ParticipantPair(low, high);
     }
+
+    /**
+     * Indique si le membre donné fait partie de la paire.
+     */
+    public boolean contains(UUID memberId) {
+        return low.equals(memberId) || high.equals(memberId);
+    }
 }
