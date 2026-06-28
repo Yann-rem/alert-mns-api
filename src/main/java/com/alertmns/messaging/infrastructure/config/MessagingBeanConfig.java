@@ -3,6 +3,7 @@ package com.alertmns.messaging.infrastructure.config;
 import com.alertmns.messaging.application.CreateConversationFromGroupService;
 import com.alertmns.messaging.application.CreateDirectConversationService;
 import com.alertmns.messaging.application.PostMessageService;
+import com.alertmns.messaging.application.ReadConversationMessagesService;
 import com.alertmns.messaging.application.RenameConversationService;
 import com.alertmns.messaging.domain.port.incoming.CreateConversationFromGroupUseCase;
 import com.alertmns.messaging.domain.port.incoming.RenameConversationUseCase;
@@ -100,6 +101,23 @@ public class MessagingBeanConfig {
                 messageRepository,
                 publisher,
                 clock
+        );
+    }
+
+    @Bean
+    public ReadConversationMessagesService readConversationMessagesService(
+            CurrentUserPort currentUserPort,
+            MemberRepository memberRepository,
+            ConversationRepository conversationRepository,
+            MessageRepository messageRepository,
+            GroupMembershipChecker groupMembershipChecker
+    ) {
+        return new ReadConversationMessagesService(
+                currentUserPort,
+                memberRepository,
+                conversationRepository,
+                messageRepository,
+                groupMembershipChecker
         );
     }
 
