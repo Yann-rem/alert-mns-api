@@ -2,6 +2,7 @@ package com.alertmns.messaging.infrastructure.config;
 
 import com.alertmns.messaging.application.CreateConversationFromGroupService;
 import com.alertmns.messaging.application.CreateDirectConversationService;
+import com.alertmns.messaging.application.CurrentMemberResolver;
 import com.alertmns.messaging.application.PostMessageService;
 import com.alertmns.messaging.application.ReadConversationMessagesService;
 import com.alertmns.messaging.application.RenameConversationService;
@@ -49,6 +50,14 @@ public class MessagingBeanConfig {
     // --- Services ---
 
     @Bean
+    public CurrentMemberResolver currentMemberResolver(
+            CurrentUserPort currentUserPort,
+            MemberRepository memberRepository
+    ) {
+        return new CurrentMemberResolver(currentUserPort, memberRepository);
+    }
+
+    @Bean
     public CreateConversationFromGroupService createConversationFromGroupService(
             ConversationRepository repository,
             EventPublisher publisher,
@@ -68,14 +77,14 @@ public class MessagingBeanConfig {
 
     @Bean
     public CreateDirectConversationService createDirectConversationService(
-            CurrentUserPort currentUserPort,
+            CurrentMemberResolver currentMemberResolver,
             MemberRepository memberRepository,
             ConversationRepository conversationRepository,
             EventPublisher publisher,
             Clock clock
     ) {
         return new CreateDirectConversationService(
-                currentUserPort,
+                currentMemberResolver,
                 memberRepository,
                 conversationRepository,
                 publisher,
@@ -85,8 +94,7 @@ public class MessagingBeanConfig {
 
     @Bean
     public PostMessageService postMessageService(
-            CurrentUserPort currentUserPort,
-            MemberRepository memberRepository,
+            CurrentMemberResolver currentMemberResolver,
             ConversationRepository conversationRepository,
             GroupMembershipChecker groupMembershipChecker,
             MessageRepository messageRepository,
@@ -94,8 +102,7 @@ public class MessagingBeanConfig {
             Clock clock
     ) {
         return new PostMessageService(
-                currentUserPort,
-                memberRepository,
+                currentMemberResolver,
                 conversationRepository,
                 groupMembershipChecker,
                 messageRepository,
@@ -106,15 +113,13 @@ public class MessagingBeanConfig {
 
     @Bean
     public ReadConversationMessagesService readConversationMessagesService(
-            CurrentUserPort currentUserPort,
-            MemberRepository memberRepository,
+            CurrentMemberResolver currentMemberResolver,
             ConversationRepository conversationRepository,
             MessageRepository messageRepository,
             GroupMembershipChecker groupMembershipChecker
     ) {
         return new ReadConversationMessagesService(
-                currentUserPort,
-                memberRepository,
+                currentMemberResolver,
                 conversationRepository,
                 messageRepository,
                 groupMembershipChecker

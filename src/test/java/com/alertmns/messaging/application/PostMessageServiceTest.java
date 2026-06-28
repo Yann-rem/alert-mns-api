@@ -20,13 +20,9 @@ import com.alertmns.organisation.domain.model.Member;
 import com.alertmns.organisation.domain.model.MemberId;
 import com.alertmns.organisation.domain.model.MemberRole;
 import com.alertmns.organisation.domain.model.MemberStatus;
-import com.alertmns.organisation.domain.port.outgoing.MemberRepository;
-import com.alertmns.shared.AuthenticatedUser;
-import com.alertmns.shared.CurrentUserPort;
 import com.alertmns.shared.DomainEvent;
 import com.alertmns.shared.EventPublisher;
 import com.alertmns.shared.OrganisationId;
-import com.alertmns.shared.UserId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -63,10 +59,7 @@ class PostMessageServiceTest {
     static final String CONTENT = "Bonjour";
 
     @Mock
-    CurrentUserPort currentUserPort;
-
-    @Mock
-    MemberRepository memberRepository;
+    CurrentMemberResolver currentMemberResolver;
 
     @Mock
     ConversationRepository conversationRepository;
@@ -86,7 +79,6 @@ class PostMessageServiceTest {
     @InjectMocks
     PostMessageService service;
 
-    UserId userId;
     MemberId authorMemberId;
     Member author;
     ConversationId conversationId;
@@ -94,16 +86,14 @@ class PostMessageServiceTest {
     @BeforeEach
     void setUp() {
         lenient().when(clock.instant()).thenReturn(NOW);
-        userId = UserId.generate();
         authorMemberId = MemberId.generate();
         author = Member.reconstitute(
-                authorMemberId, ORGANISATION_ID, userId.value(), MemberRole.MEMBER, MemberStatus.ACTIVE, NOW);
+                authorMemberId, ORGANISATION_ID, UUID.randomUUID(), MemberRole.MEMBER, MemberStatus.ACTIVE, NOW);
         conversationId = ConversationId.generate();
     }
 
     private void stubAuthenticatedAuthor() {
-        when(currentUserPort.currentUser()).thenReturn(Optional.of(new AuthenticatedUser(userId)));
-        when(memberRepository.findByUserId(userId.value())).thenReturn(Optional.of(author));
+        when(currentMemberResolver.resolveCurrentMember()).thenReturn(author);
     }
 
     private PostMessageCommand command() {
@@ -269,87 +259,49 @@ class PostMessageServiceTest {
     }
 
     @Nested
-    @DisplayName("Authentication")
-    class Authentication {
-
-        @Test
-        @DisplayName("should throw IllegalStateException when there is no authenticated user")
-        void shouldThrowWhenNoCurrentUser() {
-            when(currentUserPort.currentUser()).thenReturn(Optional.empty());
-
-            assertThrows(IllegalStateException.class, () -> service.post(command()));
-            verify(messageRepository, never()).save(any());
-        }
-
-        @Test
-        @DisplayName("should throw IllegalStateException when the authenticated user has no member")
-        void shouldThrowWhenAuthorHasNoMember() {
-            when(currentUserPort.currentUser()).thenReturn(Optional.of(new AuthenticatedUser(userId)));
-            when(memberRepository.findByUserId(userId.value())).thenReturn(Optional.empty());
-
-            assertThrows(IllegalStateException.class, () -> service.post(command()));
-            verify(messageRepository, never()).save(any());
-        }
-    }
-
-    @Nested
     @DisplayName("Invariants")
     class Invariants {
 
         @Test
-        @DisplayName("should reject null currentUserPort")
-        void shouldRejectNullCurrentUserPort() {
+        @DisplayName("should reject null currentMemberResolver")
+        void shouldRejectNullCurrentMemberResolver() {
             assertThrows(NullPointerException.class, () -> new PostMessageService(
-                    null, memberRepository, conversationRepository, groupMembershipChecker, messageRepository,
-                    publisher, clock));
-        }
-
-        @Test
-        @DisplayName("should reject null memberRepository")
-        void shouldRejectNullMemberRepository() {
-            assertThrows(NullPointerException.class, () -> new PostMessageService(
-                    currentUserPort, null, conversationRepository, groupMembershipChecker, messageRepository,
-                    publisher, clock));
+                    null, conversationRepository, groupMembershipChecker, messageRepository, publisher, clock));
         }
 
         @Test
         @DisplayName("should reject null conversationRepository")
         void shouldRejectNullConversationRepository() {
             assertThrows(NullPointerException.class, () -> new PostMessageService(
-                    currentUserPort, memberRepository, null, groupMembershipChecker, messageRepository,
-                    publisher, clock));
+                    currentMemberResolver, null, groupMembershipChecker, messageRepository, publisher, clock));
         }
 
         @Test
         @DisplayName("should reject null groupMembershipChecker")
         void shouldRejectNullGroupMembershipChecker() {
             assertThrows(NullPointerException.class, () -> new PostMessageService(
-                    currentUserPort, memberRepository, conversationRepository, null, messageRepository,
-                    publisher, clock));
+                    currentMemberResolver, conversationRepository, null, messageRepository, publisher, clock));
         }
 
         @Test
         @DisplayName("should reject null messageRepository")
         void shouldRejectNullMessageRepository() {
             assertThrows(NullPointerException.class, () -> new PostMessageService(
-                    currentUserPort, memberRepository, conversationRepository, groupMembershipChecker, null,
-                    publisher, clock));
+                    currentMemberResolver, conversationRepository, groupMembershipChecker, null, publisher, clock));
         }
 
         @Test
         @DisplayName("should reject null publisher")
         void shouldRejectNullPublisher() {
             assertThrows(NullPointerException.class, () -> new PostMessageService(
-                    currentUserPort, memberRepository, conversationRepository, groupMembershipChecker, messageRepository,
-                    null, clock));
+                    currentMemberResolver, conversationRepository, groupMembershipChecker, messageRepository, null, clock));
         }
 
         @Test
         @DisplayName("should reject null clock")
         void shouldRejectNullClock() {
             assertThrows(NullPointerException.class, () -> new PostMessageService(
-                    currentUserPort, memberRepository, conversationRepository, groupMembershipChecker, messageRepository,
-                    publisher, null));
+                    currentMemberResolver, conversationRepository, groupMembershipChecker, messageRepository, publisher, null));
         }
 
         @Test

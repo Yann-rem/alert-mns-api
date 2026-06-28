@@ -10,10 +10,6 @@ import com.alertmns.messaging.domain.port.incoming.command.ReadConversationMessa
 import com.alertmns.messaging.domain.port.outgoing.ConversationRepository;
 import com.alertmns.messaging.domain.port.outgoing.GroupMembershipChecker;
 import com.alertmns.messaging.domain.port.outgoing.MessageRepository;
-import com.alertmns.organisation.domain.model.Member;
-import com.alertmns.organisation.domain.port.outgoing.MemberRepository;
-import com.alertmns.shared.CurrentUserPort;
-import com.alertmns.shared.UserId;
 
 import java.util.List;
 import java.util.Objects;
@@ -28,21 +24,19 @@ import java.util.UUID;
  */
 public final class ReadConversationMessagesService implements ReadConversationMessagesUseCase {
 
-    private final CurrentUserPort currentUserPort;
-    private final MemberRepository memberRepository;
+    private final CurrentMemberResolver currentMemberResolver;
     private final ConversationRepository conversationRepository;
     private final MessageRepository messageRepository;
     private final GroupMembershipChecker groupMembershipChecker;
 
     public ReadConversationMessagesService(
-            CurrentUserPort currentUserPort,
-            MemberRepository memberRepository,
+            CurrentMemberResolver currentMemberResolver,
             ConversationRepository conversationRepository,
             MessageRepository messageRepository,
             GroupMembershipChecker groupMembershipChecker
     ) {
-        this.currentUserPort = Objects.requireNonNull(currentUserPort, "currentUserPort must not be null");
-        this.memberRepository = Objects.requireNonNull(memberRepository, "memberRepository must not be null");
+        this.currentMemberResolver = Objects.requireNonNull(
+                currentMemberResolver, "currentMemberResolver must not be null");
         this.conversationRepository = Objects.requireNonNull(
                 conversationRepository, "conversationRepository must not be null");
         this.messageRepository = Objects.requireNonNull(messageRepository, "messageRepository must not be null");
@@ -52,14 +46,7 @@ public final class ReadConversationMessagesService implements ReadConversationMe
 
     @Override
     public List<Message> read(ReadConversationMessagesQuery query) {
-        UserId currentUserId = currentUserPort.currentUser()
-                .orElseThrow(() -> new IllegalStateException("No authenticated user in context"))
-                .userId();
-
-        Member reader = memberRepository.findByUserId(currentUserId.value())
-                .orElseThrow(() -> new IllegalStateException(
-                        "Authenticated user has no member: " + currentUserId.value()));
-        UUID memberId = reader.id().value();
+        UUID memberId = currentMemberResolver.resolveCurrentMember().id().value();
 
         ConversationId conversationId = ConversationId.from(query.conversationId());
         Conversation conversation = conversationRepository.findById(conversationId)

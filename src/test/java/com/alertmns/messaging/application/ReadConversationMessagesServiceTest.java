@@ -18,11 +18,7 @@ import com.alertmns.organisation.domain.model.Member;
 import com.alertmns.organisation.domain.model.MemberId;
 import com.alertmns.organisation.domain.model.MemberRole;
 import com.alertmns.organisation.domain.model.MemberStatus;
-import com.alertmns.organisation.domain.port.outgoing.MemberRepository;
-import com.alertmns.shared.AuthenticatedUser;
-import com.alertmns.shared.CurrentUserPort;
 import com.alertmns.shared.OrganisationId;
-import com.alertmns.shared.UserId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -54,10 +50,7 @@ class ReadConversationMessagesServiceTest {
     static final Instant NOW = Instant.parse("2026-05-30T10:00:00Z");
 
     @Mock
-    CurrentUserPort currentUserPort;
-
-    @Mock
-    MemberRepository memberRepository;
+    CurrentMemberResolver currentMemberResolver;
 
     @Mock
     ConversationRepository conversationRepository;
@@ -71,23 +64,20 @@ class ReadConversationMessagesServiceTest {
     @InjectMocks
     ReadConversationMessagesService service;
 
-    UserId userId;
     MemberId readerMemberId;
     Member reader;
     ConversationId conversationId;
 
     @BeforeEach
     void setUp() {
-        userId = UserId.generate();
         readerMemberId = MemberId.generate();
         reader = Member.reconstitute(
-                readerMemberId, ORGANISATION_ID, userId.value(), MemberRole.MEMBER, MemberStatus.ACTIVE, NOW);
+                readerMemberId, ORGANISATION_ID, UUID.randomUUID(), MemberRole.MEMBER, MemberStatus.ACTIVE, NOW);
         conversationId = ConversationId.generate();
     }
 
     private void stubAuthenticatedReader() {
-        when(currentUserPort.currentUser()).thenReturn(Optional.of(new AuthenticatedUser(userId)));
-        when(memberRepository.findByUserId(userId.value())).thenReturn(Optional.of(reader));
+        when(currentMemberResolver.resolveCurrentMember()).thenReturn(reader);
     }
 
     private ReadConversationMessagesQuery query() {
@@ -194,64 +184,35 @@ class ReadConversationMessagesServiceTest {
     }
 
     @Nested
-    @DisplayName("Authentication")
-    class Authentication {
-
-        @Test
-        @DisplayName("should throw IllegalStateException when there is no authenticated user")
-        void shouldThrowWhenNoCurrentUser() {
-            when(currentUserPort.currentUser()).thenReturn(Optional.empty());
-
-            assertThrows(IllegalStateException.class, () -> service.read(query()));
-        }
-
-        @Test
-        @DisplayName("should throw IllegalStateException when the authenticated user has no member")
-        void shouldThrowWhenReaderHasNoMember() {
-            when(currentUserPort.currentUser()).thenReturn(Optional.of(new AuthenticatedUser(userId)));
-            when(memberRepository.findByUserId(userId.value())).thenReturn(Optional.empty());
-
-            assertThrows(IllegalStateException.class, () -> service.read(query()));
-        }
-    }
-
-    @Nested
     @DisplayName("Invariants")
     class Invariants {
 
         @Test
-        @DisplayName("should reject null currentUserPort")
-        void shouldRejectNullCurrentUserPort() {
+        @DisplayName("should reject null currentMemberResolver")
+        void shouldRejectNullCurrentMemberResolver() {
             assertThrows(NullPointerException.class, () -> new ReadConversationMessagesService(
-                    null, memberRepository, conversationRepository, messageRepository, groupMembershipChecker));
-        }
-
-        @Test
-        @DisplayName("should reject null memberRepository")
-        void shouldRejectNullMemberRepository() {
-            assertThrows(NullPointerException.class, () -> new ReadConversationMessagesService(
-                    currentUserPort, null, conversationRepository, messageRepository, groupMembershipChecker));
+                    null, conversationRepository, messageRepository, groupMembershipChecker));
         }
 
         @Test
         @DisplayName("should reject null conversationRepository")
         void shouldRejectNullConversationRepository() {
             assertThrows(NullPointerException.class, () -> new ReadConversationMessagesService(
-                    currentUserPort, memberRepository, null, messageRepository, groupMembershipChecker));
+                    currentMemberResolver, null, messageRepository, groupMembershipChecker));
         }
 
         @Test
         @DisplayName("should reject null messageRepository")
         void shouldRejectNullMessageRepository() {
             assertThrows(NullPointerException.class, () -> new ReadConversationMessagesService(
-                    currentUserPort, memberRepository, conversationRepository, null, groupMembershipChecker));
+                    currentMemberResolver, conversationRepository, null, groupMembershipChecker));
         }
 
         @Test
         @DisplayName("should reject null groupMembershipChecker")
         void shouldRejectNullGroupMembershipChecker() {
             assertThrows(NullPointerException.class, () -> new ReadConversationMessagesService(
-                    currentUserPort, memberRepository, conversationRepository, messageRepository, null));
+                    currentMemberResolver, conversationRepository, messageRepository, null));
         }
 
         @Test
