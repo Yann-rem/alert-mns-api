@@ -3,6 +3,7 @@ package com.alertmns.messaging.domain.model;
 import com.alertmns.messaging.domain.event.ConversationCreated;
 import com.alertmns.messaging.domain.event.ConversationRenamed;
 import com.alertmns.messaging.domain.event.DirectConversationCreated;
+import com.alertmns.messaging.domain.port.outgoing.GroupMembershipChecker;
 import com.alertmns.shared.DomainEvent;
 import com.alertmns.shared.OrganisationId;
 import org.junit.jupiter.api.DisplayName;
@@ -14,6 +15,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -169,6 +171,55 @@ class ConversationTest {
             Conversation conversation = Conversation.createForGroup(ORGANISATION_ID, GROUP_ID, NAME, NOW);
 
             assertThrows(NullPointerException.class, () -> conversation.rename(null, LATER));
+        }
+    }
+
+    @Nested
+    @DisplayName("Participation")
+    class Participation {
+
+        @Test
+        @DisplayName("DIRECT: a member of the pair is a participant, without consulting the group checker")
+        void directMemberIsParticipant() {
+            ParticipantPair pair = ParticipantPair.of(MEMBER_A, MEMBER_B);
+            Conversation conversation = Conversation.createDirect(ORGANISATION_ID, pair, NOW);
+            GroupMembershipChecker neverConsulted = (groupId, memberId) -> {
+                throw new AssertionError("the group checker must not be consulted for a DIRECT conversation");
+            };
+
+            assertTrue(conversation.isParticipant(MEMBER_A, neverConsulted));
+            assertTrue(conversation.isParticipant(MEMBER_B, neverConsulted));
+        }
+
+        @Test
+        @DisplayName("DIRECT: a member outside the pair is not a participant")
+        void directOutsiderIsNotParticipant() {
+            ParticipantPair pair = ParticipantPair.of(MEMBER_A, MEMBER_B);
+            Conversation conversation = Conversation.createDirect(ORGANISATION_ID, pair, NOW);
+
+            assertFalse(conversation.isParticipant(UUID.randomUUID(), (groupId, memberId) -> false));
+        }
+
+        @Test
+        @DisplayName("GROUP: participation is delegated to the group membership checker")
+        void groupParticipationIsDelegated() {
+            Conversation conversation = Conversation.createForGroup(ORGANISATION_ID, GROUP_ID, NAME, NOW);
+            UUID member = UUID.randomUUID();
+
+            assertTrue(conversation.isParticipant(member,
+                    (groupId, memberId) -> groupId.equals(GROUP_ID) && memberId.equals(member)));
+            assertFalse(conversation.isParticipant(member, (groupId, memberId) -> false));
+        }
+
+        @Test
+        @DisplayName("isParticipant should reject null arguments")
+        void isParticipantShouldRejectNulls() {
+            Conversation conversation = Conversation.createForGroup(ORGANISATION_ID, GROUP_ID, NAME, NOW);
+
+            assertThrows(NullPointerException.class,
+                    () -> conversation.isParticipant(null, (groupId, memberId) -> true));
+            assertThrows(NullPointerException.class,
+                    () -> conversation.isParticipant(MEMBER_A, null));
         }
     }
 
