@@ -1,10 +1,13 @@
 package com.alertmns.messaging.infrastructure.adapter.outgoing.persistence;
 
+import com.alertmns.messaging.domain.model.ConversationId;
 import com.alertmns.messaging.domain.model.Message;
 import com.alertmns.messaging.domain.model.MessageId;
 import com.alertmns.messaging.domain.port.outgoing.MessageRepository;
 import com.alertmns.messaging.infrastructure.adapter.outgoing.persistence.mapper.MessagePersistenceMapper;
+import org.springframework.data.domain.PageRequest;
 
+import java.util.List;
 import java.util.Optional;
 
 public final class MessagePersistenceAdapter implements MessageRepository {
@@ -23,5 +26,14 @@ public final class MessagePersistenceAdapter implements MessageRepository {
     @Override
     public Optional<Message> findById(MessageId messageId) {
         return jpaRepository.findById(messageId.value()).map(MessagePersistenceMapper::toDomain);
+    }
+
+    @Override
+    public List<Message> findByConversationId(ConversationId conversationId, int page, int size) {
+        return jpaRepository
+                .findByConversationIdOrderBySentAtDesc(conversationId.value(), PageRequest.of(page, size))
+                .stream()
+                .map(MessagePersistenceMapper::toDomain)
+                .toList();
     }
 }
