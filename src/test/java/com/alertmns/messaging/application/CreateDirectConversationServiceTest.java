@@ -14,12 +14,9 @@ import com.alertmns.organisation.domain.model.MemberId;
 import com.alertmns.organisation.domain.model.MemberRole;
 import com.alertmns.organisation.domain.model.MemberStatus;
 import com.alertmns.organisation.domain.port.outgoing.MemberRepository;
-import com.alertmns.shared.AuthenticatedUser;
-import com.alertmns.shared.CurrentUserPort;
 import com.alertmns.shared.DomainEvent;
 import com.alertmns.shared.EventPublisher;
 import com.alertmns.shared.OrganisationId;
-import com.alertmns.shared.UserId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -55,7 +52,7 @@ class CreateDirectConversationServiceTest {
     static final Instant NOW = Instant.parse("2026-05-30T10:00:00Z");
 
     @Mock
-    CurrentUserPort currentUserPort;
+    CurrentMemberResolver currentMemberResolver;
 
     @Mock
     MemberRepository memberRepository;
@@ -72,7 +69,6 @@ class CreateDirectConversationServiceTest {
     @InjectMocks
     CreateDirectConversationService service;
 
-    UserId userId;
     MemberId initiatorId;
     MemberId targetId;
     Member initiator;
@@ -81,11 +77,10 @@ class CreateDirectConversationServiceTest {
     @BeforeEach
     void setUp() {
         lenient().when(clock.instant()).thenReturn(NOW);
-        userId = UserId.generate();
         initiatorId = MemberId.generate();
         targetId = MemberId.generate();
         initiator = Member.reconstitute(
-                initiatorId, ORGANISATION_ID, userId.value(), MemberRole.MEMBER, MemberStatus.ACTIVE, NOW);
+                initiatorId, ORGANISATION_ID, UUID.randomUUID(), MemberRole.MEMBER, MemberStatus.ACTIVE, NOW);
         target = Member.reconstitute(
                 targetId, ORGANISATION_ID, UUID.randomUUID(), MemberRole.MEMBER, MemberStatus.ACTIVE, NOW);
     }
@@ -95,8 +90,7 @@ class CreateDirectConversationServiceTest {
     }
 
     private void stubAuthenticatedInitiator() {
-        when(currentUserPort.currentUser()).thenReturn(Optional.of(new AuthenticatedUser(userId)));
-        when(memberRepository.findByUserId(userId.value())).thenReturn(Optional.of(initiator));
+        when(currentMemberResolver.resolveCurrentMember()).thenReturn(initiator);
     }
 
     @Nested
@@ -187,25 +181,6 @@ class CreateDirectConversationServiceTest {
             assertThrows(OrganisationMismatchException.class, () -> service.create(command()));
             verify(conversationRepository, never()).save(any());
         }
-
-        @Test
-        @DisplayName("should throw IllegalStateException when there is no authenticated user")
-        void shouldThrowWhenNoCurrentUser() {
-            when(currentUserPort.currentUser()).thenReturn(Optional.empty());
-
-            assertThrows(IllegalStateException.class, () -> service.create(command()));
-            verify(conversationRepository, never()).save(any());
-        }
-
-        @Test
-        @DisplayName("should throw IllegalStateException when the authenticated user has no member")
-        void shouldThrowWhenInitiatorHasNoMember() {
-            when(currentUserPort.currentUser()).thenReturn(Optional.of(new AuthenticatedUser(userId)));
-            when(memberRepository.findByUserId(userId.value())).thenReturn(Optional.empty());
-
-            assertThrows(IllegalStateException.class, () -> service.create(command()));
-            verify(conversationRepository, never()).save(any());
-        }
     }
 
     @Nested
@@ -213,8 +188,8 @@ class CreateDirectConversationServiceTest {
     class Invariants {
 
         @Test
-        @DisplayName("should reject null currentUserPort")
-        void shouldRejectNullCurrentUserPort() {
+        @DisplayName("should reject null currentMemberResolver")
+        void shouldRejectNullCurrentMemberResolver() {
             assertThrows(NullPointerException.class,
                     () -> new CreateDirectConversationService(null, memberRepository, conversationRepository, publisher, clock));
         }
@@ -223,28 +198,28 @@ class CreateDirectConversationServiceTest {
         @DisplayName("should reject null memberRepository")
         void shouldRejectNullMemberRepository() {
             assertThrows(NullPointerException.class,
-                    () -> new CreateDirectConversationService(currentUserPort, null, conversationRepository, publisher, clock));
+                    () -> new CreateDirectConversationService(currentMemberResolver, null, conversationRepository, publisher, clock));
         }
 
         @Test
         @DisplayName("should reject null conversationRepository")
         void shouldRejectNullConversationRepository() {
             assertThrows(NullPointerException.class,
-                    () -> new CreateDirectConversationService(currentUserPort, memberRepository, null, publisher, clock));
+                    () -> new CreateDirectConversationService(currentMemberResolver, memberRepository, null, publisher, clock));
         }
 
         @Test
         @DisplayName("should reject null publisher")
         void shouldRejectNullPublisher() {
             assertThrows(NullPointerException.class,
-                    () -> new CreateDirectConversationService(currentUserPort, memberRepository, conversationRepository, null, clock));
+                    () -> new CreateDirectConversationService(currentMemberResolver, memberRepository, conversationRepository, null, clock));
         }
 
         @Test
         @DisplayName("should reject null clock")
         void shouldRejectNullClock() {
             assertThrows(NullPointerException.class,
-                    () -> new CreateDirectConversationService(currentUserPort, memberRepository, conversationRepository, publisher, null));
+                    () -> new CreateDirectConversationService(currentMemberResolver, memberRepository, conversationRepository, publisher, null));
         }
 
         @Test

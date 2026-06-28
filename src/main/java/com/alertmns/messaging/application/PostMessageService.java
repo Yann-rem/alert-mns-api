@@ -13,11 +13,7 @@ import com.alertmns.messaging.domain.port.incoming.command.PostMessageCommand;
 import com.alertmns.messaging.domain.port.outgoing.ConversationRepository;
 import com.alertmns.messaging.domain.port.outgoing.GroupMembershipChecker;
 import com.alertmns.messaging.domain.port.outgoing.MessageRepository;
-import com.alertmns.organisation.domain.model.Member;
-import com.alertmns.organisation.domain.port.outgoing.MemberRepository;
-import com.alertmns.shared.CurrentUserPort;
 import com.alertmns.shared.EventPublisher;
-import com.alertmns.shared.UserId;
 
 import java.time.Clock;
 import java.util.Objects;
@@ -32,8 +28,7 @@ import java.util.UUID;
  */
 public final class PostMessageService implements PostMessageUseCase {
 
-    private final CurrentUserPort currentUserPort;
-    private final MemberRepository memberRepository;
+    private final CurrentMemberResolver currentMemberResolver;
     private final ConversationRepository conversationRepository;
     private final GroupMembershipChecker groupMembershipChecker;
     private final MessageRepository messageRepository;
@@ -41,16 +36,15 @@ public final class PostMessageService implements PostMessageUseCase {
     private final Clock clock;
 
     public PostMessageService(
-            CurrentUserPort currentUserPort,
-            MemberRepository memberRepository,
+            CurrentMemberResolver currentMemberResolver,
             ConversationRepository conversationRepository,
             GroupMembershipChecker groupMembershipChecker,
             MessageRepository messageRepository,
             EventPublisher publisher,
             Clock clock
     ) {
-        this.currentUserPort = Objects.requireNonNull(currentUserPort, "currentUserPort must not be null");
-        this.memberRepository = Objects.requireNonNull(memberRepository, "memberRepository must not be null");
+        this.currentMemberResolver = Objects.requireNonNull(
+                currentMemberResolver, "currentMemberResolver must not be null");
         this.conversationRepository = Objects.requireNonNull(
                 conversationRepository, "conversationRepository must not be null");
         this.groupMembershipChecker = Objects.requireNonNull(
@@ -63,14 +57,7 @@ public final class PostMessageService implements PostMessageUseCase {
 
     @Override
     public MessageId post(PostMessageCommand command) {
-        UserId currentUserId = currentUserPort.currentUser()
-                .orElseThrow(() -> new IllegalStateException("No authenticated user in context"))
-                .userId();
-
-        Member author = memberRepository.findByUserId(currentUserId.value())
-                .orElseThrow(() -> new IllegalStateException(
-                        "Authenticated user has no member: " + currentUserId.value()));
-        UUID authorId = author.id().value();
+        UUID authorId = currentMemberResolver.resolveCurrentMember().id().value();
 
         ConversationId conversationId = ConversationId.from(command.conversationId());
         Conversation conversation = conversationRepository.findById(conversationId)

@@ -11,9 +11,7 @@ import com.alertmns.organisation.domain.exception.OrganisationMismatchException;
 import com.alertmns.organisation.domain.model.Member;
 import com.alertmns.organisation.domain.model.MemberId;
 import com.alertmns.organisation.domain.port.outgoing.MemberRepository;
-import com.alertmns.shared.CurrentUserPort;
 import com.alertmns.shared.EventPublisher;
-import com.alertmns.shared.UserId;
 
 import java.time.Clock;
 import java.util.Objects;
@@ -27,20 +25,21 @@ import java.util.Objects;
  */
 public final class CreateDirectConversationService implements CreateDirectConversationUseCase {
 
-    private final CurrentUserPort currentUserPort;
+    private final CurrentMemberResolver currentMemberResolver;
     private final MemberRepository memberRepository;
     private final ConversationRepository conversationRepository;
     private final EventPublisher publisher;
     private final Clock clock;
 
     public CreateDirectConversationService(
-            CurrentUserPort currentUserPort,
+            CurrentMemberResolver currentMemberResolver,
             MemberRepository memberRepository,
             ConversationRepository conversationRepository,
             EventPublisher publisher,
             Clock clock
     ) {
-        this.currentUserPort = Objects.requireNonNull(currentUserPort, "currentUserPort must not be null");
+        this.currentMemberResolver = Objects.requireNonNull(
+                currentMemberResolver, "currentMemberResolver must not be null");
         this.memberRepository = Objects.requireNonNull(memberRepository, "memberRepository must not be null");
         this.conversationRepository = Objects.requireNonNull(
                 conversationRepository, "conversationRepository must not be null");
@@ -50,13 +49,7 @@ public final class CreateDirectConversationService implements CreateDirectConver
 
     @Override
     public ConversationId create(CreateDirectConversationCommand command) {
-        UserId currentUserId = currentUserPort.currentUser()
-                .orElseThrow(() -> new IllegalStateException("No authenticated user in context"))
-                .userId();
-
-        Member initiator = memberRepository.findByUserId(currentUserId.value())
-                .orElseThrow(() -> new IllegalStateException(
-                        "Authenticated user has no member: " + currentUserId.value()));
+        Member initiator = currentMemberResolver.resolveCurrentMember();
 
         MemberId targetMemberId = MemberId.from(command.targetMemberId());
         Member target = memberRepository.findById(targetMemberId)
