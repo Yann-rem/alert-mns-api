@@ -4,6 +4,7 @@ import com.alertmns.organisation.domain.model.GroupId;
 import com.alertmns.organisation.domain.model.GroupMembership;
 import com.alertmns.organisation.domain.model.MemberId;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -33,4 +34,12 @@ public interface GroupMembershipRepository {
      * @return l'adhésion trouvée, ou vide
      */
     Optional<GroupMembership> findByGroupIdAndMemberId(GroupId groupId, MemberId memberId);
+
+    /**
+     * Liste les adhésions d'un membre (tous ses groupes).
+     *
+     * @param memberId l'identifiant du membre
+     * @return les adhésions du membre (éventuellement vide)
+     */
+    List<GroupMembership> findByMemberId(MemberId memberId);
 }
