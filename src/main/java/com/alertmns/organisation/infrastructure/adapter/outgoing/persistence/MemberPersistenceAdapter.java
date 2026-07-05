@@ -2,6 +2,8 @@ package com.alertmns.organisation.infrastructure.adapter.outgoing.persistence;
 
 import com.alertmns.organisation.domain.model.Member;
 import com.alertmns.organisation.domain.model.MemberId;
+import com.alertmns.organisation.domain.model.MemberRole;
+import com.alertmns.organisation.domain.model.MemberStatus;
 import com.alertmns.organisation.domain.port.outgoing.MemberRepository;
 import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.mapper.MemberPersistenceMapper;
 import com.alertmns.shared.OrganisationId;
@@ -39,5 +41,11 @@ public final class MemberPersistenceAdapter implements MemberRepository {
     @Override
     public boolean existsByOrganisationIdAndUserId(OrganisationId organisationId, UUID userId) {
         return jpaRepository.existsByOrganisationIdAndUserId(organisationId.value(), userId);
+    }
+
+    @Override
+    public long countByOrganisationIdAndRoleAndStatus(
+            OrganisationId organisationId, MemberRole role, MemberStatus status) {
+        return jpaRepository.countByOrganisationIdAndRoleAndStatus(organisationId.value(), role, status);
     }
 }
