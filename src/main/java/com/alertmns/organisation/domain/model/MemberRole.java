@@ -7,6 +7,13 @@ package com.alertmns.organisation.domain.model;
  * Security via {@code UserAuthoritiesProvider}.</p>
  */
 public enum MemberRole {
+
+    /** Administrateur de l'organisation : toutes les opérations d'administration. */
     ADMIN,
+
+    /** Gestionnaire de chat : peut diffuser des alertes et modérer (introduit avec le BC Alerting). */
+    MANAGER,
+
+    /** Membre standard. */
     MEMBER
 }

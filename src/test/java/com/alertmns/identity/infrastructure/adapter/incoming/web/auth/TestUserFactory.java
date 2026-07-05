@@ -158,6 +158,19 @@ public final class TestUserFactory {
         return id;
     }
 
+    /**
+     * Crée un utilisateur ACTIVE rattaché à un {@code Member} role {@code MANAGER} (gestionnaire de chat).
+     *
+     * <p>Utilisé notamment par les tests d'autorisation de la diffusion d'alertes, réservée aux rôles ADMIN et
+     * MANAGER.</p>
+     */
+    public UserId registerActiveManager(String email, String rawPassword) {
+        UserId id = registerPending(email);
+        activateInPlace(id, rawPassword);
+        joinMember(id, MemberRole.MANAGER);
+        return id;
+    }
+
     private void activateInPlace(UserId id, String rawPassword) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalStateException("User just registered should exist in DB: " + id));
