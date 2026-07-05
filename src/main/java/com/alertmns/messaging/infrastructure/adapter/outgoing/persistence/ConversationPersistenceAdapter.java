@@ -6,6 +6,8 @@ import com.alertmns.messaging.domain.model.ParticipantPair;
 import com.alertmns.messaging.domain.port.outgoing.ConversationRepository;
 import com.alertmns.messaging.infrastructure.adapter.outgoing.persistence.mapper.ConversationPersistenceMapper;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -42,5 +44,21 @@ public final class ConversationPersistenceAdapter implements ConversationReposit
         return jpaRepository
                 .findByParticipantLowAndParticipantHigh(participants.low(), participants.high())
                 .map(ConversationPersistenceMapper::toDomain);
+    }
+
+    @Override
+    public List<Conversation> findByParticipant(UUID memberId) {
+        return jpaRepository.findByParticipantLowOrParticipantHigh(memberId, memberId)
+                .stream()
+                .map(ConversationPersistenceMapper::toDomain)
+                .toList();
+    }
+
+    @Override
+    public List<Conversation> findByGroupIdIn(Collection<UUID> groupIds) {
+        return jpaRepository.findByGroupIdIn(groupIds)
+                .stream()
+                .map(ConversationPersistenceMapper::toDomain)
+                .toList();
     }
 }

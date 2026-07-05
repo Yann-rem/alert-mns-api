@@ -3,6 +3,7 @@ package com.alertmns.messaging.infrastructure.config;
 import com.alertmns.messaging.application.CreateConversationFromGroupService;
 import com.alertmns.messaging.application.CreateDirectConversationService;
 import com.alertmns.messaging.application.CurrentMemberResolver;
+import com.alertmns.messaging.application.ListMyConversationsService;
 import com.alertmns.messaging.application.PostMessageService;
 import com.alertmns.messaging.application.ReadConversationMessagesService;
 import com.alertmns.messaging.application.RenameConversationService;
@@ -10,10 +11,11 @@ import com.alertmns.messaging.domain.port.incoming.CreateConversationFromGroupUs
 import com.alertmns.messaging.domain.port.incoming.RenameConversationUseCase;
 import com.alertmns.messaging.domain.port.outgoing.ConversationRepository;
 import com.alertmns.messaging.domain.port.outgoing.GroupMembershipChecker;
+import com.alertmns.messaging.domain.port.outgoing.GroupMembershipPort;
 import com.alertmns.messaging.domain.port.outgoing.MessageRepository;
 import com.alertmns.messaging.infrastructure.adapter.incoming.event.CreateConversationOnGroupCreatedListener;
 import com.alertmns.messaging.infrastructure.adapter.incoming.event.RenameConversationOnGroupRenamedListener;
-import com.alertmns.messaging.infrastructure.adapter.outgoing.acl.GroupMembershipCheckerAdapter;
+import com.alertmns.messaging.infrastructure.adapter.outgoing.acl.GroupMembershipPortAdapter;
 import com.alertmns.messaging.infrastructure.adapter.outgoing.persistence.ConversationJpaRepository;
 import com.alertmns.messaging.infrastructure.adapter.outgoing.persistence.ConversationPersistenceAdapter;
 import com.alertmns.messaging.infrastructure.adapter.outgoing.persistence.MessageJpaRepository;
@@ -43,8 +45,8 @@ public class MessagingBeanConfig {
     }
 
     @Bean
-    public GroupMembershipChecker groupMembershipChecker(GroupMembershipRepository groupMembershipRepository) {
-        return new GroupMembershipCheckerAdapter(groupMembershipRepository);
+    public GroupMembershipPort groupMembershipPort(GroupMembershipRepository groupMembershipRepository) {
+        return new GroupMembershipPortAdapter(groupMembershipRepository);
     }
 
     // --- Services ---
@@ -124,6 +126,15 @@ public class MessagingBeanConfig {
                 messageRepository,
                 groupMembershipChecker
         );
+    }
+
+    @Bean
+    public ListMyConversationsService listMyConversationsService(
+            CurrentMemberResolver currentMemberResolver,
+            ConversationRepository conversationRepository,
+            GroupMembershipPort groupMembershipPort
+    ) {
+        return new ListMyConversationsService(currentMemberResolver, conversationRepository, groupMembershipPort);
     }
 
     // --- Event listeners ---

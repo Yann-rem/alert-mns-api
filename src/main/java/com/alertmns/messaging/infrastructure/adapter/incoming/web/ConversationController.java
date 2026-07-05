@@ -2,6 +2,8 @@ package com.alertmns.messaging.infrastructure.adapter.incoming.web;
 
 import com.alertmns.messaging.domain.model.ConversationId;
 import com.alertmns.messaging.domain.port.incoming.CreateDirectConversationUseCase;
+import com.alertmns.messaging.domain.port.incoming.ListMyConversationsUseCase;
+import com.alertmns.messaging.infrastructure.adapter.incoming.web.dto.ConversationResponse;
 import com.alertmns.messaging.infrastructure.adapter.incoming.web.dto.CreateDirectConversationRequest;
 import com.alertmns.messaging.infrastructure.adapter.incoming.web.dto.CreateDirectConversationResponse;
 import com.alertmns.messaging.infrastructure.adapter.incoming.web.mapper.ConversationWebMapper;
@@ -11,11 +13,14 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/messaging/conversations")
@@ -24,6 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ConversationController {
 
     private final CreateDirectConversationUseCase createDirectConversationUseCase;
+    private final ListMyConversationsUseCase listMyConversationsUseCase;
 
     @Operation(
             summary = "Démarrer une conversation directe",
@@ -42,5 +48,17 @@ public class ConversationController {
                 ConversationWebMapper.toCreateDirectConversationCommand(request)
         );
         return new CreateDirectConversationResponse(id.value());
+    }
+
+    @Operation(
+            summary = "Lister mes conversations",
+            description = "Retourne les conversations de l'utilisateur courant (DM et groupes), de la plus récente à la plus ancienne.",
+            responses = @ApiResponse(responseCode = "200", description = "Liste des conversations")
+    )
+    @GetMapping
+    public List<ConversationResponse> listMine() {
+        return listMyConversationsUseCase.list().stream()
+                .map(ConversationWebMapper::toConversationResponse)
+                .toList();
     }
 }

@@ -6,6 +6,7 @@ import com.alertmns.organisation.domain.model.MemberId;
 import com.alertmns.organisation.domain.port.outgoing.GroupMembershipRepository;
 import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.mapper.GroupMembershipPersistenceMapper;
 
+import java.util.List;
 import java.util.Optional;
 
 public final class GroupMembershipPersistenceAdapter implements GroupMembershipRepository {
@@ -31,5 +32,13 @@ public final class GroupMembershipPersistenceAdapter implements GroupMembershipR
         return jpaRepository
                 .findByGroupIdAndMemberId(groupId.value(), memberId.value())
                 .map(GroupMembershipPersistenceMapper::toDomain);
+    }
+
+    @Override
+    public List<GroupMembership> findByMemberId(MemberId memberId) {
+        return jpaRepository.findByMemberId(memberId.value())
+                .stream()
+                .map(GroupMembershipPersistenceMapper::toDomain)
+                .toList();
     }
 }
