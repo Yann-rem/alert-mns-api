@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -24,9 +25,15 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
 
+/**
+ * Adapter web — administration des groupes. Réservé au rôle {@code ADMIN} : l'autorisation par rôle (RBAC) est un
+ * concern d'authentification/livraison, placé sur l'adapter entrant pour garder l'application et le domaine
+ * agnostiques de Spring Security. Le rôle est dérivé du {@code Member.role} du BC Organisation.
+ */
 @RestController
 @RequestMapping("/api/organisations")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('ADMIN')")
 @Tag(name = "Groups", description = "Gestion des groupes")
 public class GroupController {
 

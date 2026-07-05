@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,9 +19,15 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
 
+/**
+ * Adapter web — administration des membres (suspension / réactivation). Réservé au rôle {@code ADMIN} : le RBAC est
+ * placé sur l'adapter entrant pour garder l'application et le domaine agnostiques de Spring Security. Le rôle est
+ * dérivé du {@code Member.role} du BC Organisation.
+ */
 @RestController
 @RequestMapping("/api/organisations")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('ADMIN')")
 @Tag(name = "Members", description = "Gestion des membres d'une organisation")
 public class MemberController {
 
