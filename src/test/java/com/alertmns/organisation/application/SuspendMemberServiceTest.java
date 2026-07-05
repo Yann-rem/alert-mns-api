@@ -1,6 +1,7 @@
 package com.alertmns.organisation.application;
 
 import com.alertmns.organisation.domain.event.MemberSuspended;
+import com.alertmns.organisation.domain.exception.LastAdminCannotBeRemovedException;
 import com.alertmns.organisation.domain.exception.MemberNotFoundException;
 import com.alertmns.organisation.domain.exception.OrganisationMismatchException;
 import com.alertmns.organisation.domain.model.Member;
@@ -182,6 +183,50 @@ class SuspendMemberServiceTest {
             assertThrows(IllegalArgumentException.class, () -> service.suspend(command));
             verify(repository, never()).save(any());
             verify(publisher, never()).publish(anyList());
+        }
+    }
+
+    @Nested
+    @DisplayName("Last-admin invariant")
+    class LastAdmin {
+
+        MemberId id;
+        Member activeAdmin;
+
+        @BeforeEach
+        void setUp() {
+            id = MemberId.generate();
+            lenient().when(clock.instant()).thenReturn(NOW);
+            activeAdmin = Member.reconstitute(
+                    id, ORGANISATION_ID, USER_ID, MemberRole.ADMIN, MemberStatus.ACTIVE, NOW);
+        }
+
+        private SuspendMemberCommand command() {
+            return new SuspendMemberCommand(ORGANISATION_ID.value().toString(), id.value().toString());
+        }
+
+        @Test
+        @DisplayName("should refuse suspending the last active admin")
+        void refusesSuspendingLastAdmin() {
+            when(repository.findById(any())).thenReturn(Optional.of(activeAdmin));
+            when(repository.countByOrganisationIdAndRoleAndStatus(
+                    ORGANISATION_ID, MemberRole.ADMIN, MemberStatus.ACTIVE)).thenReturn(1L);
+
+            assertThrows(LastAdminCannotBeRemovedException.class, () -> service.suspend(command()));
+            verify(repository, never()).save(any());
+            verify(publisher, never()).publish(anyList());
+        }
+
+        @Test
+        @DisplayName("should allow suspending an admin when others remain")
+        void allowsSuspendingWhenOthersRemain() {
+            when(repository.findById(any())).thenReturn(Optional.of(activeAdmin));
+            when(repository.countByOrganisationIdAndRoleAndStatus(
+                    ORGANISATION_ID, MemberRole.ADMIN, MemberStatus.ACTIVE)).thenReturn(2L);
+
+            service.suspend(command());
+
+            verify(repository).save(any());
         }
     }
 
