@@ -4,6 +4,7 @@ import com.alertmns.identity.domain.port.incoming.RegisterPendingUserUseCase;
 import com.alertmns.identity.domain.port.outgoing.UserRepository;
 import com.alertmns.organisation.application.AcceptMembershipInvitationService;
 import com.alertmns.organisation.application.AddMemberToGroupService;
+import com.alertmns.organisation.application.ChangeMemberRoleService;
 import com.alertmns.organisation.application.CreateGeneralGroupService;
 import com.alertmns.organisation.application.CreateGroupService;
 import com.alertmns.organisation.application.CreateOrganisationService;
@@ -117,6 +118,15 @@ public class OrganisationBeanConfig {
             Clock clock
     ) {
         return new SuspendMemberService(repository, publisher, clock);
+    }
+
+    @Bean
+    public ChangeMemberRoleService changeMemberRoleService(
+            MemberRepository repository,
+            EventPublisher publisher,
+            Clock clock
+    ) {
+        return new ChangeMemberRoleService(repository, publisher, clock);
     }
 
     @Bean

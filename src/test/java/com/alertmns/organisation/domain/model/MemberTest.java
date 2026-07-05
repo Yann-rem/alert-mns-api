@@ -2,6 +2,7 @@ package com.alertmns.organisation.domain.model;
 
 import com.alertmns.organisation.domain.event.MemberJoined;
 import com.alertmns.organisation.domain.event.MemberReactivated;
+import com.alertmns.organisation.domain.event.MemberRoleChanged;
 import com.alertmns.organisation.domain.event.MemberSuspended;
 import com.alertmns.shared.DomainEvent;
 import com.alertmns.shared.OrganisationId;
@@ -213,6 +214,49 @@ class MemberTest {
             member.pullDomainEvents();
             List<DomainEvent> events = member.pullDomainEvents();
             assertTrue(events.isEmpty());
+        }
+    }
+
+    @Nested
+    @DisplayName("Change role")
+    class ChangeRole {
+
+        Member member;
+
+        @BeforeEach
+        void setUp() {
+            member = Member.createActive(ORGANISATION_ID, USER_ID, MemberRole.MEMBER, NOW);
+            member.pullDomainEvents();
+        }
+
+        @Test
+        @DisplayName("changeRole should update the role and emit MemberRoleChanged")
+        void changeRoleUpdatesAndEmits() {
+            member.changeRole(MemberRole.MANAGER, LATER);
+
+            assertEquals(MemberRole.MANAGER, member.role());
+            List<DomainEvent> events = member.pullDomainEvents();
+            assertEquals(1, events.size());
+            MemberRoleChanged event = assertInstanceOf(MemberRoleChanged.class, events.getFirst());
+            assertEquals(ORGANISATION_ID, event.organisationId());
+            assertEquals(member.id(), event.memberId());
+            assertEquals(MemberRole.MANAGER, event.newRole());
+            assertEquals(LATER, event.occurredOn());
+        }
+
+        @Test
+        @DisplayName("changeRole to the same role is a no-op and emits nothing")
+        void changeRoleSameRoleIsNoop() {
+            member.changeRole(MemberRole.MEMBER, LATER);
+
+            assertEquals(MemberRole.MEMBER, member.role());
+            assertTrue(member.pullDomainEvents().isEmpty());
+        }
+
+        @Test
+        @DisplayName("changeRole should reject a null role")
+        void changeRoleRejectsNull() {
+            assertThrows(NullPointerException.class, () -> member.changeRole(null, LATER));
         }
     }
 

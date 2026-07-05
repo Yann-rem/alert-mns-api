@@ -2,6 +2,7 @@ package com.alertmns.organisation.domain.model;
 
 import com.alertmns.organisation.domain.event.MemberJoined;
 import com.alertmns.organisation.domain.event.MemberReactivated;
+import com.alertmns.organisation.domain.event.MemberRoleChanged;
 import com.alertmns.organisation.domain.event.MemberSuspended;
 import com.alertmns.shared.AggregateRoot;
 import com.alertmns.shared.OrganisationId;
@@ -25,7 +26,7 @@ public final class Member extends AggregateRoot {
     private final MemberId id;
     private final OrganisationId organisationId;
     private final UUID userId;
-    private final MemberRole role;
+    private MemberRole role;
     private MemberStatus status;
     private final Instant joinedAt;
 
@@ -111,6 +112,26 @@ public final class Member extends AggregateRoot {
         requireStatus(MemberStatus.SUSPENDED, "reactivate");
         status = MemberStatus.ACTIVE;
         registerEvent(new MemberReactivated(organisationId, id, now));
+    }
+
+    /**
+     * Change le rôle du membre.
+     *
+     * <p>Émet {@link MemberRoleChanged}. Idempotent : no-op si le rôle est inchangé.</p>
+     *
+     * <p>L'invariant « au moins un ADMIN actif » (ADR-0013) n'est pas porté ici : l'agrégat ne connaît que lui-même.
+     * Il est vérifié par le service applicatif, qui a accès au dénombrement des administrateurs.</p>
+     *
+     * @param newRole le nouveau rôle
+     * @param now     instant de l'opération
+     */
+    public void changeRole(MemberRole newRole, Instant now) {
+        Objects.requireNonNull(newRole, "newRole must not be null");
+        if (this.role == newRole) {
+            return;
+        }
+        this.role = newRole;
+        registerEvent(new MemberRoleChanged(organisationId, id, newRole, now));
     }
 
     /**

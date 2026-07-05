@@ -2,6 +2,8 @@ package com.alertmns.organisation.domain.port.outgoing;
 
 import com.alertmns.organisation.domain.model.Member;
 import com.alertmns.organisation.domain.model.MemberId;
+import com.alertmns.organisation.domain.model.MemberRole;
+import com.alertmns.organisation.domain.model.MemberStatus;
 import com.alertmns.shared.OrganisationId;
 
 import java.util.Optional;
@@ -43,4 +45,16 @@ public interface MemberRepository {
      * @return {@code true} si un membre existe déjà pour ce couple
      */
     boolean existsByOrganisationIdAndUserId(OrganisationId organisationId, UUID userId);
+
+    /**
+     * Compte les membres d'une organisation ayant un rôle et un statut donnés.
+     *
+     * <p>Sert l'invariant « au moins un ADMIN actif » (ADR-0013).</p>
+     *
+     * @param organisationId l'organisation
+     * @param role           le rôle recherché
+     * @param status         le statut recherché
+     * @return le nombre de membres correspondants
+     */
+    long countByOrganisationIdAndRoleAndStatus(OrganisationId organisationId, MemberRole role, MemberStatus status);
 }

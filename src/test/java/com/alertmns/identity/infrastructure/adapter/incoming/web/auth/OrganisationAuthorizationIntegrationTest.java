@@ -131,6 +131,19 @@ class OrganisationAuthorizationIntegrationTest extends AbstractAuthIntegrationTe
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     }
 
+    @Test
+    @DisplayName("Member changing a member's role returns 403")
+    void memberChangeRoleForbidden() {
+        AuthCookies member = asMember();
+
+        ResponseEntity<String> response = mutate(
+                HttpMethod.PUT,
+                "/api/organisations/" + ORG_ID + "/members/" + UUID.randomUUID() + "/role",
+                "{\"role\":\"MANAGER\"}", member);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    }
+
     // ----------------------------------------------------------------------------------------------------------------
     // GroupMembershipController : PUT/DELETE .../groups/{groupId}/members/{memberId}
     // ----------------------------------------------------------------------------------------------------------------
