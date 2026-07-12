@@ -1,4 +1,4 @@
-package com.alertmns.alerting.application;
+package com.alertmns.organisation.application;
 
 import com.alertmns.organisation.domain.model.Member;
 import com.alertmns.organisation.domain.port.outgoing.MemberRepository;
@@ -8,12 +8,12 @@ import com.alertmns.shared.UserId;
 import java.util.Objects;
 
 /**
- * Résout le {@link Member} correspondant à l'utilisateur authentifié courant, pour les services du BC Alerting.
+ * Résout le {@link Member} correspondant à l'utilisateur authentifié courant.
  *
- * <p><b>Dette assumée</b> : ce collaborateur est un doublon de {@code messaging.application.CurrentMemberResolver}.
- * La duplication garde le BC Alerting auto-porté (pas de couplage vers le BC Messaging). Maintenant que deux BC en
- * ont besoin, l'extraction vers un point unique (BC Organisation, use case entrant « membre courant ») est justifiée
- * — à traiter dans un refactoring dédié.</p>
+ * <p>Collaborateur d'application partagé : il vit dans le BC Organisation (propriétaire de l'agrégat {@code Member})
+ * et est réutilisé par les BC Messaging et Alerting, qui agissent « au nom » du membre courant. Encapsule la
+ * traduction utilisateur courant → Member, évitant de la dupliquer (et de dupliquer le couplage vers
+ * {@link MemberRepository}) dans chaque service consommateur.</p>
  */
 public final class CurrentMemberResolver {
 

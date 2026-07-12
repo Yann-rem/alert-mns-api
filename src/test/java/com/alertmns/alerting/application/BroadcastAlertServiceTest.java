@@ -6,6 +6,7 @@ import com.alertmns.alerting.domain.model.AlertId;
 import com.alertmns.alerting.domain.model.AlertLevel;
 import com.alertmns.alerting.domain.port.incoming.command.BroadcastAlertCommand;
 import com.alertmns.alerting.domain.port.outgoing.AlertRepository;
+import com.alertmns.organisation.application.CurrentMemberResolver;
 import com.alertmns.organisation.domain.model.Member;
 import com.alertmns.organisation.domain.model.MemberId;
 import com.alertmns.organisation.domain.model.MemberRole;

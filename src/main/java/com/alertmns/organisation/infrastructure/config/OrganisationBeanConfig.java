@@ -8,6 +8,7 @@ import com.alertmns.organisation.application.ChangeMemberRoleService;
 import com.alertmns.organisation.application.CreateGeneralGroupService;
 import com.alertmns.organisation.application.CreateGroupService;
 import com.alertmns.organisation.application.CreateOrganisationService;
+import com.alertmns.organisation.application.CurrentMemberResolver;
 import com.alertmns.organisation.application.IssueMembershipInvitationService;
 import com.alertmns.organisation.application.ReactivateMemberService;
 import com.alertmns.organisation.application.RemoveMemberFromGroupService;
@@ -32,6 +33,7 @@ import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.Mem
 import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.MembershipInvitationPersistenceAdapter;
 import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.OrganisationJpaRepository;
 import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.OrganisationPersistenceAdapter;
+import com.alertmns.shared.CurrentUserPort;
 import com.alertmns.shared.EventPublisher;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -73,6 +75,14 @@ public class OrganisationBeanConfig {
     }
 
     // --- Services ---
+
+    @Bean
+    public CurrentMemberResolver currentMemberResolver(
+            CurrentUserPort currentUserPort,
+            MemberRepository memberRepository
+    ) {
+        return new CurrentMemberResolver(currentUserPort, memberRepository);
+    }
 
     @Bean
     public CreateOrganisationService createOrganisationService(

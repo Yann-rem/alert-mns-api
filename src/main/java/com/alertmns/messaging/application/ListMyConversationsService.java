@@ -4,6 +4,7 @@ import com.alertmns.messaging.domain.model.Conversation;
 import com.alertmns.messaging.domain.port.incoming.ListMyConversationsUseCase;
 import com.alertmns.messaging.domain.port.outgoing.ConversationRepository;
 import com.alertmns.messaging.domain.port.outgoing.GroupMembershipPort;
+import com.alertmns.organisation.application.CurrentMemberResolver;
 
 import java.util.Comparator;
 import java.util.List;

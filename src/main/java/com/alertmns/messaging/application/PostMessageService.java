@@ -13,6 +13,7 @@ import com.alertmns.messaging.domain.port.incoming.command.PostMessageCommand;
 import com.alertmns.messaging.domain.port.outgoing.ConversationRepository;
 import com.alertmns.messaging.domain.port.outgoing.GroupMembershipChecker;
 import com.alertmns.messaging.domain.port.outgoing.MessageRepository;
+import com.alertmns.organisation.application.CurrentMemberResolver;
 import com.alertmns.shared.EventPublisher;
 
 import java.time.Clock;

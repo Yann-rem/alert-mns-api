@@ -1,12 +1,14 @@
 package com.alertmns.alerting.infrastructure.config;
 
 import com.alertmns.alerting.application.BroadcastAlertService;
-import com.alertmns.alerting.application.CurrentMemberResolver;
+import com.alertmns.alerting.application.ListMyAlertsService;
 import com.alertmns.alerting.domain.port.outgoing.AlertRepository;
+import com.alertmns.alerting.domain.port.outgoing.GroupMembershipPort;
+import com.alertmns.alerting.infrastructure.adapter.outgoing.acl.GroupMembershipPortAdapter;
 import com.alertmns.alerting.infrastructure.adapter.outgoing.persistence.AlertJpaRepository;
 import com.alertmns.alerting.infrastructure.adapter.outgoing.persistence.AlertPersistenceAdapter;
-import com.alertmns.organisation.domain.port.outgoing.MemberRepository;
-import com.alertmns.shared.CurrentUserPort;
+import com.alertmns.organisation.application.CurrentMemberResolver;
+import com.alertmns.organisation.domain.port.outgoing.GroupMembershipRepository;
 import com.alertmns.shared.EventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,23 +25,29 @@ public class AlertingBeanConfig {
         return new AlertPersistenceAdapter(jpaRepository);
     }
 
+    @Bean
+    public GroupMembershipPort alertingGroupMembershipPort(GroupMembershipRepository groupMembershipRepository) {
+        return new GroupMembershipPortAdapter(groupMembershipRepository);
+    }
+
     // --- Services ---
 
     @Bean
-    public CurrentMemberResolver alertingCurrentMemberResolver(
-            CurrentUserPort currentUserPort,
-            MemberRepository memberRepository
-    ) {
-        return new CurrentMemberResolver(currentUserPort, memberRepository);
-    }
-
-    @Bean
     public BroadcastAlertService broadcastAlertService(
-            CurrentMemberResolver alertingCurrentMemberResolver,
+            CurrentMemberResolver currentMemberResolver,
             AlertRepository alertRepository,
             EventPublisher publisher,
             Clock clock
     ) {
-        return new BroadcastAlertService(alertingCurrentMemberResolver, alertRepository, publisher, clock);
+        return new BroadcastAlertService(currentMemberResolver, alertRepository, publisher, clock);
+    }
+
+    @Bean
+    public ListMyAlertsService listMyAlertsService(
+            CurrentMemberResolver currentMemberResolver,
+            AlertRepository alertRepository,
+            GroupMembershipPort alertingGroupMembershipPort
+    ) {
+        return new ListMyAlertsService(currentMemberResolver, alertRepository, alertingGroupMembershipPort);
     }
 }

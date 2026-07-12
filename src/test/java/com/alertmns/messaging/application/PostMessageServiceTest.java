@@ -16,6 +16,7 @@ import com.alertmns.messaging.domain.port.incoming.command.PostMessageCommand;
 import com.alertmns.messaging.domain.port.outgoing.ConversationRepository;
 import com.alertmns.messaging.domain.port.outgoing.GroupMembershipChecker;
 import com.alertmns.messaging.domain.port.outgoing.MessageRepository;
+import com.alertmns.organisation.application.CurrentMemberResolver;
 import com.alertmns.organisation.domain.model.Member;
 import com.alertmns.organisation.domain.model.MemberId;
 import com.alertmns.organisation.domain.model.MemberRole;

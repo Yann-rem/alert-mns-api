@@ -7,6 +7,7 @@ import com.alertmns.messaging.domain.model.ConversationKind;
 import com.alertmns.messaging.domain.model.ParticipantPair;
 import com.alertmns.messaging.domain.port.incoming.command.CreateDirectConversationCommand;
 import com.alertmns.messaging.domain.port.outgoing.ConversationRepository;
+import com.alertmns.organisation.application.CurrentMemberResolver;
 import com.alertmns.organisation.domain.exception.MemberNotFoundException;
 import com.alertmns.organisation.domain.exception.OrganisationMismatchException;
 import com.alertmns.organisation.domain.model.Member;

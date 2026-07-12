@@ -60,4 +60,15 @@ class AlertAuthorizationIntegrationTest extends AbstractAuthIntegrationTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
     }
+
+    @Test
+    @DisplayName("Member listing alerts returns 200 (read is open to any member)")
+    void memberListAlertsOk() {
+        userFactory.registerActive(MEMBER_EMAIL, PASSWORD);
+        AuthCookies member = loginAndAcquireCookies(MEMBER_EMAIL, PASSWORD);
+
+        ResponseEntity<String> response = mutate(HttpMethod.GET, "/api/alerting/alerts", null, member);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
 }

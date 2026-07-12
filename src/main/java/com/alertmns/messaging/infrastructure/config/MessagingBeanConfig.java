@@ -2,7 +2,6 @@ package com.alertmns.messaging.infrastructure.config;
 
 import com.alertmns.messaging.application.CreateConversationFromGroupService;
 import com.alertmns.messaging.application.CreateDirectConversationService;
-import com.alertmns.messaging.application.CurrentMemberResolver;
 import com.alertmns.messaging.application.ListMyConversationsService;
 import com.alertmns.messaging.application.PostMessageService;
 import com.alertmns.messaging.application.ReadConversationMessagesService;
@@ -20,9 +19,9 @@ import com.alertmns.messaging.infrastructure.adapter.outgoing.persistence.Conver
 import com.alertmns.messaging.infrastructure.adapter.outgoing.persistence.ConversationPersistenceAdapter;
 import com.alertmns.messaging.infrastructure.adapter.outgoing.persistence.MessageJpaRepository;
 import com.alertmns.messaging.infrastructure.adapter.outgoing.persistence.MessagePersistenceAdapter;
+import com.alertmns.organisation.application.CurrentMemberResolver;
 import com.alertmns.organisation.domain.port.outgoing.GroupMembershipRepository;
 import com.alertmns.organisation.domain.port.outgoing.MemberRepository;
-import com.alertmns.shared.CurrentUserPort;
 import com.alertmns.shared.EventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -50,14 +49,6 @@ public class MessagingBeanConfig {
     }
 
     // --- Services ---
-
-    @Bean
-    public CurrentMemberResolver currentMemberResolver(
-            CurrentUserPort currentUserPort,
-            MemberRepository memberRepository
-    ) {
-        return new CurrentMemberResolver(currentUserPort, memberRepository);
-    }
 
     @Bean
     public CreateConversationFromGroupService createConversationFromGroupService(
