@@ -16,6 +16,7 @@ import com.alertmns.identity.domain.port.outgoing.PasswordHasher;
 import com.alertmns.identity.domain.port.outgoing.UserAuthoritiesProvider;
 import com.alertmns.identity.domain.port.outgoing.UserRepository;
 import com.alertmns.identity.infrastructure.adapter.incoming.event.IssueActivationTokenOnUserRegisteredListener;
+import com.alertmns.identity.infrastructure.adapter.incoming.event.WebSocketRevocationListener;
 import com.alertmns.identity.infrastructure.adapter.incoming.web.security.DomainUserDetailsService;
 import com.alertmns.identity.infrastructure.adapter.incoming.web.security.SpringSecurityCurrentUserAdapter;
 import com.alertmns.identity.infrastructure.adapter.outgoing.mailer.LoggingMailerAdapter;
@@ -28,6 +29,7 @@ import com.alertmns.organisation.domain.port.outgoing.MemberRepository;
 import com.alertmns.organisation.infrastructure.adapter.outgoing.authorities.MemberUserAuthoritiesAdapter;
 import com.alertmns.shared.CurrentUserPort;
 import com.alertmns.shared.EventPublisher;
+import com.alertmns.shared.web.ws.WebSocketSessionRegistry;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
@@ -39,6 +41,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
+import org.springframework.security.web.session.HttpSessionEventPublisher;
 
 import java.net.URI;
 import java.time.Clock;
@@ -204,5 +207,19 @@ public class IdentityBeanConfig {
             IssueActivationTokenUseCase issueActivationTokenUseCase
     ) {
         return new IssueActivationTokenOnUserRegisteredListener(issueActivationTokenUseCase);
+    }
+
+    /**
+     * Publie les événements de cycle de vie des sessions HTTP (création / destruction) vers le contexte Spring — requis
+     * pour que {@link WebSocketRevocationListener} détecte les logouts et expirations.
+     */
+    @Bean
+    public HttpSessionEventPublisher httpSessionEventPublisher() {
+        return new HttpSessionEventPublisher();
+    }
+
+    @Bean
+    public WebSocketRevocationListener webSocketRevocationListener(WebSocketSessionRegistry sessionRegistry) {
+        return new WebSocketRevocationListener(sessionRegistry);
     }
 }
