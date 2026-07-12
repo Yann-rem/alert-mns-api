@@ -1,9 +1,11 @@
 package com.alertmns.identity.infrastructure.adapter.incoming.web;
 
+import com.alertmns.identity.domain.port.incoming.AnonymizeUserUseCase;
 import com.alertmns.identity.domain.port.incoming.ReactivateUserUseCase;
 import com.alertmns.identity.domain.port.incoming.SuspendUserUseCase;
 import com.alertmns.identity.domain.port.incoming.UpdateAbsenceMessageUseCase;
 import com.alertmns.identity.domain.port.incoming.UpdateProfileUseCase;
+import com.alertmns.identity.domain.port.incoming.command.AnonymizeUserCommand;
 import com.alertmns.identity.domain.port.incoming.command.ReactivateUserCommand;
 import com.alertmns.identity.domain.port.incoming.command.SuspendUserCommand;
 import com.alertmns.identity.infrastructure.adapter.incoming.web.dto.UpdateAbsenceMessageRequest;
@@ -37,6 +39,7 @@ public class UserController {
     private final ReactivateUserUseCase reactivateUserUseCase;
     private final UpdateProfileUseCase updateProfileUseCase;
     private final UpdateAbsenceMessageUseCase updateAbsenceMessageUseCase;
+    private final AnonymizeUserUseCase anonymizeUserUseCase;
 
     @Operation(
             summary = "Suspendre un utilisateur",
@@ -67,6 +70,23 @@ public class UserController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void reactivate(@Parameter(description = "Identifiant de l'utilisateur") @PathVariable UUID id) {
         reactivateUserUseCase.reactivate(new ReactivateUserCommand(id.toString()));
+    }
+
+    @Operation(
+            summary = "Anonymiser un utilisateur (RGPD)",
+            description = "Efface les données personnelles (email, profil, mot de passe) en les remplaçant par des "
+                    + "placeholders non-identifiants. Le userId est conservé. Opération idempotente, déclenchée par "
+                    + "l'ADMIN sur instruction du DPO (droit à l'effacement, article 17 RGPD).",
+            responses = {
+                    @ApiResponse(responseCode = "204", description = "Utilisateur anonymisé avec succès"),
+                    @ApiResponse(responseCode = "404", description = "Utilisateur introuvable")
+            }
+    )
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/{id}/anonymize")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void anonymize(@Parameter(description = "Identifiant de l'utilisateur") @PathVariable UUID id) {
+        anonymizeUserUseCase.anonymize(new AnonymizeUserCommand(id.toString()));
     }
 
     @Operation(

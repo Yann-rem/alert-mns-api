@@ -3,6 +3,7 @@ package com.alertmns.identity.domain.model;
 import com.alertmns.identity.domain.event.AbsenceMessageUpdated;
 import com.alertmns.identity.domain.event.ProfileUpdated;
 import com.alertmns.identity.domain.event.UserActivated;
+import com.alertmns.identity.domain.event.UserAnonymized;
 import com.alertmns.identity.domain.event.UserReactivated;
 import com.alertmns.identity.domain.event.UserRegistered;
 import com.alertmns.identity.domain.event.UserSuspended;
@@ -234,6 +235,65 @@ class UserTest {
         void reactivateShouldRejectNonSUSPENDEDAccount() {
             assertThrows(IllegalStateException.class, () -> user.reactivate(NOW));
         }
+
+        @Test
+        @DisplayName("anonymize should scrub email, name and password with non-identifying placeholders")
+        void anonymizeShouldScrubPii() {
+            user.activateWithPassword(HashedPassword.of(BCRYPT_HASH), NOW);
+            UserId id = user.id();
+
+            user.anonymize(LATER);
+
+            assertEquals("anonymized-" + id.value() + "@deleted.local", user.email().value());
+            assertEquals("Utilisateur", user.profile().firstName().value());
+            assertEquals("Supprimé", user.profile().lastName().value());
+            assertTrue(user.hashedPassword().isUnset());
+        }
+
+        @Test
+        @DisplayName("anonymize should clear avatar and absence message")
+        void anonymizeShouldClearAvatarAndAbsenceMessage() {
+            user.activateWithPassword(HashedPassword.of(BCRYPT_HASH), NOW);
+            user.updateProfile(FirstName.of("Jane"), LastName.of("Smith"), "https://cdn.example.com/a.jpg", NOW);
+            user.updateAbsenceMessage(AbsenceMessage.of("Absent", true), NOW);
+
+            user.anonymize(LATER);
+
+            assertTrue(user.profile().avatar().isEmpty());
+            assertTrue(user.profile().absenceMessage().isEmpty());
+        }
+
+        @Test
+        @DisplayName("anonymize should set isAnonymized and preserve the id and the access status")
+        void anonymizeShouldSetFlagAndPreserveIdAndStatus() {
+            user.activateWithPassword(HashedPassword.of(BCRYPT_HASH), NOW);
+            UserId id = user.id();
+
+            user.anonymize(LATER);
+
+            assertTrue(user.isAnonymized());
+            assertEquals(id, user.id());
+            assertEquals(UserStatus.ACTIVE, user.status());
+        }
+
+        @Test
+        @DisplayName("anonymize should be idempotent: a second call is a no-op")
+        void anonymizeShouldBeIdempotent() {
+            user.activateWithPassword(HashedPassword.of(BCRYPT_HASH), NOW);
+            user.anonymize(LATER);
+            Email afterFirst = user.email();
+
+            user.anonymize(LATER.plusSeconds(60));
+
+            assertTrue(user.isAnonymized());
+            assertEquals(afterFirst, user.email());
+        }
+
+        @Test
+        @DisplayName("anonymize should reject null now")
+        void anonymizeShouldRejectNullNow() {
+            assertThrows(NullPointerException.class, () -> user.anonymize(null));
+        }
     }
 
     @Nested
@@ -340,6 +400,32 @@ class UserTest {
             UserReactivated event = assertInstanceOf(UserReactivated.class, events.getFirst());
             assertEquals(user.id(), event.userId());
             assertEquals(LATER, event.occurredOn());
+        }
+
+        @Test
+        @DisplayName("anonymize should emit UserAnonymized with occurredOn = now")
+        void anonymizeShouldEmitUserAnonymized() {
+            user.activateWithPassword(HashedPassword.of(BCRYPT_HASH), NOW);
+            user.pullDomainEvents();
+
+            user.anonymize(LATER);
+
+            List<DomainEvent> events = user.pullDomainEvents();
+            assertEquals(1, events.size());
+            UserAnonymized event = assertInstanceOf(UserAnonymized.class, events.getFirst());
+            assertEquals(user.id(), event.userId());
+            assertEquals(LATER, event.occurredOn());
+        }
+
+        @Test
+        @DisplayName("anonymize should not emit a second event when already anonymized")
+        void anonymizeTwiceShouldEmitOnlyOneEvent() {
+            user.anonymize(NOW);
+            user.pullDomainEvents();
+
+            user.anonymize(LATER);
+
+            assertTrue(user.pullDomainEvents().isEmpty());
         }
 
         @Test
