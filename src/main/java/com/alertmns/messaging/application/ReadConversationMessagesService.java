@@ -10,6 +10,7 @@ import com.alertmns.messaging.domain.port.incoming.command.ReadConversationMessa
 import com.alertmns.messaging.domain.port.outgoing.ConversationRepository;
 import com.alertmns.messaging.domain.port.outgoing.GroupMembershipChecker;
 import com.alertmns.messaging.domain.port.outgoing.MessageRepository;
+import com.alertmns.organisation.application.CurrentMemberResolver;
 
 import java.util.List;
 import java.util.Objects;

@@ -7,6 +7,7 @@ import com.alertmns.messaging.domain.model.ConversationName;
 import com.alertmns.messaging.domain.model.ParticipantPair;
 import com.alertmns.messaging.domain.port.outgoing.ConversationRepository;
 import com.alertmns.messaging.domain.port.outgoing.GroupMembershipPort;
+import com.alertmns.organisation.application.CurrentMemberResolver;
 import com.alertmns.organisation.domain.model.Member;
 import com.alertmns.organisation.domain.model.MemberId;
 import com.alertmns.organisation.domain.model.MemberRole;

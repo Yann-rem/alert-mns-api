@@ -1,4 +1,4 @@
-package com.alertmns.messaging.application;
+package com.alertmns.organisation.application;
 
 import com.alertmns.organisation.domain.model.Member;
 import com.alertmns.organisation.domain.model.MemberId;
