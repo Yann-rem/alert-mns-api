@@ -7,6 +7,7 @@ import com.alertmns.organisation.domain.model.MemberRole;
 import com.alertmns.organisation.domain.model.MemberStatus;
 import com.alertmns.shared.OrganisationId;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -79,4 +80,14 @@ public interface MemberRepository {
      * @return les identifiants utilisateur des membres du groupe
      */
     List<UUID> findUserIdsByGroupId(GroupId groupId);
+
+    /**
+     * Retourne les {@code userId} des membres dont l'identifiant figure dans la collection donnée.
+     *
+     * <p>Sert la résolution des destinataires d'un message dans une conversation directe (les deux participants).</p>
+     *
+     * @param memberIds les identifiants de membres
+     * @return les identifiants utilisateur correspondants
+     */
+    List<UUID> findUserIdsByIdIn(Collection<MemberId> memberIds);
 }
