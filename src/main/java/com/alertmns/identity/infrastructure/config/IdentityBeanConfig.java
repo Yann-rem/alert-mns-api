@@ -1,5 +1,6 @@
 package com.alertmns.identity.infrastructure.config;
 
+import com.alertmns.identity.application.AnonymizeUserService;
 import com.alertmns.identity.application.IssueActivationTokenService;
 import com.alertmns.identity.application.ReactivateUserService;
 import com.alertmns.identity.application.RedeemActivationTokenService;
@@ -189,6 +190,11 @@ public class IdentityBeanConfig {
             Clock clock
     ) {
         return new ReactivateUserService(repository, publisher, clock);
+    }
+
+    @Bean
+    public AnonymizeUserService anonymizeUserService(UserRepository repository, EventPublisher publisher, Clock clock) {
+        return new AnonymizeUserService(repository, publisher, clock);
     }
 
     // --- Event listeners ---

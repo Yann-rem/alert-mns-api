@@ -3,6 +3,7 @@ package com.alertmns.identity.domain.model;
 import com.alertmns.identity.domain.event.AbsenceMessageUpdated;
 import com.alertmns.identity.domain.event.ProfileUpdated;
 import com.alertmns.identity.domain.event.UserActivated;
+import com.alertmns.identity.domain.event.UserAnonymized;
 import com.alertmns.identity.domain.event.UserReactivated;
 import com.alertmns.identity.domain.event.UserRegistered;
 import com.alertmns.identity.domain.event.UserSuspended;
@@ -24,8 +25,14 @@ import java.util.Objects;
  */
 public final class User extends AggregateRoot {
 
+    /** Prénom placeholder posé sur le profil d'un utilisateur anonymisé. */
+    private static final String ANONYMIZED_FIRST_NAME = "Utilisateur";
+
+    /** Nom placeholder posé sur le profil d'un utilisateur anonymisé. */
+    private static final String ANONYMIZED_LAST_NAME = "Supprimé";
+
     private final UserId id;
-    private final Email email;
+    private Email email;
     private HashedPassword hashedPassword;
     private Profile profile;
     private UserStatus status;
@@ -190,6 +197,41 @@ public final class User extends AggregateRoot {
         requireStatus(UserStatus.ACTIVE, "suspend");
         status = UserStatus.SUSPENDED;
         registerEvent(new UserSuspended(id, now));
+    }
+
+    /**
+     * Anonymise l'utilisateur au titre du droit à l'effacement (article 17 RGPD, doctrine ADR-0017).
+     *
+     * <p>Remplace toutes les données personnelles par des placeholders non-identifiants tout en conservant le
+     * {@code userId} : celui-ci reste la clé de référence opaque des messages, alertes et adhésions co-construits avec
+     * d'autres participants. Concrètement :</p>
+     * <ul>
+     *   <li>{@code email} → {@code anonymized-{userId}@deleted.local} (unique, non-identifiant) ;</li>
+     *   <li>{@code profile} → « {@value #ANONYMIZED_FIRST_NAME} {@value #ANONYMIZED_LAST_NAME} », avatar et message
+     *       d'absence effacés ;</li>
+     *   <li>{@code hashedPassword} → {@link HashedPassword#unset()} : ne matche plus aucun mot de passe, toute
+     *       connexion devient impossible.</li>
+     * </ul>
+     *
+     * <p>L'opération est <strong>orthogonale au statut d'accès</strong> ({@code status} inchangé) : décider de l'accès
+     * (suspension, bannissement) relève d'un autre use case. Elle est <strong>idempotente</strong> : ré-anonymiser un
+     * utilisateur déjà anonymisé est un no-op (aucun événement émis).</p>
+     *
+     * <p>Émet {@link UserAnonymized} (sauf no-op).</p>
+     *
+     * @param now instant de l'opération
+     * @throws NullPointerException si now est null
+     */
+    public void anonymize(Instant now) {
+        Objects.requireNonNull(now, "now must not be null");
+        if (isAnonymized) {
+            return;
+        }
+        this.email = Email.of("anonymized-" + id.value() + "@deleted.local");
+        this.hashedPassword = HashedPassword.unset();
+        this.profile = Profile.of(FirstName.of(ANONYMIZED_FIRST_NAME), LastName.of(ANONYMIZED_LAST_NAME));
+        this.isAnonymized = true;
+        registerEvent(new UserAnonymized(id, now));
     }
 
     private void requireStatus(UserStatus expected, String action) {
