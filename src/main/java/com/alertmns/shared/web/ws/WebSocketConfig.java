@@ -2,11 +2,13 @@ package com.alertmns.shared.web.ws;
 
 import com.alertmns.shared.CurrentUserPort;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
+import org.springframework.web.socket.config.annotation.WebSocketTransportRegistration;
 
 /**
  * Socle du canal temps réel : configure STOMP over WebSocket, transverse aux Bounded Contexts.
@@ -47,5 +49,20 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry.enableSimpleBroker("/topic", "/queue");
         registry.setApplicationDestinationPrefixes("/app");
         registry.setUserDestinationPrefix("/user");
+    }
+
+    /**
+     * Décore le handler WebSocket pour inscrire chaque session dans le registre : c'est ce qui permet de fermer les
+     * sockets d'un utilisateur lors d'une révocation (logout, suspension, anonymisation).
+     */
+    @Override
+    public void configureWebSocketTransport(WebSocketTransportRegistration registration) {
+        WebSocketSessionRegistry registry = webSocketSessionRegistry();
+        registration.addDecoratorFactory(handler -> new SessionTrackingWebSocketHandlerDecorator(handler, registry));
+    }
+
+    @Bean
+    public WebSocketSessionRegistry webSocketSessionRegistry() {
+        return new WebSocketSessionRegistry();
     }
 }
