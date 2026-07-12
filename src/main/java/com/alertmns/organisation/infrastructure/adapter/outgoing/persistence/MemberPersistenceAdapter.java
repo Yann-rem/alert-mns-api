@@ -9,6 +9,7 @@ import com.alertmns.organisation.domain.port.outgoing.MemberRepository;
 import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.mapper.MemberPersistenceMapper;
 import com.alertmns.shared.OrganisationId;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -59,5 +60,10 @@ public final class MemberPersistenceAdapter implements MemberRepository {
     @Override
     public List<UUID> findUserIdsByGroupId(GroupId groupId) {
         return jpaRepository.findUserIdsByGroupId(groupId.value());
+    }
+
+    @Override
+    public List<UUID> findUserIdsByIdIn(Collection<MemberId> memberIds) {
+        return jpaRepository.findUserIdsByIdIn(memberIds.stream().map(MemberId::value).toList());
     }
 }

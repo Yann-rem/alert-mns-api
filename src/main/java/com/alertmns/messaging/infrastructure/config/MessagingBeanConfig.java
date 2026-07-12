@@ -1,7 +1,9 @@
 package com.alertmns.messaging.infrastructure.config;
 
+import com.alertmns.identity.domain.port.outgoing.UserRepository;
 import com.alertmns.messaging.application.CreateConversationFromGroupService;
 import com.alertmns.messaging.application.CreateDirectConversationService;
+import com.alertmns.messaging.application.DispatchMessageService;
 import com.alertmns.messaging.application.ListMyConversationsService;
 import com.alertmns.messaging.application.PostMessageService;
 import com.alertmns.messaging.application.ReadConversationMessagesService;
@@ -11,20 +13,28 @@ import com.alertmns.messaging.domain.port.incoming.RenameConversationUseCase;
 import com.alertmns.messaging.domain.port.outgoing.ConversationRepository;
 import com.alertmns.messaging.domain.port.outgoing.GroupMembershipChecker;
 import com.alertmns.messaging.domain.port.outgoing.GroupMembershipPort;
+import com.alertmns.messaging.domain.port.outgoing.MemberDirectoryPort;
+import com.alertmns.messaging.domain.port.outgoing.MessageRealtimePort;
 import com.alertmns.messaging.domain.port.outgoing.MessageRepository;
+import com.alertmns.messaging.domain.port.outgoing.UserDirectoryPort;
 import com.alertmns.messaging.infrastructure.adapter.incoming.event.CreateConversationOnGroupCreatedListener;
+import com.alertmns.messaging.infrastructure.adapter.incoming.event.PushMessageOnPostedListener;
 import com.alertmns.messaging.infrastructure.adapter.incoming.event.RenameConversationOnGroupRenamedListener;
 import com.alertmns.messaging.infrastructure.adapter.outgoing.acl.GroupMembershipPortAdapter;
+import com.alertmns.messaging.infrastructure.adapter.outgoing.acl.MemberDirectoryPortAdapter;
+import com.alertmns.messaging.infrastructure.adapter.outgoing.acl.UserDirectoryPortAdapter;
 import com.alertmns.messaging.infrastructure.adapter.outgoing.persistence.ConversationJpaRepository;
 import com.alertmns.messaging.infrastructure.adapter.outgoing.persistence.ConversationPersistenceAdapter;
 import com.alertmns.messaging.infrastructure.adapter.outgoing.persistence.MessageJpaRepository;
 import com.alertmns.messaging.infrastructure.adapter.outgoing.persistence.MessagePersistenceAdapter;
+import com.alertmns.messaging.infrastructure.adapter.outgoing.realtime.MessageRealtimeAdapter;
 import com.alertmns.organisation.application.CurrentMemberResolver;
 import com.alertmns.organisation.domain.port.outgoing.GroupMembershipRepository;
 import com.alertmns.organisation.domain.port.outgoing.MemberRepository;
 import com.alertmns.shared.EventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.time.Clock;
 
@@ -46,6 +56,21 @@ public class MessagingBeanConfig {
     @Bean
     public GroupMembershipPort groupMembershipPort(GroupMembershipRepository groupMembershipRepository) {
         return new GroupMembershipPortAdapter(groupMembershipRepository);
+    }
+
+    @Bean
+    public MemberDirectoryPort memberDirectoryPort(MemberRepository memberRepository) {
+        return new MemberDirectoryPortAdapter(memberRepository);
+    }
+
+    @Bean
+    public UserDirectoryPort userDirectoryPort(UserRepository userRepository) {
+        return new UserDirectoryPortAdapter(userRepository);
+    }
+
+    @Bean
+    public MessageRealtimePort messageRealtimePort(SimpMessagingTemplate messagingTemplate) {
+        return new MessageRealtimeAdapter(messagingTemplate);
     }
 
     // --- Services ---
@@ -128,12 +153,34 @@ public class MessagingBeanConfig {
         return new ListMyConversationsService(currentMemberResolver, conversationRepository, groupMembershipPort);
     }
 
+    @Bean
+    public DispatchMessageService dispatchMessageService(
+            ConversationRepository conversationRepository,
+            MessageRepository messageRepository,
+            MemberDirectoryPort memberDirectoryPort,
+            UserDirectoryPort userDirectoryPort,
+            MessageRealtimePort messageRealtimePort
+    ) {
+        return new DispatchMessageService(
+                conversationRepository,
+                messageRepository,
+                memberDirectoryPort,
+                userDirectoryPort,
+                messageRealtimePort
+        );
+    }
+
     // --- Event listeners ---
 
     @Bean
     public CreateConversationOnGroupCreatedListener createConversationOnGroupCreatedListener(
             CreateConversationFromGroupUseCase createConversationFromGroupUseCase) {
         return new CreateConversationOnGroupCreatedListener(createConversationFromGroupUseCase);
+    }
+
+    @Bean
+    public PushMessageOnPostedListener pushMessageOnPostedListener(DispatchMessageService dispatchMessageService) {
+        return new PushMessageOnPostedListener(dispatchMessageService);
     }
 
     @Bean
