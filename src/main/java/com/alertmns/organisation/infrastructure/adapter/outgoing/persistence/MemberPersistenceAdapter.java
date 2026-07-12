@@ -1,5 +1,6 @@
 package com.alertmns.organisation.infrastructure.adapter.outgoing.persistence;
 
+import com.alertmns.organisation.domain.model.GroupId;
 import com.alertmns.organisation.domain.model.Member;
 import com.alertmns.organisation.domain.model.MemberId;
 import com.alertmns.organisation.domain.model.MemberRole;
@@ -8,6 +9,7 @@ import com.alertmns.organisation.domain.port.outgoing.MemberRepository;
 import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.mapper.MemberPersistenceMapper;
 import com.alertmns.shared.OrganisationId;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -47,5 +49,15 @@ public final class MemberPersistenceAdapter implements MemberRepository {
     public long countByOrganisationIdAndRoleAndStatus(
             OrganisationId organisationId, MemberRole role, MemberStatus status) {
         return jpaRepository.countByOrganisationIdAndRoleAndStatus(organisationId.value(), role, status);
+    }
+
+    @Override
+    public List<UUID> findUserIdsByOrganisationId(OrganisationId organisationId) {
+        return jpaRepository.findUserIdsByOrganisationId(organisationId.value());
+    }
+
+    @Override
+    public List<UUID> findUserIdsByGroupId(GroupId groupId) {
+        return jpaRepository.findUserIdsByGroupId(groupId.value());
     }
 }

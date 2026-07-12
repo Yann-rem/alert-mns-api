@@ -1,5 +1,6 @@
 package com.alertmns.shared.web.ws;
 
+import com.alertmns.shared.CurrentUserPort;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
@@ -25,14 +26,20 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final String[] allowedOrigins;
+    private final CurrentUserPort currentUserPort;
 
-    public WebSocketConfig(@Value("${alertmns.websocket.allowed-origins}") String[] allowedOrigins) {
+    public WebSocketConfig(
+            @Value("${alertmns.websocket.allowed-origins}") String[] allowedOrigins,
+            CurrentUserPort currentUserPort) {
         this.allowedOrigins = allowedOrigins.clone();
+        this.currentUserPort = currentUserPort;
     }
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws").setAllowedOrigins(allowedOrigins);
+        registry.addEndpoint("/ws")
+                .setAllowedOrigins(allowedOrigins)
+                .setHandshakeHandler(new UserIdHandshakeHandler(currentUserPort));
     }
 
     @Override

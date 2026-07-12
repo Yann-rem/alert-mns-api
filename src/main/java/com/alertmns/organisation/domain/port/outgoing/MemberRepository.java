@@ -1,11 +1,13 @@
 package com.alertmns.organisation.domain.port.outgoing;
 
+import com.alertmns.organisation.domain.model.GroupId;
 import com.alertmns.organisation.domain.model.Member;
 import com.alertmns.organisation.domain.model.MemberId;
 import com.alertmns.organisation.domain.model.MemberRole;
 import com.alertmns.organisation.domain.model.MemberStatus;
 import com.alertmns.shared.OrganisationId;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -57,4 +59,24 @@ public interface MemberRepository {
      * @return le nombre de membres correspondants
      */
     long countByOrganisationIdAndRoleAndStatus(OrganisationId organisationId, MemberRole role, MemberStatus status);
+
+    /**
+     * Retourne les {@code userId} de tous les membres d'une organisation.
+     *
+     * <p>Sert la résolution des destinataires d'une alerte visant toute l'organisation (BC Alerting, via ACL).</p>
+     *
+     * @param organisationId l'organisation
+     * @return les identifiants utilisateur des membres de l'organisation
+     */
+    List<UUID> findUserIdsByOrganisationId(OrganisationId organisationId);
+
+    /**
+     * Retourne les {@code userId} de tous les membres d'un groupe.
+     *
+     * <p>Sert la résolution des destinataires d'une alerte ciblant un groupe précis (BC Alerting, via ACL).</p>
+     *
+     * @param groupId le groupe
+     * @return les identifiants utilisateur des membres du groupe
+     */
+    List<UUID> findUserIdsByGroupId(GroupId groupId);
 }
