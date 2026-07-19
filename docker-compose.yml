@@ -1,7 +1,7 @@
 services:
   postgres:
     image: postgres:16
-    container_name: alert-mns-postgres
+    container_name: alert-mns-api-postgres
     environment:
       POSTGRES_DB: alertmns
       POSTGRES_USER: alertmns
