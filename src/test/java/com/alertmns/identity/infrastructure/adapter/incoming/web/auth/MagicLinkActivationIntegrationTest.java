@@ -12,6 +12,8 @@ import com.alertmns.identity.infrastructure.adapter.outgoing.persistence.UserJpa
 import com.alertmns.identity.infrastructure.adapter.outgoing.persistence.UserJpaRepository;
 import com.alertmns.organisation.domain.model.GroupKind;
 import com.alertmns.organisation.domain.model.MemberStatus;
+import com.alertmns.organisation.domain.model.MembershipInvitationStatus;
+import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.MembershipInvitationJpaEntity;
 import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.GroupJpaEntity;
 import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.GroupJpaRepository;
 import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.GroupMembershipJpaRepository;
@@ -198,6 +200,30 @@ class MagicLinkActivationIntegrationTest extends AbstractAuthIntegrationTest {
     }
 
     @Test
+    @DisplayName("POST /redeem with an expired invitation returns 410 and rolls everything back (atomic activation)")
+    void shouldRollbackEntireActivationWhenInvitationHasExpired() {
+        PendingUser pending = issueInvitationAndCaptureRawToken(EMAIL);
+        expirePendingInvitationOf(EMAIL);
+
+        ResponseEntity<String> response = redeem(pending.rawToken(), CHOSEN_PASSWORD);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.GONE);
+
+        // ADR-0022 : l'activation est atomique. L'échec tardif du listener (BC Organisation) doit
+        // annuler TOUTES les écritures faites en amont par le BC Identity.
+        UserJpaEntity user = userJpaRepository.findById(pending.userId().value()).orElseThrow();
+        assertThat(user.getStatus())
+                .as("the user must stay PENDING: no half-activated account")
+                .isEqualTo(UserStatus.PENDING);
+        assertThat(activationTokenJpaRepository.findAll())
+                .as("the token must not be consumed, so a retry stays possible")
+                .isNotEmpty();
+        assertThat(memberJpaRepository.findByUserId(pending.userId().value()))
+                .as("no membership must have been created")
+                .isEmpty();
+    }
+
+    @Test
     @DisplayName("POST /redeem is reachable anonymously without CSRF token")
     void shouldAllowAnonymousRedeemWithoutCsrf() {
         PendingUser pending = issueInvitationAndCaptureRawToken(EMAIL);
@@ -324,6 +350,26 @@ class MagicLinkActivationIntegrationTest extends AbstractAuthIntegrationTest {
                 expiredOneHourAgo
         );
         activationTokenJpaRepository.save(entity);
+    }
+
+    /**
+     * Force l'expiration de l'invitation PENDING d'un email, sans attendre le TTL. Réécrit l'entité avec le
+     * même identifiant (donc un merge JPA) en ne changeant que {@code expiresAt}.
+     */
+    private void expirePendingInvitationOf(String email) {
+        MembershipInvitationJpaEntity invitation = membershipInvitationJpaRepository
+                .findByInvitedEmailAndStatus(email, MembershipInvitationStatus.PENDING)
+                .orElseThrow();
+
+        membershipInvitationJpaRepository.saveAndFlush(new MembershipInvitationJpaEntity(
+                invitation.getId(),
+                invitation.getOrganisationId(),
+                invitation.getInvitedEmail(),
+                invitation.getRole(),
+                invitation.getStatus(),
+                invitation.getCreatedAt(),
+                Instant.now().minus(Duration.ofHours(1))
+        ));
     }
 
     private record PendingUser(UserId userId, String rawToken) {

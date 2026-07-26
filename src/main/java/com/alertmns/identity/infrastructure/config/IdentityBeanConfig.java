@@ -10,6 +10,7 @@ import com.alertmns.identity.application.UpdateAbsenceMessageService;
 import com.alertmns.identity.application.UpdateProfileService;
 import com.alertmns.identity.application.ValidateActivationTokenService;
 import com.alertmns.identity.domain.port.incoming.IssueActivationTokenUseCase;
+import com.alertmns.identity.domain.port.incoming.RedeemActivationTokenUseCase;
 import com.alertmns.identity.domain.port.outgoing.ActivationTokenRepository;
 import com.alertmns.identity.domain.port.outgoing.MailerPort;
 import com.alertmns.identity.domain.port.outgoing.PasswordHasher;
@@ -25,6 +26,7 @@ import com.alertmns.identity.infrastructure.adapter.outgoing.persistence.Activat
 import com.alertmns.identity.infrastructure.adapter.outgoing.persistence.UserJpaRepository;
 import com.alertmns.identity.infrastructure.adapter.outgoing.persistence.UserPersistenceAdapter;
 import com.alertmns.identity.infrastructure.adapter.outgoing.security.SpringSecurityPasswordHasher;
+import com.alertmns.identity.infrastructure.transaction.TransactionalRedeemActivationTokenUseCase;
 import com.alertmns.organisation.domain.port.outgoing.MemberRepository;
 import com.alertmns.organisation.infrastructure.adapter.outgoing.authorities.MemberUserAuthoritiesAdapter;
 import com.alertmns.shared.CurrentUserPort;
@@ -34,6 +36,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -161,6 +164,20 @@ public class IdentityBeanConfig {
             Clock clock
     ) {
         return new RedeemActivationTokenService(tokenRepository, userRepository, passwordHasher, publisher, clock);
+    }
+
+    /**
+     * Expose le cas d'usage d'activation <b>enveloppé dans une transaction</b> (ADR-0022).
+     *
+     * <p>{@code @Primary} car deux beans satisfont {@link RedeemActivationTokenUseCase} : le service
+     * applicatif nu et ce décorateur. Les adaptateurs entrants doivent recevoir le décorateur.</p>
+     */
+    @Bean
+    @Primary
+    public RedeemActivationTokenUseCase transactionalRedeemActivationTokenUseCase(
+            RedeemActivationTokenService delegate
+    ) {
+        return new TransactionalRedeemActivationTokenUseCase(delegate);
     }
 
     @Bean

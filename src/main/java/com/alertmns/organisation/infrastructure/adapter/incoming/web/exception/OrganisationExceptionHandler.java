@@ -3,6 +3,7 @@ package com.alertmns.organisation.infrastructure.adapter.incoming.web.exception;
 import com.alertmns.organisation.domain.exception.GroupMembershipNotFoundException;
 import com.alertmns.organisation.domain.exception.GroupNameAlreadyExistsException;
 import com.alertmns.organisation.domain.exception.GroupNotFoundException;
+import com.alertmns.organisation.domain.exception.InvitationExpiredException;
 import com.alertmns.organisation.domain.exception.LastAdminCannotBeRemovedException;
 import com.alertmns.organisation.domain.exception.MemberNotFoundException;
 import com.alertmns.organisation.domain.exception.OrganisationMismatchException;
@@ -53,6 +54,17 @@ public class OrganisationExceptionHandler {
     @ExceptionHandler(LastAdminCannotBeRemovedException.class)
     public ProblemDetail handleLastAdminCannotBeRemoved(LastAdminCannotBeRemovedException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    // --- 410 GONE ---
+
+    /**
+     * Invitation d'adhésion expirée. Aligné sur le 410 déjà renvoyé pour un lien magique périmé :
+     * la ressource a existé mais n'est plus exploitable, et un nouvel envoi est nécessaire.
+     */
+    @ExceptionHandler(InvitationExpiredException.class)
+    public ProblemDetail handleInvitationExpired(InvitationExpiredException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.GONE, ex.getMessage());
     }
 
     // --- 403 FORBIDDEN ---
