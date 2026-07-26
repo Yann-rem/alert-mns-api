@@ -1,12 +1,17 @@
 package com.alertmns.organisation.infrastructure.adapter.incoming.web;
 
 import com.alertmns.organisation.domain.port.incoming.ChangeMemberRoleUseCase;
+import com.alertmns.organisation.domain.port.incoming.ListMembersUseCase;
+import com.alertmns.organisation.domain.port.incoming.ListMembersUseCase.MembersPage;
 import com.alertmns.organisation.domain.port.incoming.ReactivateMemberUseCase;
 import com.alertmns.organisation.domain.port.incoming.SuspendMemberUseCase;
 import com.alertmns.organisation.domain.port.incoming.command.ChangeMemberRoleCommand;
+import com.alertmns.organisation.domain.port.incoming.command.ListMembersQuery;
 import com.alertmns.organisation.domain.port.incoming.command.ReactivateMemberCommand;
 import com.alertmns.organisation.domain.port.incoming.command.SuspendMemberCommand;
 import com.alertmns.organisation.infrastructure.adapter.incoming.web.dto.ChangeMemberRoleRequest;
+import com.alertmns.organisation.infrastructure.adapter.incoming.web.dto.MembersPageResponse;
+import com.alertmns.organisation.infrastructure.adapter.incoming.web.mapper.MemberWebMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -15,11 +20,13 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -41,6 +48,36 @@ public class MemberController {
     private final SuspendMemberUseCase suspendMemberUseCase;
     private final ReactivateMemberUseCase reactivateMemberUseCase;
     private final ChangeMemberRoleUseCase changeMemberRoleUseCase;
+    private final ListMembersUseCase listMembersUseCase;
+
+    @Operation(
+            summary = "Lister les membres",
+            description = """
+                    Liste paginée et filtrable des membres de l'organisation, enrichie du nom et de \
+                    l'e-mail issus du BC Identity. Ne renvoie que de véritables membres : les personnes \
+                    invitées mais pas encore activées relèvent des invitations en attente.""",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Page de membres"),
+                    @ApiResponse(responseCode = "400", description = "Filtre invalide"),
+                    @ApiResponse(responseCode = "403", description = "Réservé au rôle ADMIN")
+            }
+    )
+    @GetMapping("/{orgId}/members")
+    public MembersPageResponse list(
+            @Parameter(description = "Identifiant de l'organisation") @PathVariable UUID orgId,
+            @Parameter(description = "Filtre sur le statut du membre (ACTIVE, SUSPENDED)")
+            @RequestParam(required = false) String status,
+            @Parameter(description = "Filtre sur le rôle (ADMIN, MEMBER)")
+            @RequestParam(required = false) String role,
+            @Parameter(description = "Recherche sur le nom, le prénom ou l'e-mail")
+            @RequestParam(required = false) String q,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "50") int size
+    ) {
+        MembersPage result = listMembersUseCase.list(
+                new ListMembersQuery(orgId.toString(), status, role, q, page, size));
+        return MemberWebMapper.toMembersPageResponse(result, page, size);
+    }
 
     @Operation(
             summary = "Suspendre un membre",

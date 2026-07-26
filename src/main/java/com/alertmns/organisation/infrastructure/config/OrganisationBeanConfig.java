@@ -4,7 +4,10 @@ import com.alertmns.identity.domain.port.incoming.RegisterPendingUserUseCase;
 import com.alertmns.identity.domain.port.outgoing.UserRepository;
 import com.alertmns.organisation.application.AcceptMembershipInvitationService;
 import com.alertmns.organisation.application.AddMemberToGroupService;
+import com.alertmns.identity.infrastructure.adapter.outgoing.directory.UserDirectoryAdapter;
+import com.alertmns.identity.infrastructure.adapter.outgoing.persistence.UserJpaRepository;
 import com.alertmns.organisation.application.ChangeMemberRoleService;
+import com.alertmns.organisation.application.ListMembersService;
 import com.alertmns.organisation.application.CreateGeneralGroupService;
 import com.alertmns.organisation.application.CreateGroupService;
 import com.alertmns.organisation.application.CreateOrganisationService;
@@ -19,6 +22,7 @@ import com.alertmns.organisation.domain.port.incoming.AddMemberToGroupUseCase;
 import com.alertmns.organisation.domain.port.outgoing.GroupMembershipRepository;
 import com.alertmns.organisation.domain.port.outgoing.GroupRepository;
 import com.alertmns.organisation.domain.port.outgoing.MemberRepository;
+import com.alertmns.organisation.domain.port.outgoing.UserDirectoryPort;
 import com.alertmns.organisation.domain.port.outgoing.MembershipInvitationRepository;
 import com.alertmns.organisation.domain.port.outgoing.OrganisationRepository;
 import com.alertmns.organisation.infrastructure.adapter.incoming.event.AcceptMembershipInvitationOnUserActivatedListener;
@@ -137,6 +141,31 @@ public class OrganisationBeanConfig {
             Clock clock
     ) {
         return new ChangeMemberRoleService(repository, publisher, clock);
+    }
+
+    /**
+     * Annuaire des utilisateurs fourni par le BC Identity.
+     *
+     * <p>Câblé ici, dans la config du BC <b>consommateur</b>, symétriquement à
+     * {@code MemberUserAuthoritiesAdapter} qui est câblé côté Identity.</p>
+     *
+     * <p>Le nom du bean est préfixé car le BC Messaging déclare un port homonyme
+     * ({@code messaging.domain.port.outgoing.UserDirectoryPort}) au contrat différent : chaque BC
+     * définit son propre annuaire selon ses besoins. Les types diffèrent, seuls les noms de beans
+     * entraient en collision.</p>
+     */
+    @Bean
+    public UserDirectoryPort organisationUserDirectoryPort(UserJpaRepository userJpaRepository) {
+        return new UserDirectoryAdapter(userJpaRepository);
+    }
+
+    /** Lecture du backoffice : compose les membres (Organisation) et leur identité (Identity). */
+    @Bean
+    public ListMembersService listMembersService(
+            MemberRepository repository,
+            UserDirectoryPort userDirectory
+    ) {
+        return new ListMembersService(repository, userDirectory);
     }
 
     @Bean
