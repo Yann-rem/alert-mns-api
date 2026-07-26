@@ -141,8 +141,8 @@ class IssueActivationTokenServiceTest {
                     linkCaptor.capture()
             );
             URI link = linkCaptor.getValue();
-            assertTrue(link.toString().startsWith("https://app.alertmns.com/activate?token="),
-                    "link should be built from frontendBaseUrl with /activate path, but was: " + link);
+            assertTrue(link.toString().startsWith("https://app.alertmns.com/activation?token="),
+                    "link should be built from frontendBaseUrl with /activation path, but was: " + link);
         }
 
         @Test
