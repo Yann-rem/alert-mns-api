@@ -74,7 +74,7 @@ public final class IssueActivationTokenService implements IssueActivationTokenUs
         tokenRepository.deleteByUserId(id);
         tokenRepository.save(issued.activationToken());
 
-        URI link = frontendBaseUrl.resolve("/activate?token=" + raw.value());
+        URI link = frontendBaseUrl.resolve("/activation?token=" + raw.value());
         mailer.sendActivationEmail(user.email(), user.profile().firstName(), link);
     }
 
