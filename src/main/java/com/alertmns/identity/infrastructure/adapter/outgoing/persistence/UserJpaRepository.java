@@ -16,6 +16,8 @@ public interface UserJpaRepository extends JpaRepository<UserJpaEntity, UUID> {
 
     List<UserJpaEntity> findByIdIn(Collection<UUID> ids);
 
+    List<UserJpaEntity> findByEmailIn(Collection<String> emails);
+
     /**
      * Recherche textuelle sur le prénom, le nom ou l'e-mail, insensible à la casse.
      *

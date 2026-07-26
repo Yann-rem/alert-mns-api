@@ -8,6 +8,7 @@ import com.alertmns.identity.infrastructure.adapter.outgoing.directory.UserDirec
 import com.alertmns.identity.infrastructure.adapter.outgoing.persistence.UserJpaRepository;
 import com.alertmns.organisation.application.ChangeMemberRoleService;
 import com.alertmns.organisation.application.ListMembersService;
+import com.alertmns.organisation.application.ListPendingInvitationsService;
 import com.alertmns.organisation.application.CreateGeneralGroupService;
 import com.alertmns.organisation.application.CreateGroupService;
 import com.alertmns.organisation.application.CreateOrganisationService;
@@ -166,6 +167,15 @@ public class OrganisationBeanConfig {
             UserDirectoryPort userDirectory
     ) {
         return new ListMembersService(repository, userDirectory);
+    }
+
+    /** Lecture du backoffice : invitations encore en attente d'acceptation. */
+    @Bean
+    public ListPendingInvitationsService listPendingInvitationsService(
+            MembershipInvitationRepository invitationRepository,
+            UserDirectoryPort userDirectory
+    ) {
+        return new ListPendingInvitationsService(invitationRepository, userDirectory);
     }
 
     @Bean

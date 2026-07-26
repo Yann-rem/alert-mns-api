@@ -36,6 +36,16 @@ public final class UserDirectoryAdapter implements UserDirectoryPort {
     }
 
     @Override
+    public List<UserSummary> findByEmails(Collection<String> emails) {
+        if (emails == null || emails.isEmpty()) {
+            return List.of();
+        }
+        return userJpaRepository.findByEmailIn(emails).stream()
+                .map(UserDirectoryAdapter::toSummary)
+                .toList();
+    }
+
+    @Override
     public List<UUID> searchIds(String term) {
         if (term == null || term.isBlank()) {
             return List.of();

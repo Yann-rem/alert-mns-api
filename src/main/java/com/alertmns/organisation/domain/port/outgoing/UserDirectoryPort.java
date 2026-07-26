@@ -27,6 +27,18 @@ public interface UserDirectoryPort {
     List<UserSummary> findByIds(Collection<UUID> userIds);
 
     /**
+     * Résout l'identité d'un lot d'utilisateurs à partir de leur e-mail.
+     *
+     * <p>Sert les invitations en attente, qui ne référencent que l'e-mail de l'invité : le
+     * {@code User} correspondant existe (créé PENDING à l'émission de l'invitation) et porte ses
+     * prénom et nom.</p>
+     *
+     * @param emails adresses à résoudre
+     * @return les identités trouvées, dans un ordre non garanti
+     */
+    List<UserSummary> findByEmails(Collection<String> emails);
+
+    /**
      * Recherche les utilisateurs dont le nom, le prénom ou l'e-mail contient {@code term}
      * (insensible à la casse). Sert à filtrer une liste de membres sur un critère textuel qui
      * n'existe que dans Identity.
