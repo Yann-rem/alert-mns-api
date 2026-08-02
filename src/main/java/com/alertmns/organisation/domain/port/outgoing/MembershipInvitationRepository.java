@@ -1,9 +1,12 @@
 package com.alertmns.organisation.domain.port.outgoing;
 
 import com.alertmns.organisation.domain.model.MembershipInvitation;
+import com.alertmns.organisation.domain.model.MembershipInvitationStatus;
 import com.alertmns.shared.Email;
 import com.alertmns.shared.MembershipInvitationId;
+import com.alertmns.shared.OrganisationId;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -41,4 +44,17 @@ public interface MembershipInvitationRepository {
      * @return {@code true} si l'invitation PENDING existe déjà
      */
     boolean existsPendingByEmail(Email email);
+
+    /**
+     * Liste les invitations d'une organisation ayant un statut donné, les plus récentes d'abord.
+     *
+     * <p>Sert le backoffice : les personnes invitées mais pas encore activées n'ont pas de
+     * {@code Member} et n'apparaissent donc pas dans la liste des membres.</p>
+     *
+     * @param organisationId l'organisation
+     * @param status         le statut recherché
+     * @return les invitations correspondantes
+     */
+    List<MembershipInvitation> findByOrganisationIdAndStatus(
+            OrganisationId organisationId, MembershipInvitationStatus status);
 }

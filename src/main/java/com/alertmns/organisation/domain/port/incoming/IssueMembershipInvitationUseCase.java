@@ -17,7 +17,8 @@ public interface IssueMembershipInvitationUseCase {
      * @param command la commande d'émission
      * @return l'identifiant de l'invitation créée
      * @throws InvitationAlreadyPendingException si une invitation PENDING existe déjà pour cet email
-     * @throws UnsupportedOperationException     si un User existe déjà avec cet email
+     * @throws com.alertmns.organisation.domain.exception.InvitedUserAlreadyExistsException
+     *         si un User existe déjà avec cet email (déjà membre, ou déjà invité)
      * @throws IllegalArgumentException          si l'un des champs n'est pas un format valide
      */
     MembershipInvitationId issue(IssueMembershipInvitationCommand command);

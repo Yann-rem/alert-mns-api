@@ -4,6 +4,7 @@ import com.alertmns.identity.domain.port.incoming.RegisterPendingUserUseCase;
 import com.alertmns.identity.domain.port.incoming.command.RegisterPendingUserCommand;
 import com.alertmns.identity.domain.port.outgoing.UserRepository;
 import com.alertmns.organisation.domain.exception.InvitationAlreadyPendingException;
+import com.alertmns.organisation.domain.exception.InvitedUserAlreadyExistsException;
 import com.alertmns.organisation.domain.model.MemberRole;
 import com.alertmns.organisation.domain.model.MembershipInvitation;
 import com.alertmns.organisation.domain.port.incoming.IssueMembershipInvitationUseCase;
@@ -57,9 +58,11 @@ public final class IssueMembershipInvitationService implements IssueMembershipIn
         Email invitedEmail = Email.of(command.invitedEmail());
         MemberRole role = MemberRole.valueOf(command.role());
 
+        // Cas B : un compte existe déjà pour cet e-mail (déjà membre, ou déjà invité — l'émission
+        // d'une invitation crée aussi le User). Le rattachement d'un utilisateur existant à une
+        // organisation n'est pas couvert par le MVP.
         if (userRepository.existsByEmail(invitedEmail)) {
-            throw new UnsupportedOperationException(
-                    "Inviting an existing user to a new organization is not implemented in the MVP.");
+            throw new InvitedUserAlreadyExistsException(invitedEmail);
         }
 
         if (invitationRepository.existsPendingByEmail(invitedEmail)) {
