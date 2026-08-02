@@ -81,18 +81,35 @@ class InviteMemberIntegrationTest extends AbstractAuthIntegrationTest {
     }
 
     @Test
+    @DisplayName("le rôle MANAGER s'attribue dès l'invitation, sans changement de rôle ultérieur")
+    void shouldInviteAsManager() {
+        userFactory.registerActiveAdmin(ADMIN_EMAIL, PASSWORD);
+        AuthCookies admin = loginAndAcquireCookies(ADMIN_EMAIL, PASSWORD);
+
+        ResponseEntity<String> created = mutate(
+                HttpMethod.POST,
+                "/api/organisations/" + ORG + "/members",
+                body(INVITEE_EMAIL, "MANAGER"),
+                admin);
+        assertThat(created.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+
+        assertThat(get("/api/organisations/" + ORG + "/invitations", admin).getBody())
+                .contains("\"role\":\"MANAGER\"");
+    }
+
+    @Test
     @DisplayName("une requête invalide renvoie 400")
     void shouldRejectInvalidRequest() {
         userFactory.registerActiveAdmin(ADMIN_EMAIL, PASSWORD);
         AuthCookies admin = loginAndAcquireCookies(ADMIN_EMAIL, PASSWORD);
+        String path = "/api/organisations/" + ORG + "/members";
 
-        ResponseEntity<String> response = mutate(
-                HttpMethod.POST,
-                "/api/organisations/" + ORG + "/members",
-                body("pas-un-email", "MEMBER"),
-                admin);
+        assertThat(mutate(HttpMethod.POST, path, body("pas-un-email", "MEMBER"), admin).getStatusCode())
+                .isEqualTo(HttpStatus.BAD_REQUEST);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        // Le rôle reste contraint : ouvrir MANAGER ne doit pas laisser passer n'importe quoi.
+        assertThat(mutate(HttpMethod.POST, path, body(INVITEE_EMAIL, "SUPERVISEUR"), admin).getStatusCode())
+                .isEqualTo(HttpStatus.BAD_REQUEST);
     }
 
     @Test

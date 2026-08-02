@@ -17,6 +17,12 @@ public record InviteMemberRequest(
         @Schema(description = "Nom", example = "Nkolo")
         @NotBlank @Size(max = 100) String lastName,
 
-        @Schema(description = "Rôle attribué dans l'organisation", example = "MEMBER")
-        @NotBlank @Pattern(regexp = "ADMIN|MEMBER", message = "role must be ADMIN or MEMBER") String role
+        @Schema(
+                description = "Rôle attribué dans l'organisation",
+                example = "MEMBER",
+                allowableValues = {"ADMIN", "MANAGER", "MEMBER"}
+        )
+        @NotBlank
+        @Pattern(regexp = "ADMIN|MANAGER|MEMBER", message = "role must be one of ADMIN, MANAGER, MEMBER")
+        String role
 ) {}
