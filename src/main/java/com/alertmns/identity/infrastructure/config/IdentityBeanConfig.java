@@ -15,7 +15,6 @@ import com.alertmns.identity.domain.port.outgoing.ActivationTokenRepository;
 import com.alertmns.identity.domain.port.outgoing.MailerPort;
 import com.alertmns.identity.domain.port.outgoing.PasswordHasher;
 import com.alertmns.identity.domain.port.outgoing.UserAuthoritiesProvider;
-import com.alertmns.identity.domain.port.outgoing.UserMembershipProvider;
 import com.alertmns.identity.domain.port.outgoing.UserRepository;
 import com.alertmns.identity.infrastructure.adapter.incoming.event.IssueActivationTokenOnUserRegisteredListener;
 import com.alertmns.identity.infrastructure.adapter.incoming.event.WebSocketRevocationListener;
@@ -29,7 +28,6 @@ import com.alertmns.identity.infrastructure.adapter.outgoing.persistence.UserPer
 import com.alertmns.identity.infrastructure.adapter.outgoing.security.SpringSecurityPasswordHasher;
 import com.alertmns.identity.infrastructure.transaction.TransactionalRedeemActivationTokenUseCase;
 import com.alertmns.organisation.domain.port.outgoing.MemberRepository;
-import com.alertmns.organisation.infrastructure.adapter.outgoing.authorities.MemberMembershipAdapter;
 import com.alertmns.organisation.infrastructure.adapter.outgoing.authorities.MemberUserAuthoritiesAdapter;
 import com.alertmns.shared.CurrentUserPort;
 import com.alertmns.shared.EventPublisher;
@@ -92,12 +90,6 @@ public class IdentityBeanConfig {
     @Bean
     public UserAuthoritiesProvider userAuthoritiesProvider(MemberRepository memberRepository) {
         return new MemberUserAuthoritiesAdapter(memberRepository);
-    }
-
-    /** Adhésion de l'utilisateur (organisation, rôle, statut), exposée par {@code GET /api/auth/me}. */
-    @Bean
-    public UserMembershipProvider userMembershipProvider(MemberRepository memberRepository) {
-        return new MemberMembershipAdapter(memberRepository);
     }
 
     // --- Spring Security ---

@@ -2,7 +2,6 @@ package com.alertmns.identity.infrastructure.adapter.incoming.web.auth;
 
 import com.alertmns.identity.domain.exception.UserNotFoundException;
 import com.alertmns.identity.domain.model.User;
-import com.alertmns.identity.domain.port.outgoing.UserMembershipProvider;
 import com.alertmns.identity.domain.port.outgoing.UserRepository;
 import com.alertmns.identity.infrastructure.adapter.incoming.web.auth.dto.LoginRequest;
 import com.alertmns.identity.infrastructure.adapter.incoming.web.auth.dto.MeResponse;
@@ -42,7 +41,6 @@ public class AuthController {
     private final SecurityContextRepository securityContextRepository;
     private final CurrentUserPort currentUserPort;
     private final UserRepository userRepository;
-    private final UserMembershipProvider userMembershipProvider;
 
     @Operation(
             summary = "Authentifier un utilisateur",
@@ -105,6 +103,6 @@ public class AuthController {
                 .findById(current.userId())
                 .orElseThrow(() -> new UserNotFoundException(current.userId()));
 
-        return AuthWebMapper.toMeResponse(user, userMembershipProvider.findByUserId(current.userId()));
+        return AuthWebMapper.toMeResponse(user);
     }
 }

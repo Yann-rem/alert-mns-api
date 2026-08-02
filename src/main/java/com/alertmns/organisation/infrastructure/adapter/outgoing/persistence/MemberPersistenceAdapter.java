@@ -5,11 +5,9 @@ import com.alertmns.organisation.domain.model.Member;
 import com.alertmns.organisation.domain.model.MemberId;
 import com.alertmns.organisation.domain.model.MemberRole;
 import com.alertmns.organisation.domain.model.MemberStatus;
-import com.alertmns.organisation.domain.port.outgoing.MemberFilters;
 import com.alertmns.organisation.domain.port.outgoing.MemberRepository;
 import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.mapper.MemberPersistenceMapper;
 import com.alertmns.shared.OrganisationId;
-import org.springframework.data.domain.PageRequest;
 
 import java.util.Collection;
 import java.util.List;
@@ -67,26 +65,5 @@ public final class MemberPersistenceAdapter implements MemberRepository {
     @Override
     public List<UUID> findUserIdsByIdIn(Collection<MemberId> memberIds) {
         return jpaRepository.findUserIdsByIdIn(memberIds.stream().map(MemberId::value).toList());
-    }
-
-    @Override
-    public List<Member> findByOrganisationId(
-            OrganisationId organisationId, MemberFilters filters, int page, int size) {
-        return jpaRepository
-                .findFiltered(
-                        organisationId.value(),
-                        filters.status(),
-                        filters.role(),
-                        filters.userIds(),
-                        PageRequest.of(page, size))
-                .stream()
-                .map(MemberPersistenceMapper::toDomain)
-                .toList();
-    }
-
-    @Override
-    public long countByOrganisationId(OrganisationId organisationId, MemberFilters filters) {
-        return jpaRepository.countFiltered(
-                organisationId.value(), filters.status(), filters.role(), filters.userIds());
     }
 }

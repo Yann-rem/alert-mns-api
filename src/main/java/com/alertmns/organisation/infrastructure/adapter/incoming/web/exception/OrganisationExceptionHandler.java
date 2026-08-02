@@ -3,9 +3,7 @@ package com.alertmns.organisation.infrastructure.adapter.incoming.web.exception;
 import com.alertmns.organisation.domain.exception.GroupMembershipNotFoundException;
 import com.alertmns.organisation.domain.exception.GroupNameAlreadyExistsException;
 import com.alertmns.organisation.domain.exception.GroupNotFoundException;
-import com.alertmns.organisation.domain.exception.InvitationAlreadyPendingException;
 import com.alertmns.organisation.domain.exception.InvitationExpiredException;
-import com.alertmns.organisation.domain.exception.InvitedUserAlreadyExistsException;
 import com.alertmns.organisation.domain.exception.LastAdminCannotBeRemovedException;
 import com.alertmns.organisation.domain.exception.MemberNotFoundException;
 import com.alertmns.organisation.domain.exception.OrganisationMismatchException;
@@ -55,18 +53,6 @@ public class OrganisationExceptionHandler {
 
     @ExceptionHandler(LastAdminCannotBeRemovedException.class)
     public ProblemDetail handleLastAdminCannotBeRemoved(LastAdminCannotBeRemovedException ex) {
-        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
-    }
-
-    /** Une invitation est déjà en attente pour cet e-mail : la réémettre créerait un doublon. */
-    @ExceptionHandler(InvitationAlreadyPendingException.class)
-    public ProblemDetail handleInvitationAlreadyPending(InvitationAlreadyPendingException ex) {
-        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
-    }
-
-    /** Un compte existe déjà pour l'e-mail invité (déjà membre, ou déjà invité). */
-    @ExceptionHandler(InvitedUserAlreadyExistsException.class)
-    public ProblemDetail handleInvitedUserAlreadyExists(InvitedUserAlreadyExistsException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
     }
 

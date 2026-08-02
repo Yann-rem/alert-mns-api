@@ -5,7 +5,6 @@ import com.alertmns.identity.domain.port.incoming.command.RegisterPendingUserCom
 import com.alertmns.identity.domain.port.outgoing.UserRepository;
 import com.alertmns.organisation.domain.event.MembershipInvitationIssued;
 import com.alertmns.organisation.domain.exception.InvitationAlreadyPendingException;
-import com.alertmns.organisation.domain.exception.InvitedUserAlreadyExistsException;
 import com.alertmns.organisation.domain.model.MemberRole;
 import com.alertmns.organisation.domain.model.MembershipInvitation;
 import com.alertmns.organisation.domain.model.MembershipInvitationStatus;
@@ -168,11 +167,11 @@ class IssueMembershipInvitationServiceTest {
     class CaseBDetection {
 
         @Test
-        @DisplayName("should throw InvitedUserAlreadyExistsException when the email matches an existing user")
+        @DisplayName("should throw UnsupportedOperationException when the email matches an existing user")
         void shouldThrowWhenUserAlreadyExists() {
             when(userRepository.existsByEmail(Email.of(INVITED_EMAIL))).thenReturn(true);
 
-            assertThrows(InvitedUserAlreadyExistsException.class, () -> service.issue(command()));
+            assertThrows(UnsupportedOperationException.class, () -> service.issue(command()));
         }
 
         @Test
@@ -180,7 +179,7 @@ class IssueMembershipInvitationServiceTest {
         void shouldNotOrchestrateAnySideEffectWhenCaseB() {
             when(userRepository.existsByEmail(any())).thenReturn(true);
 
-            assertThrows(InvitedUserAlreadyExistsException.class, () -> service.issue(command()));
+            assertThrows(UnsupportedOperationException.class, () -> service.issue(command()));
 
             verify(invitationRepository, never()).existsPendingByEmail(any());
             verify(registerPendingUserUseCase, never()).register(any());
