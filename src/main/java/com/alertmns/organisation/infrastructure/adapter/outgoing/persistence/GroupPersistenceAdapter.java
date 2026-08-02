@@ -7,7 +7,9 @@ import com.alertmns.organisation.domain.model.GroupName;
 import com.alertmns.organisation.domain.port.outgoing.GroupRepository;
 import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.mapper.GroupPersistenceMapper;
 import com.alertmns.shared.OrganisationId;
+import org.springframework.data.domain.PageRequest;
 
+import java.util.List;
 import java.util.Optional;
 
 public final class GroupPersistenceAdapter implements GroupRepository {
@@ -45,5 +47,32 @@ public final class GroupPersistenceAdapter implements GroupRepository {
     @Override
     public boolean existsGeneralByOrganisationId(OrganisationId organisationId) {
         return jpaRepository.existsByOrganisationIdAndKind(organisationId.value(), GroupKind.GENERAL);
+    }
+
+    @Override
+    public List<Group> findByOrganisationId(
+            OrganisationId organisationId, String search, int page, int size) {
+        return jpaRepository
+                .findFiltered(organisationId.value(), likePattern(search), PageRequest.of(page, size))
+                .stream()
+                .map(GroupPersistenceMapper::toDomain)
+                .toList();
+    }
+
+    @Override
+    public long countByOrganisationId(OrganisationId organisationId, String search) {
+        return jpaRepository.countFiltered(organisationId.value(), likePattern(search));
+    }
+
+    /**
+     * Traduit un terme de recherche en motif LIKE. Absence de terme → {@code %}, qui laisse tout
+     * passer. Les caractères jokers saisis par l'utilisateur sont échappés pour rester littéraux.
+     */
+    private static String likePattern(String search) {
+        if (search == null || search.isBlank()) {
+            return "%";
+        }
+        String escaped = search.trim().replace("!", "!!").replace("%", "!%").replace("_", "!_");
+        return "%" + escaped + "%";
     }
 }

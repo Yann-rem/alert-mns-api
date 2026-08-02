@@ -2,9 +2,13 @@ package com.alertmns.organisation.infrastructure.adapter.incoming.web;
 
 import com.alertmns.organisation.domain.model.GroupId;
 import com.alertmns.organisation.domain.port.incoming.CreateGroupUseCase;
+import com.alertmns.organisation.domain.port.incoming.ListGroupsUseCase;
+import com.alertmns.organisation.domain.port.incoming.ListGroupsUseCase.GroupsPage;
 import com.alertmns.organisation.domain.port.incoming.RenameGroupUseCase;
+import com.alertmns.organisation.domain.port.incoming.command.ListGroupsQuery;
 import com.alertmns.organisation.infrastructure.adapter.incoming.web.dto.CreateGroupRequest;
 import com.alertmns.organisation.infrastructure.adapter.incoming.web.dto.CreateGroupResponse;
+import com.alertmns.organisation.infrastructure.adapter.incoming.web.dto.GroupsPageResponse;
 import com.alertmns.organisation.infrastructure.adapter.incoming.web.dto.RenameGroupRequest;
 import com.alertmns.organisation.infrastructure.adapter.incoming.web.mapper.GroupWebMapper;
 import io.swagger.v3.oas.annotations.Operation;
@@ -15,11 +19,13 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -39,6 +45,31 @@ public class GroupController {
 
     private final CreateGroupUseCase createGroupUseCase;
     private final RenameGroupUseCase renameGroupUseCase;
+    private final ListGroupsUseCase listGroupsUseCase;
+
+    @Operation(
+            summary = "Lister les groupes",
+            description = """
+                    Liste paginée et filtrable des groupes de l'organisation. Ouverte aux MANAGER en \
+                    plus des ADMIN : le sélecteur d'audience de la diffusion d'alerte s'en sert, et \
+                    la diffusion est justement permise aux deux rôles.""",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Page de groupes"),
+                    @ApiResponse(responseCode = "403", description = "Réservé aux rôles ADMIN et MANAGER")
+            }
+    )
+    @GetMapping("/{orgId}/groups")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
+    public GroupsPageResponse list(
+            @Parameter(description = "Identifiant de l'organisation") @PathVariable UUID orgId,
+            @Parameter(description = "Recherche sur le nom du groupe")
+            @RequestParam(required = false) String q,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "50") int size
+    ) {
+        GroupsPage result = listGroupsUseCase.list(new ListGroupsQuery(orgId.toString(), q, page, size));
+        return GroupWebMapper.toGroupsPageResponse(result, page, size);
+    }
 
     @Operation(
             summary = "Créer un nouveau groupe",

@@ -1,8 +1,12 @@
 package com.alertmns.organisation.infrastructure.adapter.incoming.web.mapper;
 
+import com.alertmns.organisation.domain.model.Group;
+import com.alertmns.organisation.domain.port.incoming.ListGroupsUseCase.GroupsPage;
 import com.alertmns.organisation.domain.port.incoming.command.CreateGroupCommand;
 import com.alertmns.organisation.domain.port.incoming.command.RenameGroupCommand;
 import com.alertmns.organisation.infrastructure.adapter.incoming.web.dto.CreateGroupRequest;
+import com.alertmns.organisation.infrastructure.adapter.incoming.web.dto.GroupSummaryResponse;
+import com.alertmns.organisation.infrastructure.adapter.incoming.web.dto.GroupsPageResponse;
 import com.alertmns.organisation.infrastructure.adapter.incoming.web.dto.RenameGroupRequest;
 
 import java.util.UUID;
@@ -21,5 +25,23 @@ public final class GroupWebMapper {
             RenameGroupRequest request
     ) {
         return new RenameGroupCommand(organisationId.toString(), groupId.toString(), request.name());
+    }
+
+    public static GroupsPageResponse toGroupsPageResponse(GroupsPage page, int pageIndex, int size) {
+        return new GroupsPageResponse(
+                page.groups().stream().map(GroupWebMapper::toGroupSummaryResponse).toList(),
+                page.total(),
+                pageIndex,
+                size
+        );
+    }
+
+    public static GroupSummaryResponse toGroupSummaryResponse(Group group) {
+        return new GroupSummaryResponse(
+                group.id().value(),
+                group.name().value(),
+                group.kind().name(),
+                group.createdAt()
+        );
     }
 }

@@ -6,7 +6,9 @@ import com.alertmns.organisation.domain.port.outgoing.MembershipInvitationReposi
 import com.alertmns.organisation.infrastructure.adapter.outgoing.persistence.mapper.MembershipInvitationPersistenceMapper;
 import com.alertmns.shared.Email;
 import com.alertmns.shared.MembershipInvitationId;
+import com.alertmns.shared.OrganisationId;
 
+import java.util.List;
 import java.util.Optional;
 
 public final class MembershipInvitationPersistenceAdapter implements MembershipInvitationRepository {
@@ -39,5 +41,15 @@ public final class MembershipInvitationPersistenceAdapter implements MembershipI
     @Override
     public boolean existsPendingByEmail(Email email) {
         return jpaRepository.existsByInvitedEmailAndStatus(email.value(), MembershipInvitationStatus.PENDING);
+    }
+
+    @Override
+    public List<MembershipInvitation> findByOrganisationIdAndStatus(
+            OrganisationId organisationId, MembershipInvitationStatus status) {
+        return jpaRepository
+                .findByOrganisationIdAndStatusOrderByCreatedAtDesc(organisationId.value(), status)
+                .stream()
+                .map(MembershipInvitationPersistenceMapper::toDomain)
+                .toList();
     }
 }

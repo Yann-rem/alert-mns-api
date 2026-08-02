@@ -90,4 +90,29 @@ public interface MemberRepository {
      * @return les identifiants utilisateur correspondants
      */
     List<UUID> findUserIdsByIdIn(Collection<MemberId> memberIds);
+
+    /**
+     * Liste paginée et filtrée des membres d'une organisation (backoffice, ADR-0014).
+     *
+     * <p>La pagination passe par des primitives : les types {@code Pageable}/{@code Page} de Spring
+     * Data restent confinés à l'adaptateur de persistance, conformément à l'usage déjà en place
+     * dans le BC Messaging.</p>
+     *
+     * @param organisationId l'organisation
+     * @param filters        critères de filtrage
+     * @param page           index de page, à partir de 0
+     * @param size           taille de page
+     * @return les membres de la page, triés de façon stable
+     */
+    List<Member> findByOrganisationId(OrganisationId organisationId, MemberFilters filters, int page, int size);
+
+    /**
+     * Compte les membres correspondant aux mêmes critères que
+     * {@link #findByOrganisationId(OrganisationId, MemberFilters, int, int)}.
+     *
+     * @param organisationId l'organisation
+     * @param filters        critères de filtrage
+     * @return le nombre total de membres correspondants, toutes pages confondues
+     */
+    long countByOrganisationId(OrganisationId organisationId, MemberFilters filters);
 }
