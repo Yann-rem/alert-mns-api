@@ -6,6 +6,7 @@ import com.alertmns.organisation.domain.model.GroupKind;
 import com.alertmns.organisation.domain.model.GroupName;
 import com.alertmns.shared.OrganisationId;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -52,4 +53,21 @@ public interface GroupRepository {
      * @return {@code true} si un groupe général existe déjà pour cette organisation
      */
     boolean existsGeneralByOrganisationId(OrganisationId organisationId);
+
+    /**
+     * Liste paginée des groupes d'une organisation (ADR-0014), triée par nom.
+     *
+     * @param organisationId l'organisation
+     * @param search         filtre sur le nom (insensible à la casse), ou {@code null} pour tout lister
+     * @param page           index de page, à partir de 0
+     * @param size           taille de page
+     * @return les groupes de la page
+     */
+    List<Group> findByOrganisationId(OrganisationId organisationId, String search, int page, int size);
+
+    /**
+     * Compte les groupes correspondant aux mêmes critères que
+     * {@link #findByOrganisationId(OrganisationId, String, int, int)}.
+     */
+    long countByOrganisationId(OrganisationId organisationId, String search);
 }
