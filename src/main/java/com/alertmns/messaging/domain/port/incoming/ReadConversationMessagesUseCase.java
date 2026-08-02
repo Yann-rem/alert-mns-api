@@ -1,6 +1,5 @@
 package com.alertmns.messaging.domain.port.incoming;
 
-import com.alertmns.messaging.domain.model.Message;
 import com.alertmns.messaging.domain.port.incoming.command.ReadConversationMessagesQuery;
 
 import java.util.List;
@@ -12,5 +11,5 @@ import java.util.List;
  */
 public interface ReadConversationMessagesUseCase {
 
-    List<Message> read(ReadConversationMessagesQuery query);
+    List<MessageView> read(ReadConversationMessagesQuery query);
 }

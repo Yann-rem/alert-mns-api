@@ -23,29 +23,30 @@ import java.util.UUID;
  * (memberId → userId → nom d'affichage, anonymisation-aware), construit la projection {@link MessageNotification} et la
  * pousse.</p>
  *
- * <p>C'est ici — dans l'application — qu'est composée la chaîne member → user → nom : chaque port ACL reste mono-BC
- * ({@link MemberDirectoryPort} vers Organisation, {@link UserDirectoryPort} vers Identity).</p>
+ * <p>La chaîne member → user → nom est déléguée à {@link MemberNameResolver}, partagée avec les services de
+ * lecture : le nom poussé en temps réel et celui rendu à la relecture de l'historique doivent être résolus par le
+ * même chemin, sans quoi un membre anonymisé apparaîtrait différemment selon la voie empruntée.</p>
  */
 public final class DispatchMessageService {
 
     private final ConversationRepository conversationRepository;
     private final MessageRepository messageRepository;
     private final MemberDirectoryPort memberDirectory;
-    private final UserDirectoryPort userDirectory;
+    private final MemberNameResolver nameResolver;
     private final MessageRealtimePort realtimePort;
 
     public DispatchMessageService(
             ConversationRepository conversationRepository,
             MessageRepository messageRepository,
             MemberDirectoryPort memberDirectory,
-            UserDirectoryPort userDirectory,
+            MemberNameResolver nameResolver,
             MessageRealtimePort realtimePort
     ) {
         this.conversationRepository = Objects.requireNonNull(
                 conversationRepository, "conversationRepository must not be null");
         this.messageRepository = Objects.requireNonNull(messageRepository, "messageRepository must not be null");
         this.memberDirectory = Objects.requireNonNull(memberDirectory, "memberDirectory must not be null");
-        this.userDirectory = Objects.requireNonNull(userDirectory, "userDirectory must not be null");
+        this.nameResolver = Objects.requireNonNull(nameResolver, "nameResolver must not be null");
         this.realtimePort = Objects.requireNonNull(realtimePort, "realtimePort must not be null");
     }
 
@@ -81,16 +82,10 @@ public final class DispatchMessageService {
                 message.id().value(),
                 conversation.id().value(),
                 authorMemberId,
-                resolveAuthorName(authorMemberId),
+                nameResolver.nameOf(authorMemberId),
                 message.content().value(),
                 replyTo == null ? null : replyTo.value(),
                 message.sentAt()
         );
-    }
-
-    private String resolveAuthorName(UUID authorMemberId) {
-        return memberDirectory.userIdOf(authorMemberId)
-                .map(userDirectory::displayName)
-                .orElse(UserDirectoryPort.DELETED_USER_DISPLAY_NAME);
     }
 }

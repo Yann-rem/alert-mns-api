@@ -26,10 +26,13 @@ public interface UserMembershipProvider {
     Optional<Membership> findByUserId(UserId userId);
 
     /**
+     * @param memberId       identifiant du {@code Member}. Le BC Messaging référence ses auteurs et
+     *                       participants par cet identifiant, jamais par le {@code userId} : sans lui,
+     *                       le client ne peut pas reconnaître ses propres messages.
      * @param organisationId organisation d'appartenance
      * @param role           rôle métier (ADMIN, MEMBER…)
      * @param status         statut de l'adhésion (ACTIVE, SUSPENDED…), orthogonal au statut du
      *                       compte utilisateur (ADR-0019)
      */
-    record Membership(UUID organisationId, String role, String status) {}
+    record Membership(UUID memberId, UUID organisationId, String role, String status) {}
 }

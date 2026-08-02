@@ -10,6 +10,7 @@ import com.alertmns.messaging.domain.model.Message;
 import com.alertmns.messaging.domain.model.MessageContent;
 import com.alertmns.messaging.domain.model.MessageId;
 import com.alertmns.messaging.domain.model.ParticipantPair;
+import com.alertmns.messaging.domain.port.incoming.MessageView;
 import com.alertmns.messaging.domain.port.incoming.ReadConversationMessagesUseCase;
 import com.alertmns.messaging.domain.port.incoming.command.ReadConversationMessagesQuery;
 import com.alertmns.messaging.domain.port.outgoing.ConversationRepository;
@@ -138,10 +139,10 @@ class ReadConversationMessagesIntegrationTest {
         seedMessage(conversation.id(), middle, "2", NOW.plusSeconds(60));
         seedMessage(conversation.id(), newer, "3", NOW.plusSeconds(120));
 
-        List<Message> result = readConversationMessagesUseCase.read(
+        List<MessageView> result = readConversationMessagesUseCase.read(
                 new ReadConversationMessagesQuery(conversation.id().value().toString(), 0, 50));
 
-        assertThat(result).extracting(Message::id).containsExactly(newer, middle, older);
+        assertThat(result).extracting(view -> view.message().id()).containsExactly(newer, middle, older);
     }
 
     @Test
@@ -155,13 +156,13 @@ class ReadConversationMessagesIntegrationTest {
         seedMessage(conversation.id(), middle, "2", NOW.plusSeconds(60));
         seedMessage(conversation.id(), newer, "3", NOW.plusSeconds(120));
 
-        List<Message> firstPage = readConversationMessagesUseCase.read(
+        List<MessageView> firstPage = readConversationMessagesUseCase.read(
                 new ReadConversationMessagesQuery(conversation.id().value().toString(), 0, 2));
-        List<Message> secondPage = readConversationMessagesUseCase.read(
+        List<MessageView> secondPage = readConversationMessagesUseCase.read(
                 new ReadConversationMessagesQuery(conversation.id().value().toString(), 1, 2));
 
-        assertThat(firstPage).extracting(Message::id).containsExactly(newer, middle);
-        assertThat(secondPage).extracting(Message::id).containsExactly(older);
+        assertThat(firstPage).extracting(view -> view.message().id()).containsExactly(newer, middle);
+        assertThat(secondPage).extracting(view -> view.message().id()).containsExactly(older);
     }
 
     @Test

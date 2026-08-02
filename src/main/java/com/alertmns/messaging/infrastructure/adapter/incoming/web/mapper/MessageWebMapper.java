@@ -2,6 +2,7 @@ package com.alertmns.messaging.infrastructure.adapter.incoming.web.mapper;
 
 import com.alertmns.messaging.domain.model.Message;
 import com.alertmns.messaging.domain.model.MessageId;
+import com.alertmns.messaging.domain.port.incoming.MessageView;
 import com.alertmns.messaging.domain.port.incoming.command.PostMessageCommand;
 import com.alertmns.messaging.infrastructure.adapter.incoming.web.dto.MessageResponse;
 import com.alertmns.messaging.infrastructure.adapter.incoming.web.dto.PostMessageRequest;
@@ -21,11 +22,13 @@ public final class MessageWebMapper {
         );
     }
 
-    public static MessageResponse toMessageResponse(Message message) {
+    public static MessageResponse toMessageResponse(MessageView view) {
+        Message message = view.message();
         MessageId replyTo = message.replyTo();
         return new MessageResponse(
                 message.id().value(),
                 message.authorId(),
+                view.authorName(),
                 message.content().value(),
                 replyTo == null ? null : replyTo.value(),
                 message.sentAt()

@@ -25,6 +25,7 @@ public final class MemberMembershipAdapter implements UserMembershipProvider {
     public Optional<Membership> findByUserId(UserId userId) {
         return memberRepository.findByUserId(userId.value())
                 .map(member -> new Membership(
+                        member.id().value(),
                         member.organisationId().value(),
                         member.role().name(),
                         member.status().name()));
