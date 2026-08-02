@@ -56,7 +56,7 @@ class DispatchMessageServiceTest {
     MemberDirectoryPort memberDirectory;
 
     @Mock
-    UserDirectoryPort userDirectory;
+    MemberNameResolver nameResolver;
 
     @Mock
     MessageRealtimePort realtimePort;
@@ -99,13 +99,11 @@ class DispatchMessageServiceTest {
             Conversation conversation = directConversation(otherMemberId);
             UUID u1 = UUID.randomUUID();
             UUID u2 = UUID.randomUUID();
-            UUID authorUserId = UUID.randomUUID();
             when(conversationRepository.findById(conversationId)).thenReturn(Optional.of(conversation));
             when(messageRepository.findById(messageId)).thenReturn(Optional.of(message("Bonjour")));
             when(memberDirectory.directRecipients(conversation.participantPair().low(),
                     conversation.participantPair().high())).thenReturn(List.of(u1, u2));
-            when(memberDirectory.userIdOf(authorMemberId)).thenReturn(Optional.of(authorUserId));
-            when(userDirectory.displayName(authorUserId)).thenReturn("Alice Martin");
+            when(nameResolver.nameOf(authorMemberId)).thenReturn("Alice Martin");
 
             service.dispatch(event());
 
@@ -126,12 +124,10 @@ class DispatchMessageServiceTest {
         void shouldPushToGroupMembers() {
             UUID groupId = UUID.randomUUID();
             UUID u1 = UUID.randomUUID();
-            UUID authorUserId = UUID.randomUUID();
             when(conversationRepository.findById(conversationId)).thenReturn(Optional.of(groupConversation(groupId)));
             when(messageRepository.findById(messageId)).thenReturn(Optional.of(message("Salut le groupe")));
             when(memberDirectory.groupRecipients(groupId)).thenReturn(List.of(u1));
-            when(memberDirectory.userIdOf(authorMemberId)).thenReturn(Optional.of(authorUserId));
-            when(userDirectory.displayName(authorUserId)).thenReturn("Bob");
+            when(nameResolver.nameOf(authorMemberId)).thenReturn("Bob");
 
             service.dispatch(event());
 
@@ -139,21 +135,26 @@ class DispatchMessageServiceTest {
             verify(memberDirectory, never()).directRecipients(any(), any());
         }
 
+        /**
+         * Le repli sur « Utilisateur supprimé » appartient désormais à {@link MemberNameResolver} et
+         * y est testé ; ici on vérifie seulement qu'il est propagé tel quel dans la notification.
+         */
         @Test
-        @DisplayName("renders the author as 'Utilisateur supprimé' when the member has no user (orphan reference)")
-        void shouldFallBackToPlaceholderForOrphanAuthor() {
+        @DisplayName("propagates the placeholder name resolved for an anonymised or orphan author")
+        void shouldPropagatePlaceholderForOrphanAuthor() {
             UUID otherMemberId = UUID.randomUUID();
-            when(conversationRepository.findById(conversationId)).thenReturn(Optional.of(directConversation(otherMemberId)));
+            when(conversationRepository.findById(conversationId))
+                    .thenReturn(Optional.of(directConversation(otherMemberId)));
             when(messageRepository.findById(messageId)).thenReturn(Optional.of(message("Coucou")));
             when(memberDirectory.directRecipients(any(), any())).thenReturn(List.of(UUID.randomUUID()));
-            when(memberDirectory.userIdOf(authorMemberId)).thenReturn(Optional.empty());
+            when(nameResolver.nameOf(authorMemberId))
+                    .thenReturn(UserDirectoryPort.DELETED_USER_DISPLAY_NAME);
 
             service.dispatch(event());
 
             ArgumentCaptor<MessageNotification> captor = ArgumentCaptor.forClass(MessageNotification.class);
             verify(realtimePort).push(any(), captor.capture());
             assertEquals(UserDirectoryPort.DELETED_USER_DISPLAY_NAME, captor.getValue().authorName());
-            verify(userDirectory, never()).displayName(any());
         }
 
         @Test
@@ -201,15 +202,15 @@ class DispatchMessageServiceTest {
         @DisplayName("should reject null collaborators")
         void shouldRejectNullCollaborators() {
             assertThrows(NullPointerException.class, () -> new DispatchMessageService(
-                    null, messageRepository, memberDirectory, userDirectory, realtimePort));
+                    null, messageRepository, memberDirectory, nameResolver, realtimePort));
             assertThrows(NullPointerException.class, () -> new DispatchMessageService(
-                    conversationRepository, null, memberDirectory, userDirectory, realtimePort));
+                    conversationRepository, null, memberDirectory, nameResolver, realtimePort));
             assertThrows(NullPointerException.class, () -> new DispatchMessageService(
-                    conversationRepository, messageRepository, null, userDirectory, realtimePort));
+                    conversationRepository, messageRepository, null, nameResolver, realtimePort));
             assertThrows(NullPointerException.class, () -> new DispatchMessageService(
                     conversationRepository, messageRepository, memberDirectory, null, realtimePort));
             assertThrows(NullPointerException.class, () -> new DispatchMessageService(
-                    conversationRepository, messageRepository, memberDirectory, userDirectory, null));
+                    conversationRepository, messageRepository, memberDirectory, nameResolver, null));
         }
     }
 }

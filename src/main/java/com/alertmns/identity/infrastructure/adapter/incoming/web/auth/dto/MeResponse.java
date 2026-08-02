@@ -9,6 +9,11 @@ public record MeResponse(
         @Schema(description = "Prénom") String firstName,
         @Schema(description = "Nom") String lastName,
         @Schema(
+                description = "Identifiant du membre dans l'organisation courante, ou null. "
+                        + "Le BC Messaging désigne auteurs et participants par cet identifiant : "
+                        + "c'est lui, et non userId, qui permet au client de reconnaître ses propres messages."
+        ) String memberId,
+        @Schema(
                 description = "Organisation courante, ou null si l'utilisateur n'est membre d'aucune "
                         + "organisation. Le client s'en sert pour construire les URLs "
                         + "/api/organisations/{orgId}/… (ADR-0011)."

@@ -5,6 +5,7 @@ import com.alertmns.messaging.application.CreateConversationFromGroupService;
 import com.alertmns.messaging.application.CreateDirectConversationService;
 import com.alertmns.messaging.application.DispatchMessageService;
 import com.alertmns.messaging.application.ListMyConversationsService;
+import com.alertmns.messaging.application.MemberNameResolver;
 import com.alertmns.messaging.application.PostMessageService;
 import com.alertmns.messaging.application.ReadConversationMessagesService;
 import com.alertmns.messaging.application.RenameConversationService;
@@ -129,18 +130,32 @@ public class MessagingBeanConfig {
         );
     }
 
+    /**
+     * Résolution du nom d'un membre, partagée par le push temps réel et les deux services de lecture :
+     * le même chemin pour tous, sinon un membre anonymisé s'afficherait différemment selon la voie.
+     */
+    @Bean
+    public MemberNameResolver memberNameResolver(
+            MemberDirectoryPort memberDirectoryPort,
+            UserDirectoryPort userDirectoryPort
+    ) {
+        return new MemberNameResolver(memberDirectoryPort, userDirectoryPort);
+    }
+
     @Bean
     public ReadConversationMessagesService readConversationMessagesService(
             CurrentMemberResolver currentMemberResolver,
             ConversationRepository conversationRepository,
             MessageRepository messageRepository,
-            GroupMembershipChecker groupMembershipChecker
+            GroupMembershipChecker groupMembershipChecker,
+            MemberNameResolver memberNameResolver
     ) {
         return new ReadConversationMessagesService(
                 currentMemberResolver,
                 conversationRepository,
                 messageRepository,
-                groupMembershipChecker
+                groupMembershipChecker,
+                memberNameResolver
         );
     }
 
@@ -148,9 +163,17 @@ public class MessagingBeanConfig {
     public ListMyConversationsService listMyConversationsService(
             CurrentMemberResolver currentMemberResolver,
             ConversationRepository conversationRepository,
-            GroupMembershipPort groupMembershipPort
+            GroupMembershipPort groupMembershipPort,
+            MessageRepository messageRepository,
+            MemberNameResolver memberNameResolver
     ) {
-        return new ListMyConversationsService(currentMemberResolver, conversationRepository, groupMembershipPort);
+        return new ListMyConversationsService(
+                currentMemberResolver,
+                conversationRepository,
+                groupMembershipPort,
+                messageRepository,
+                memberNameResolver
+        );
     }
 
     @Bean
@@ -158,14 +181,14 @@ public class MessagingBeanConfig {
             ConversationRepository conversationRepository,
             MessageRepository messageRepository,
             MemberDirectoryPort memberDirectoryPort,
-            UserDirectoryPort userDirectoryPort,
+            MemberNameResolver memberNameResolver,
             MessageRealtimePort messageRealtimePort
     ) {
         return new DispatchMessageService(
                 conversationRepository,
                 messageRepository,
                 memberDirectoryPort,
-                userDirectoryPort,
+                memberNameResolver,
                 messageRealtimePort
         );
     }

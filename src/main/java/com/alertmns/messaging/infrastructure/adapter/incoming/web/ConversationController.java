@@ -52,7 +52,10 @@ public class ConversationController {
 
     @Operation(
             summary = "Lister mes conversations",
-            description = "Retourne les conversations de l'utilisateur courant (DM et groupes), de la plus récente à la plus ancienne.",
+            description = """
+                    Retourne les conversations de l'utilisateur courant (DM et groupes), \
+                    de la plus récemment active à la plus ancienne. Chaque entrée porte son titre résolu \
+                    et l'aperçu de son dernier message.""",
             responses = @ApiResponse(responseCode = "200", description = "Liste des conversations")
     )
     @GetMapping

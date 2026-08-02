@@ -5,10 +5,16 @@ import com.alertmns.messaging.domain.model.Conversation;
 import com.alertmns.messaging.domain.model.ConversationId;
 import com.alertmns.messaging.domain.model.ConversationKind;
 import com.alertmns.messaging.domain.model.ConversationName;
+import com.alertmns.messaging.domain.model.Message;
+import com.alertmns.messaging.domain.model.MessageContent;
+import com.alertmns.messaging.domain.model.MessageId;
 import com.alertmns.messaging.domain.model.ParticipantPair;
+import com.alertmns.messaging.domain.port.incoming.ConversationSummary;
 import com.alertmns.messaging.domain.port.incoming.ListMyConversationsUseCase;
 import com.alertmns.messaging.domain.port.outgoing.ConversationRepository;
+import com.alertmns.messaging.domain.port.outgoing.MessageRepository;
 import com.alertmns.messaging.infrastructure.adapter.outgoing.persistence.ConversationJpaRepository;
+import com.alertmns.messaging.infrastructure.adapter.outgoing.persistence.MessageJpaRepository;
 import com.alertmns.organisation.domain.model.GroupId;
 import com.alertmns.organisation.domain.model.GroupMembership;
 import com.alertmns.organisation.domain.model.GroupMembershipId;
@@ -81,10 +87,16 @@ class ListMyConversationsIntegrationTest {
     private ConversationRepository conversationRepository;
 
     @Autowired
+    private MessageRepository messageRepository;
+
+    @Autowired
     private GroupMembershipRepository groupMembershipRepository;
 
     @Autowired
     private ConversationJpaRepository conversationJpaRepository;
+
+    @Autowired
+    private MessageJpaRepository messageJpaRepository;
 
     @Autowired
     private GroupMembershipJpaRepository groupMembershipJpaRepository;
@@ -106,6 +118,7 @@ class ListMyConversationsIntegrationTest {
 
     @AfterEach
     void cleanDatabase() {
+        messageJpaRepository.deleteAll();
         conversationJpaRepository.deleteAll();
         groupMembershipJpaRepository.deleteAll();
         memberJpaRepository.deleteAll();
@@ -136,9 +149,48 @@ class ListMyConversationsIntegrationTest {
                 ConversationId.generate(), ORGANISATION_ID, UUID.randomUUID(), ConversationName.of("Autre"),
                 ConversationKind.GROUP, null, NOW));
 
-        List<Conversation> result = listMyConversationsUseCase.list();
+        List<ConversationSummary> result = listMyConversationsUseCase.list();
 
-        assertThat(result).extracting(Conversation::id).containsExactly(myGroup.id(), myDm.id());
+        assertThat(result)
+                .extracting(summary -> summary.conversation().id())
+                .containsExactly(myGroup.id(), myDm.id());
+    }
+
+    /**
+     * Couvre la requête du dernier message sur une base réelle : c'est une sous-requête corrélée,
+     * dont la justesse ne se voit qu'à l'exécution. On glisse volontairement un message plus ancien
+     * <em>après</em> le plus récent, pour que l'ordre d'insertion ne puisse pas sauver le test.
+     */
+    @Test
+    @DisplayName("attaches the last message of each conversation and sorts by real activity")
+    void shouldAttachLastMessageAndSortByActivity() {
+        Conversation busyButOld = Conversation.reconstitute(
+                ConversationId.generate(), ORGANISATION_ID, null, null, ConversationKind.DIRECT,
+                ParticipantPair.of(memberId.value(), UUID.randomUUID()), NOW);
+        conversationRepository.save(busyButOld);
+
+        Conversation recentButSilent = Conversation.reconstitute(
+                ConversationId.generate(), ORGANISATION_ID, null, null, ConversationKind.DIRECT,
+                ParticipantPair.of(memberId.value(), UUID.randomUUID()), NOW.plusSeconds(3_600));
+        conversationRepository.save(recentButSilent);
+
+        messageRepository.save(Message.reconstitute(
+                MessageId.generate(), busyButOld.id(), memberId.value(),
+                MessageContent.of("Le plus récent"), null, NOW.plusSeconds(7_200)));
+        messageRepository.save(Message.reconstitute(
+                MessageId.generate(), busyButOld.id(), memberId.value(),
+                MessageContent.of("Un ancien"), null, NOW.plusSeconds(60)));
+
+        List<ConversationSummary> result = listMyConversationsUseCase.list();
+
+        assertThat(result)
+                .as("la conversation vivante passe devant la conversation récente mais muette")
+                .extracting(summary -> summary.conversation().id())
+                .containsExactly(busyButOld.id(), recentButSilent.id());
+        assertThat(result.getFirst().lastMessage().content()).isEqualTo("Le plus récent");
+        assertThat(result.getLast().lastMessage())
+                .as("une conversation sans message n'a pas d'aperçu")
+                .isNull();
     }
 
     @Test

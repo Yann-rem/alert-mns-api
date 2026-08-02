@@ -10,6 +10,7 @@ import com.alertmns.messaging.domain.model.Message;
 import com.alertmns.messaging.domain.model.MessageContent;
 import com.alertmns.messaging.domain.model.MessageId;
 import com.alertmns.messaging.domain.model.ParticipantPair;
+import com.alertmns.messaging.domain.port.incoming.MessageView;
 import com.alertmns.messaging.domain.port.incoming.command.ReadConversationMessagesQuery;
 import com.alertmns.messaging.domain.port.outgoing.ConversationRepository;
 import com.alertmns.messaging.domain.port.outgoing.GroupMembershipChecker;
@@ -31,6 +32,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -61,6 +63,9 @@ class ReadConversationMessagesServiceTest {
 
     @Mock
     GroupMembershipChecker groupMembershipChecker;
+
+    @Mock
+    MemberNameResolver nameResolver;
 
     @InjectMocks
     ReadConversationMessagesService service;
@@ -110,10 +115,13 @@ class ReadConversationMessagesServiceTest {
                     MessageId.generate(), conversationId, readerMemberId.value(), MessageContent.of("A"), null, NOW);
             when(messageRepository.findByConversationId(eq(conversationId), anyInt(), anyInt()))
                     .thenReturn(List.of(message));
+            when(nameResolver.namesOf(List.of(readerMemberId.value())))
+                    .thenReturn(Map.of(readerMemberId.value(), "Sofia Nkolo"));
 
-            List<Message> result = service.read(query());
+            List<MessageView> result = service.read(query());
 
-            assertEquals(List.of(message), result);
+            assertEquals(List.of(message), result.stream().map(MessageView::message).toList());
+            assertEquals("Sofia Nkolo", result.getFirst().authorName());
         }
 
         @Test
@@ -125,6 +133,7 @@ class ReadConversationMessagesServiceTest {
             when(groupMembershipChecker.isMember(groupId, readerMemberId.value())).thenReturn(true);
             when(messageRepository.findByConversationId(eq(conversationId), anyInt(), anyInt()))
                     .thenReturn(List.of());
+            when(nameResolver.namesOf(List.of())).thenReturn(Map.of());
 
             service.read(query());
 
@@ -192,28 +201,28 @@ class ReadConversationMessagesServiceTest {
         @DisplayName("should reject null currentMemberResolver")
         void shouldRejectNullCurrentMemberResolver() {
             assertThrows(NullPointerException.class, () -> new ReadConversationMessagesService(
-                    null, conversationRepository, messageRepository, groupMembershipChecker));
+                    null, conversationRepository, messageRepository, groupMembershipChecker, nameResolver));
         }
 
         @Test
         @DisplayName("should reject null conversationRepository")
         void shouldRejectNullConversationRepository() {
             assertThrows(NullPointerException.class, () -> new ReadConversationMessagesService(
-                    currentMemberResolver, null, messageRepository, groupMembershipChecker));
+                    currentMemberResolver, null, messageRepository, groupMembershipChecker, nameResolver));
         }
 
         @Test
         @DisplayName("should reject null messageRepository")
         void shouldRejectNullMessageRepository() {
             assertThrows(NullPointerException.class, () -> new ReadConversationMessagesService(
-                    currentMemberResolver, conversationRepository, null, groupMembershipChecker));
+                    currentMemberResolver, conversationRepository, null, groupMembershipChecker, nameResolver));
         }
 
         @Test
         @DisplayName("should reject null groupMembershipChecker")
         void shouldRejectNullGroupMembershipChecker() {
             assertThrows(NullPointerException.class, () -> new ReadConversationMessagesService(
-                    currentMemberResolver, conversationRepository, messageRepository, null));
+                    currentMemberResolver, conversationRepository, messageRepository, null, nameResolver));
         }
 
         @Test

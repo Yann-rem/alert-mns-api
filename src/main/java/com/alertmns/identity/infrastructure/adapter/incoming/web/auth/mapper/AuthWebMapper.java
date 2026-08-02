@@ -23,6 +23,7 @@ public final class AuthWebMapper {
                 user.email().value(),
                 user.profile().firstName().value(),
                 user.profile().lastName().value(),
+                membership.map(m -> m.memberId().toString()).orElse(null),
                 membership.map(m -> m.organisationId().toString()).orElse(null),
                 membership.map(Membership::role).orElse(null),
                 membership.map(Membership::status).orElse(null),
