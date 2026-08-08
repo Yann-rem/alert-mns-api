@@ -8,6 +8,8 @@ import com.alertmns.alerting.domain.model.AlertLevel;
 import com.alertmns.alerting.domain.port.outgoing.AlertNotification;
 import com.alertmns.alerting.domain.port.outgoing.AlertRealtimePort;
 import com.alertmns.alerting.domain.port.outgoing.AlertRecipientPort;
+import com.alertmns.alerting.domain.port.outgoing.GroupDirectoryPort;
+import com.alertmns.alerting.domain.port.outgoing.IssuerDirectoryPort;
 import com.alertmns.shared.OrganisationId;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -45,6 +47,12 @@ class DispatchAlertServiceTest {
     @Mock
     AlertRealtimePort realtimePort;
 
+    @Mock
+    IssuerDirectoryPort issuerDirectory;
+
+    @Mock
+    GroupDirectoryPort groupDirectory;
+
     @InjectMocks
     DispatchAlertService service;
 
@@ -71,6 +79,7 @@ class DispatchAlertServiceTest {
             UUID u2 = UUID.randomUUID();
             AlertBroadcast event = organisationAlert("Évacuation générale", AlertLevel.URGENT);
             when(recipientPort.organisationRecipients(ORGANISATION_ID)).thenReturn(List.of(u1, u2));
+            when(issuerDirectory.displayNameOf(ISSUER_ID)).thenReturn("Marie Dupont");
 
             service.dispatch(event);
 
@@ -80,20 +89,26 @@ class DispatchAlertServiceTest {
             assertEquals(event.alertId().value(), notification.alertId());
             assertEquals(ORGANISATION_ID.value(), notification.organisationId());
             assertEquals(ISSUER_ID, notification.issuerId());
+            assertEquals("Marie Dupont", notification.issuerName());
             assertEquals("Évacuation générale", notification.content());
             assertEquals("URGENT", notification.level());
             assertEquals("ORGANISATION", notification.audienceKind());
             assertNull(notification.groupId());
+            assertNull(notification.groupName(), "an organisation-wide alert targets no group");
             assertEquals(NOW, notification.issuedAt());
+            // Rien à nommer côté groupe : l'annuaire ne doit même pas être sollicité.
+            verify(groupDirectory, never()).nameOf(any());
         }
 
         @Test
-        @DisplayName("GROUP audience: pushes to the group recipients and carries the groupId")
+        @DisplayName("GROUP audience: pushes to the group recipients and names the target group")
         void shouldPushToGroupRecipients() {
             UUID groupId = UUID.randomUUID();
             UUID u1 = UUID.randomUUID();
             AlertBroadcast event = groupAlert(groupId, "Cours annulé", AlertLevel.INFO);
             when(recipientPort.groupRecipients(groupId)).thenReturn(List.of(u1));
+            when(issuerDirectory.displayNameOf(ISSUER_ID)).thenReturn("Marie Dupont");
+            when(groupDirectory.nameOf(groupId)).thenReturn("Promo CDA 2026");
 
             service.dispatch(event);
 
@@ -101,11 +116,12 @@ class DispatchAlertServiceTest {
             verify(realtimePort).push(eq(List.of(u1)), captor.capture());
             assertEquals("GROUP", captor.getValue().audienceKind());
             assertEquals(groupId, captor.getValue().groupId());
+            assertEquals("Promo CDA 2026", captor.getValue().groupName());
             verify(recipientPort, never()).organisationRecipients(any());
         }
 
         @Test
-        @DisplayName("should not push when the audience resolves to no recipient")
+        @DisplayName("should not push, nor resolve any name, when the audience resolves to no recipient")
         void shouldNotPushWhenNoRecipient() {
             AlertBroadcast event = organisationAlert("Personne connectée", AlertLevel.INFO);
             when(recipientPort.organisationRecipients(ORGANISATION_ID)).thenReturn(List.of());
@@ -113,6 +129,7 @@ class DispatchAlertServiceTest {
             service.dispatch(event);
 
             verify(realtimePort, never()).push(any(), any());
+            verify(issuerDirectory, never()).displayNameOf(any());
         }
     }
 
@@ -123,13 +140,29 @@ class DispatchAlertServiceTest {
         @Test
         @DisplayName("should reject null recipientPort")
         void shouldRejectNullRecipientPort() {
-            assertThrows(NullPointerException.class, () -> new DispatchAlertService(null, realtimePort));
+            assertThrows(NullPointerException.class,
+                    () -> new DispatchAlertService(null, realtimePort, issuerDirectory, groupDirectory));
         }
 
         @Test
         @DisplayName("should reject null realtimePort")
         void shouldRejectNullRealtimePort() {
-            assertThrows(NullPointerException.class, () -> new DispatchAlertService(recipientPort, null));
+            assertThrows(NullPointerException.class,
+                    () -> new DispatchAlertService(recipientPort, null, issuerDirectory, groupDirectory));
+        }
+
+        @Test
+        @DisplayName("should reject null issuerDirectory")
+        void shouldRejectNullIssuerDirectory() {
+            assertThrows(NullPointerException.class,
+                    () -> new DispatchAlertService(recipientPort, realtimePort, null, groupDirectory));
+        }
+
+        @Test
+        @DisplayName("should reject null groupDirectory")
+        void shouldRejectNullGroupDirectory() {
+            assertThrows(NullPointerException.class,
+                    () -> new DispatchAlertService(recipientPort, realtimePort, issuerDirectory, null));
         }
     }
 }

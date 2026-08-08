@@ -92,6 +92,9 @@ class AlertRealtimeIntegrationTest extends AbstractAuthIntegrationTest {
         assertThat(payload.get("content")).isEqualTo("Évacuation générale");
         assertThat(payload.get("level")).isEqualTo("URGENT");
         assertThat(payload.get("audienceKind")).isEqualTo("ORGANISATION");
+        // Le destinataire ne peut pas traduire un memberId : le nom doit voyager avec l'alerte.
+        assertThat(payload.get("issuerName")).isEqualTo("Test User");
+        assertThat(payload.get("groupName")).isNull();
 
         memberSession.disconnect();
     }

@@ -4,6 +4,8 @@ import com.alertmns.alerting.domain.event.AlertBroadcast;
 import com.alertmns.alerting.domain.port.outgoing.AlertNotification;
 import com.alertmns.alerting.domain.port.outgoing.AlertRealtimePort;
 import com.alertmns.alerting.domain.port.outgoing.AlertRecipientPort;
+import com.alertmns.alerting.domain.port.outgoing.GroupDirectoryPort;
+import com.alertmns.alerting.domain.port.outgoing.IssuerDirectoryPort;
 
 import java.util.List;
 import java.util.Objects;
@@ -13,17 +15,30 @@ import java.util.UUID;
  * Service applicatif livrant une alerte diffusée à ses destinataires en temps réel.
  *
  * <p>Réaction à l'événement {@link AlertBroadcast} : resolve (audience → {@code userId} des destinataires) → build
- * (projection {@link AlertNotification}) → push. Aucune donnée n'est rechargée : l'événement thick porte tout. Si
- * l'audience ne résout aucun destinataire, aucun push n'est émis.</p>
+ * (projection {@link AlertNotification}) → push. Aucune donnée n'est rechargée : l'événement thick porte tout, à
+ * l'exception des noms, qui n'appartiennent pas au BC Alerting. Si l'audience ne résout aucun destinataire, aucun
+ * push n'est émis — et aucun nom n'est résolu inutilement.</p>
+ *
+ * <p>Les mêmes ports servent la lecture REST ({@code ListMyAlertsService}), sans quoi un membre anonymisé
+ * s'afficherait différemment selon qu'on reçoit l'alerte en direct ou qu'on la relit.</p>
  */
 public final class DispatchAlertService {
 
     private final AlertRecipientPort recipientPort;
     private final AlertRealtimePort realtimePort;
+    private final IssuerDirectoryPort issuerDirectory;
+    private final GroupDirectoryPort groupDirectory;
 
-    public DispatchAlertService(AlertRecipientPort recipientPort, AlertRealtimePort realtimePort) {
+    public DispatchAlertService(
+            AlertRecipientPort recipientPort,
+            AlertRealtimePort realtimePort,
+            IssuerDirectoryPort issuerDirectory,
+            GroupDirectoryPort groupDirectory
+    ) {
         this.recipientPort = Objects.requireNonNull(recipientPort, "recipientPort must not be null");
         this.realtimePort = Objects.requireNonNull(realtimePort, "realtimePort must not be null");
+        this.issuerDirectory = Objects.requireNonNull(issuerDirectory, "issuerDirectory must not be null");
+        this.groupDirectory = Objects.requireNonNull(groupDirectory, "groupDirectory must not be null");
     }
 
     public void dispatch(AlertBroadcast event) {
@@ -42,14 +57,17 @@ public final class DispatchAlertService {
     }
 
     private AlertNotification toNotification(AlertBroadcast event) {
+        UUID groupId = event.audience().groupId();
         return new AlertNotification(
                 event.alertId().value(),
                 event.organisationId().value(),
                 event.issuerId(),
+                issuerDirectory.displayNameOf(event.issuerId()),
                 event.content().value(),
                 event.level().name(),
                 event.audience().kind().name(),
-                event.audience().groupId(),
+                groupId,
+                groupId == null ? null : groupDirectory.nameOf(groupId),
                 event.occurredOn()
         );
     }

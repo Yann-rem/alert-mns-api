@@ -5,8 +5,11 @@ import com.alertmns.alerting.domain.model.AlertAudience;
 import com.alertmns.alerting.domain.model.AlertContent;
 import com.alertmns.alerting.domain.model.AlertId;
 import com.alertmns.alerting.domain.model.AlertLevel;
+import com.alertmns.alerting.domain.port.incoming.AlertView;
 import com.alertmns.alerting.domain.port.incoming.ListMyAlertsUseCase;
 import com.alertmns.alerting.domain.port.outgoing.AlertRepository;
+import com.alertmns.alerting.domain.port.outgoing.GroupDirectoryPort;
+import com.alertmns.alerting.domain.port.outgoing.IssuerDirectoryPort;
 import com.alertmns.alerting.infrastructure.adapter.outgoing.persistence.AlertJpaRepository;
 import com.alertmns.identity.domain.port.outgoing.MailerPort;
 import com.alertmns.organisation.domain.model.GroupId;
@@ -140,9 +143,17 @@ class ListMyAlertsIntegrationTest {
         // a group alert for a group the member is not in → must be excluded
         alertRepository.save(groupAlert(UUID.randomUUID(), NOW));
 
-        List<Alert> result = listMyAlertsUseCase.list();
+        List<AlertView> result = listMyAlertsUseCase.list();
 
-        assertThat(result).extracting(Alert::id).containsExactly(myGroupAlert.id(), myOrgAlert.id());
+        assertThat(result)
+                .extracting(view -> view.alert().id())
+                .containsExactly(myGroupAlert.id(), myOrgAlert.id());
+        // Aucun User ni Group n'est provisionné ici : la lecture doit dégrader, pas échouer.
+        assertThat(result)
+                .extracting(AlertView::issuerName)
+                .containsOnly(IssuerDirectoryPort.DELETED_USER_DISPLAY_NAME);
+        assertThat(result.get(0).groupName()).isEqualTo(GroupDirectoryPort.DELETED_GROUP_DISPLAY_NAME);
+        assertThat(result.get(1).groupName()).isNull();
     }
 
     @Test

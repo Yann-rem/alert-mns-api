@@ -1,7 +1,5 @@
 package com.alertmns.alerting.domain.port.incoming;
 
-import com.alertmns.alerting.domain.model.Alert;
-
 import java.util.List;
 
 /**
@@ -15,7 +13,7 @@ public interface ListMyAlertsUseCase {
      * Retourne les alertes destinées à l'utilisateur courant (toute l'organisation et ses groupes), de la plus
      * récente à la plus ancienne.
      *
-     * @return la liste des alertes
+     * @return la liste des alertes, augmentées des noms de leur émetteur et de leur groupe cible
      */
-    List<Alert> list();
+    List<AlertView> list();
 }
