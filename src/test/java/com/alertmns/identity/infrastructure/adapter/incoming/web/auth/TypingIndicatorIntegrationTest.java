@@ -105,6 +105,8 @@ class TypingIndicatorIntegrationTest extends AbstractAuthIntegrationTest {
         assertThat(payload).isNotNull();
         assertThat(payload.get("conversationId")).isEqualTo(conversation.id().value().toString());
         assertThat(payload.get("userId")).isEqualTo(bobId.value().toString());
+        // Le nom voyage avec le signal : le client ne sait pas traduire un userId.
+        assertThat(payload.get("userName")).isEqualTo("Test User");
 
         aliceSession.disconnect();
         bobSession.disconnect();

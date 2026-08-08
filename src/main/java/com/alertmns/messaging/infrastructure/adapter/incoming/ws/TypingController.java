@@ -4,6 +4,7 @@ import com.alertmns.messaging.domain.model.Conversation;
 import com.alertmns.messaging.domain.model.ConversationId;
 import com.alertmns.messaging.domain.port.outgoing.ConversationRepository;
 import com.alertmns.messaging.domain.port.outgoing.MemberDirectoryPort;
+import com.alertmns.messaging.domain.port.outgoing.UserDirectoryPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -23,9 +24,12 @@ import java.util.UUID;
  *
  * <p><strong>Éphémère et 100 % infrastructure</strong> : aucun agrégat, aucun événement de domaine, aucune
  * persistance. Le contrôleur consomme les ports sortants existants ({@link ConversationRepository},
- * {@link MemberDirectoryPort}) comme des modèles de lecture, et pousse via {@link SimpMessagingTemplate}. L'identité du
- * typist provient du {@code Principal} posé au handshake ({@code userId}). L'autorisation est implicite : un typist qui
- * ne figure pas parmi les participants est ignoré.</p>
+ * {@link MemberDirectoryPort}, {@link UserDirectoryPort}) comme des modèles de lecture, et pousse via
+ * {@link SimpMessagingTemplate}. L'identité du typist provient du {@code Principal} posé au handshake
+ * ({@code userId}). L'autorisation est implicite : un typist qui ne figure pas parmi les participants est ignoré.</p>
+ *
+ * <p>Le nom du typist est résolu ici, faute pour le client de savoir traduire un {@code userId} — il ne manipule que
+ * des {@code memberId} (cf. {@link TypingNotification}).</p>
  */
 @Controller
 @RequiredArgsConstructor
@@ -35,6 +39,7 @@ public class TypingController {
 
     private final ConversationRepository conversationRepository;
     private final MemberDirectoryPort memberDirectory;
+    private final UserDirectoryPort userDirectory;
     private final SimpMessagingTemplate messagingTemplate;
 
     @MessageMapping("/conversations/{conversationId}/typing")
@@ -54,7 +59,8 @@ public class TypingController {
             return;
         }
 
-        TypingNotification notification = new TypingNotification(conversation.id().value(), typistUserId);
+        TypingNotification notification = new TypingNotification(
+                conversation.id().value(), typistUserId, userDirectory.displayName(typistUserId));
         for (UUID recipient : participants) {
             if (!recipient.equals(typistUserId)) {
                 messagingTemplate.convertAndSendToUser(recipient.toString(), DESTINATION, notification);

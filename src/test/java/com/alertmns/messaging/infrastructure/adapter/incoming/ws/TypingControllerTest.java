@@ -7,6 +7,7 @@ import com.alertmns.messaging.domain.model.ConversationName;
 import com.alertmns.messaging.domain.model.ParticipantPair;
 import com.alertmns.messaging.domain.port.outgoing.ConversationRepository;
 import com.alertmns.messaging.domain.port.outgoing.MemberDirectoryPort;
+import com.alertmns.messaging.domain.port.outgoing.UserDirectoryPort;
 import com.alertmns.shared.OrganisationId;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -46,6 +47,9 @@ class TypingControllerTest {
     MemberDirectoryPort memberDirectory;
 
     @Mock
+    UserDirectoryPort userDirectory;
+
+    @Mock
     SimpMessagingTemplate messagingTemplate;
 
     @InjectMocks
@@ -73,6 +77,7 @@ class TypingControllerTest {
         UUID other = UUID.randomUUID();
         when(conversationRepository.findById(conversationId)).thenReturn(Optional.of(directConversation()));
         when(memberDirectory.directRecipients(any(), any())).thenReturn(List.of(typistUserId, other));
+        when(userDirectory.displayName(typistUserId)).thenReturn("Sofia Nkolo");
 
         controller.typing(conversationId.value().toString(), typist);
 
@@ -80,6 +85,7 @@ class TypingControllerTest {
         verify(messagingTemplate).convertAndSendToUser(eq(other.toString()), eq("/queue/typing"), captor.capture());
         assertEquals(conversationId.value(), captor.getValue().conversationId());
         assertEquals(typistUserId, captor.getValue().userId());
+        assertEquals("Sofia Nkolo", captor.getValue().userName());
         verify(messagingTemplate, never()).convertAndSendToUser(eq(typistUserId.toString()), anyString(), any());
     }
 
