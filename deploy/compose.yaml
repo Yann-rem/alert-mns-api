@@ -1,0 +1,98 @@
+# ===========================================================================
+# Pile de production — à déployer sur le serveur, dans /opt/alerte
+# ===========================================================================
+# Trois conteneurs sur un réseau interne, dont un seul est exposé. Les valeurs
+# sensibles ne figurent pas ici : elles sont lues dans le fichier .env voisin,
+# qui n'est pas versionné (voir .env.example pour le gabarit).
+#
+# Démarrage :   docker compose up -d
+# État :        docker compose ps
+# Journaux :    docker compose logs -f api
+
+name: alerte
+
+services:
+  # -------------------------------------------------------------------------
+  # Base de données — jamais exposée hors du réseau interne
+  # -------------------------------------------------------------------------
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    # L'API attend que la base réponde réellement, et pas seulement que son
+    # conteneur soit lancé : Flyway échouerait sur une base non encore prête.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    networks: [interne]
+    # Absence volontaire de `ports:` — aucune publication vers l'hôte, donc aucune
+    # connexion possible depuis l'extérieur, même si le pare-feu était mal réglé.
+
+  # -------------------------------------------------------------------------
+  # Application
+  # -------------------------------------------------------------------------
+  api:
+    image: ghcr.io/yann-rem/alert-mns-api:${API_TAG:-latest}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Clés Spring standard : aucun tiret, donc aucune ambiguïté de conversion.
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      # Interprétée par application.yml : ${SESSION_COOKIE_SECURE:false}
+      SESSION_COOKIE_SECURE: "true"
+
+      # Les propriétés applicatives passent en propriétés système plutôt qu'en
+      # variables d'environnement. Motif : Spring supprime les tirets pour les
+      # @ConfigurationProperties mais les convertit en underscores pour les @Value,
+      # et ce projet emploie les deux. Une variable mal orthographiée n'émet aucun
+      # avertissement — la valeur par défaut s'applique en silence. En propriété
+      # système, le nom est repris tel quel, sans règle de conversion.
+      JAVA_OPTS: >-
+        -XX:MaxRAMPercentage=70
+        -Dspring.jpa.show-sql=false
+        -Dalertmns.identity.activation.frontend-base-url=https://${DOMAIN}/
+        -Dalertmns.websocket.allowed-origins=https://${DOMAIN}
+        -Dalertmns.bootstrap.organisation.name=${ORGANISATION_NAME}
+        -Dalertmns.bootstrap.general-group.name=${GENERAL_GROUP_NAME}
+        -Dalertmns.bootstrap.admin.email=${ADMIN_EMAIL}
+        -Dalertmns.bootstrap.admin.first-name=${ADMIN_FIRST_NAME}
+        -Dalertmns.bootstrap.admin.last-name=${ADMIN_LAST_NAME}
+    # Plafond mémoire : la JVM lit cette limite et dimensionne son tas en
+    # conséquence. Sans elle, elle se fierait aux 4 Go de l'hôte et pourrait
+    # évincer PostgreSQL.
+    mem_limit: 1g
+    networks: [interne]
+
+  # -------------------------------------------------------------------------
+  # Serveur frontal — le seul conteneur exposé
+  # -------------------------------------------------------------------------
+  nginx:
+    image: ghcr.io/yann-rem/alert-mns-front:${FRONT_TAG:-latest}
+    restart: unless-stopped
+    depends_on: [api]
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # Certificats gérés sur l'hôte par certbot, montés en lecture seule.
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      # Racine du défi ACME, partagée avec certbot pour le renouvellement.
+      - /opt/alerte/certbot-www:/var/www/certbot:ro
+    networks: [interne]
+
+volumes:
+  postgres_data:
+
+networks:
+  interne:
