@@ -1,0 +1,31 @@
+# ===========================================================================
+# Normalisation des fins de ligne
+# ===========================================================================
+# Git stocke du LF, mais `core.autocrlf=true` sous Windows restitue du CRLF dans la copie
+# de travail. Un script ainsi restitué casse dès qu'il s'exécute sous Linux : le shebang
+# devient « #!/bin/sh\r », le noyau cherche un interpréteur nommé « /bin/sh\r » et renvoie
+# « not found » sur un fichier pourtant présent — avec un code de sortie 127 trompeur.
+#
+# Le symptôme n'apparaît qu'à la construction de l'image Docker. L'intégration continue,
+# qui s'exécute sous Linux, reçoit du LF et ne rencontre jamais le problème : ce fichier
+# évite donc une divergence entre ce qui marche en CI et ce qui marche en local.
+
+* text=auto eol=lf
+
+# Exécutés dans un conteneur Linux : jamais de CRLF.
+mvnw        text eol=lf
+*.sh        text eol=lf
+Dockerfile  text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+
+# Destinés à Windows : CRLF assumé.
+mvnw.cmd    text eol=crlf
+*.bat       text eol=crlf
+
+# Binaires : aucune conversion.
+*.jar       binary
+*.png       binary
+*.jpg       binary
+*.pdf       binary
+*.docx      binary

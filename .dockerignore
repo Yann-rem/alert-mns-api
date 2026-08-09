@@ -1,0 +1,21 @@
+# Tout ce qui n'entre pas dans le contexte de construction. Deux effets : l'envoi au
+# démon Docker est plus rapide, et rien d'inattendu ne peut se retrouver dans l'image.
+
+# Produits de construction — l'image les régénère
+target/
+
+# Historique et outillage de développement
+.git/
+.github/
+.idea/
+.vscode/
+*.iml
+
+# Documentation, non versionnée mais présente localement
+docs/
+
+# Environnement de développement local
+docker-compose.yml
+
+# Journaux et fichiers temporaires
+*.log
