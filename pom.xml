@@ -126,6 +126,15 @@
 
     <build>
         <plugins>
+            <!-- Produit un jar exécutable : dépendances embarquées et manifeste de démarrage.
+                 Sans lui, `mvn package` ne génère qu'une archive des classes du projet, que la
+                 JVM refuse de lancer (« no main manifest attribute »). La version est gouvernée
+                 par le parent Spring Boot. -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>

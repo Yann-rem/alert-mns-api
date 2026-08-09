@@ -52,22 +52,31 @@ services:
       # Interprétée par application.yml : ${SESSION_COOKIE_SECURE:false}
       SESSION_COOKIE_SECURE: "true"
 
-      # Les propriétés applicatives passent en propriétés système plutôt qu'en
-      # variables d'environnement. Motif : Spring supprime les tirets pour les
-      # @ConfigurationProperties mais les convertit en underscores pour les @Value,
-      # et ce projet emploie les deux. Une variable mal orthographiée n'émet aucun
-      # avertissement — la valeur par défaut s'applique en silence. En propriété
-      # système, le nom est repris tel quel, sans règle de conversion.
-      JAVA_OPTS: >-
-        -XX:MaxRAMPercentage=70
-        -Dspring.jpa.show-sql=false
-        -Dalertmns.identity.activation.frontend-base-url=https://${DOMAIN}/
-        -Dalertmns.websocket.allowed-origins=https://${DOMAIN}
-        -Dalertmns.bootstrap.organisation.name=${ORGANISATION_NAME}
-        -Dalertmns.bootstrap.general-group.name=${GENERAL_GROUP_NAME}
-        -Dalertmns.bootstrap.admin.email=${ADMIN_EMAIL}
-        -Dalertmns.bootstrap.admin.first-name=${ADMIN_FIRST_NAME}
-        -Dalertmns.bootstrap.admin.last-name=${ADMIN_LAST_NAME}
+      JAVA_OPTS: "-XX:MaxRAMPercentage=70"
+
+      # Les propriétés applicatives passent par SPRING_APPLICATION_JSON, et non par des
+      # variables d'environnement ni des propriétés système. Deux écueils évités d'un coup :
+      #
+      #  1. Les règles de conversion de Spring diffèrent selon le mécanisme de lecture —
+      #     les tirets disparaissent pour les @ConfigurationProperties mais deviennent des
+      #     underscores pour les @Value, et ce projet emploie les deux. Un nom mal formé
+      #     n'émet aucun avertissement : la valeur par défaut s'applique en silence.
+      #  2. Une valeur contenant un espace, comme le nom de l'organisation, serait découpée
+      #     par le shell si elle transitait par -D dans JAVA_OPTS. Java prendrait alors le
+      #     deuxième mot pour une classe à exécuter.
+      #
+      # En JSON, les noms sont repris à l'identique et les valeurs restent délimitées.
+      SPRING_APPLICATION_JSON: |
+        {
+          "spring.jpa.show-sql": false,
+          "alertmns.identity.activation.frontend-base-url": "https://${DOMAIN}/",
+          "alertmns.websocket.allowed-origins": "https://${DOMAIN}",
+          "alertmns.bootstrap.organisation.name": "${ORGANISATION_NAME}",
+          "alertmns.bootstrap.general-group.name": "${GENERAL_GROUP_NAME}",
+          "alertmns.bootstrap.admin.email": "${ADMIN_EMAIL}",
+          "alertmns.bootstrap.admin.first-name": "${ADMIN_FIRST_NAME}",
+          "alertmns.bootstrap.admin.last-name": "${ADMIN_LAST_NAME}"
+        }
     # Plafond mémoire : la JVM lit cette limite et dimensionne son tas en
     # conséquence. Sans elle, elle se fierait aux 4 Go de l'hôte et pourrait
     # évincer PostgreSQL.
