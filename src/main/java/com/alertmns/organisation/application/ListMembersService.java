@@ -55,7 +55,7 @@ public class ListMembersService implements ListMembersUseCase {
             return new MembersPage(List.of(), 0L);
         }
 
-        MemberFilters filters = new MemberFilters(status, role, matchingUserIds);
+        MemberFilters filters = new MemberFilters(status, role, matchingUserIds, parseGroupId(query.groupId()));
         List<Member> members = memberRepository.findByOrganisationId(
                 organisationId, filters, query.page(), query.size());
         long total = memberRepository.countByOrganisationId(organisationId, filters);
@@ -90,5 +90,10 @@ public class ListMembersService implements ListMembersUseCase {
     /** Convertit une valeur d'énumération reçue en texte, en tolérant l'absence de filtre. */
     private static <E extends Enum<E>> E parse(String value, Class<E> type) {
         return (value == null || value.isBlank()) ? null : Enum.valueOf(type, value.trim().toUpperCase());
+    }
+
+    /** Convertit l'identifiant de groupe reçu en texte, en tolérant l'absence de filtre. */
+    private static UUID parseGroupId(String groupId) {
+        return (groupId == null || groupId.isBlank()) ? null : UUID.fromString(groupId.trim());
     }
 }

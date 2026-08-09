@@ -78,6 +78,99 @@ class ListMembersIntegrationTest extends AbstractAuthIntegrationTest {
     }
 
     @Test
+    @DisplayName("le filtre sur le groupe ne renvoie que ses membres")
+    void shouldFilterByGroup() {
+        userFactory.registerActiveAdmin(ADMIN_EMAIL, PASSWORD);
+        userFactory.registerActive(MEMBER_EMAIL, PASSWORD);
+        AuthCookies admin = loginAndAcquireCookies(ADMIN_EMAIL, PASSWORD);
+
+        String groupId = createGroup("Promotion CDA", admin);
+        addToGroup(groupId, memberIdOf(MEMBER_EMAIL, admin), admin);
+
+        ResponseEntity<String> response = listMembers("?groupId=" + groupId, ADMIN_EMAIL);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody())
+                .as("l'appartenance est portée par GroupMembership, pas par le membre")
+                .contains(MEMBER_EMAIL)
+                .doesNotContain(ADMIN_EMAIL);
+        assertThat(response.getBody()).contains("\"total\":1");
+    }
+
+    @Test
+    @DisplayName("un groupe sans membre renvoie une page vide")
+    void shouldReturnEmptyPageForGroupWithoutMembers() {
+        userFactory.registerActiveAdmin(ADMIN_EMAIL, PASSWORD);
+        AuthCookies admin = loginAndAcquireCookies(ADMIN_EMAIL, PASSWORD);
+
+        String groupId = createGroup("Groupe vide", admin);
+
+        ResponseEntity<String> response = listMembers("?groupId=" + groupId, ADMIN_EMAIL);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).contains("\"total\":0").contains("\"items\":[]");
+    }
+
+    @Test
+    @DisplayName("le filtre sur le groupe se combine avec la recherche textuelle")
+    void shouldCombineGroupFilterWithSearch() {
+        userFactory.registerActiveAdmin(ADMIN_EMAIL, PASSWORD);
+        userFactory.registerActive(MEMBER_EMAIL, PASSWORD);
+        AuthCookies admin = loginAndAcquireCookies(ADMIN_EMAIL, PASSWORD);
+
+        String groupId = createGroup("Promotion CDA", admin);
+        addToGroup(groupId, memberIdOf(MEMBER_EMAIL, admin), admin);
+
+        // Sofia est dans le groupe, mais la recherche ne la désigne pas : les deux filtres se cumulent.
+        ResponseEntity<String> response = listMembers("?groupId=" + groupId + "&q=zzz-inexistant", ADMIN_EMAIL);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).contains("\"total\":0");
+    }
+
+    /** @return l'identifiant du groupe créé */
+    private String createGroup(String name, AuthCookies admin) {
+        ResponseEntity<String> response = mutate(
+                HttpMethod.POST,
+                "/api/organisations/" + ORG + "/groups",
+                "{\"name\":\"" + name + "\"}",
+                admin);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        // La réponse de création expose « id », là où la liste des groupes expose « groupId ».
+        return extractJsonValue(response.getBody(), "id");
+    }
+
+    private void addToGroup(String groupId, String memberId, AuthCookies admin) {
+        ResponseEntity<String> response = mutate(
+                HttpMethod.PUT,
+                "/api/organisations/" + ORG + "/groups/" + groupId + "/members/" + memberId,
+                null,
+                admin);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+    }
+
+    /** Retrouve le {@code memberId} d'un compte via la liste du backoffice. */
+    private String memberIdOf(String email, AuthCookies admin) {
+        ResponseEntity<String> response = listMembers("?q=" + email, ADMIN_EMAIL);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        return extractJsonValue(response.getBody(), "memberId");
+    }
+
+    /**
+     * Extraction volontairement rustique : le corps testé ne contient qu'une occurrence de la clé.
+     *
+     * <p>Échoue explicitement si la clé est absente. Un retour silencieux produirait un
+     * identifiant illisible, et donc une liste vide : le test passerait pour la mauvaise raison.</p>
+     */
+    private static String extractJsonValue(String body, String key) {
+        String marker = "\"" + key + "\":\"";
+        int start = body.indexOf(marker);
+        assertThat(start).as("clé « %s » absente de la réponse : %s", key, body).isNotNegative();
+        int valueStart = start + marker.length();
+        return body.substring(valueStart, body.indexOf('"', valueStart));
+    }
+
+    @Test
     @DisplayName("un membre non-ADMIN reçoit 403")
     void shouldRejectNonAdmin() {
         userFactory.registerActive(MEMBER_EMAIL, PASSWORD);

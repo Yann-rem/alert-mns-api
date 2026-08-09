@@ -129,11 +129,19 @@ public class MemberController {
             @RequestParam(required = false) String role,
             @Parameter(description = "Recherche sur le nom, le prénom ou l'e-mail")
             @RequestParam(required = false) String q,
+            @Parameter(description = "Filtre sur l'appartenance à un groupe")
+            @RequestParam(required = false) UUID groupId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "50") int size
     ) {
-        MembersPage result = listMembersUseCase.list(
-                new ListMembersQuery(orgId.toString(), status, role, q, page, size));
+        MembersPage result = listMembersUseCase.list(new ListMembersQuery(
+                orgId.toString(),
+                status,
+                role,
+                q,
+                groupId == null ? null : groupId.toString(),
+                page,
+                size));
         return MemberWebMapper.toMembersPageResponse(result, page, size);
     }
 

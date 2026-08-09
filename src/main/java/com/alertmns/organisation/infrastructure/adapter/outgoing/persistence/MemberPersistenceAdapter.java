@@ -78,6 +78,7 @@ public final class MemberPersistenceAdapter implements MemberRepository {
                         filters.status(),
                         filters.role(),
                         filters.userIds(),
+                        filters.groupId(),
                         PageRequest.of(page, size))
                 .stream()
                 .map(MemberPersistenceMapper::toDomain)
@@ -87,6 +88,10 @@ public final class MemberPersistenceAdapter implements MemberRepository {
     @Override
     public long countByOrganisationId(OrganisationId organisationId, MemberFilters filters) {
         return jpaRepository.countFiltered(
-                organisationId.value(), filters.status(), filters.role(), filters.userIds());
+                organisationId.value(),
+                filters.status(),
+                filters.role(),
+                filters.userIds(),
+                filters.groupId());
     }
 }

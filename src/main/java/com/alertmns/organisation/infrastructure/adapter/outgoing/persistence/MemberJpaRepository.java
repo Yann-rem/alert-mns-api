@@ -45,6 +45,9 @@ public interface MemberJpaRepository extends JpaRepository<MemberJpaEntity, UUID
               and (:status is null or m.status = :status)
               and (:role is null or m.role = :role)
               and (:userIds is null or m.userId in :userIds)
+              and (:groupId is null
+                   or m.id in (select gm.memberId from GroupMembershipJpaEntity gm
+                               where gm.groupId = :groupId))
             order by m.joinedAt asc, m.id asc
             """)
     List<MemberJpaEntity> findFiltered(
@@ -52,6 +55,7 @@ public interface MemberJpaRepository extends JpaRepository<MemberJpaEntity, UUID
             @Param("status") MemberStatus status,
             @Param("role") MemberRole role,
             @Param("userIds") Collection<UUID> userIds,
+            @Param("groupId") UUID groupId,
             Pageable pageable);
 
     /** Compte les membres correspondant aux mêmes filtres que {@link #findFiltered}. */
@@ -61,10 +65,14 @@ public interface MemberJpaRepository extends JpaRepository<MemberJpaEntity, UUID
               and (:status is null or m.status = :status)
               and (:role is null or m.role = :role)
               and (:userIds is null or m.userId in :userIds)
+              and (:groupId is null
+                   or m.id in (select gm.memberId from GroupMembershipJpaEntity gm
+                               where gm.groupId = :groupId))
             """)
     long countFiltered(
             @Param("organisationId") UUID organisationId,
             @Param("status") MemberStatus status,
             @Param("role") MemberRole role,
-            @Param("userIds") Collection<UUID> userIds);
+            @Param("userIds") Collection<UUID> userIds,
+            @Param("groupId") UUID groupId);
 }
