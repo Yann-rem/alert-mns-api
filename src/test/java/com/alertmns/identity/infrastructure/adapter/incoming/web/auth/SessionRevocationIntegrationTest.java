@@ -4,6 +4,9 @@ import com.alertmns.identity.application.AnonymizeUserService;
 import com.alertmns.identity.application.SuspendUserService;
 import com.alertmns.identity.domain.port.incoming.command.AnonymizeUserCommand;
 import com.alertmns.identity.domain.port.incoming.command.SuspendUserCommand;
+import com.alertmns.identity.domain.port.outgoing.UserMembershipProvider;
+import com.alertmns.organisation.application.SuspendMemberService;
+import com.alertmns.organisation.domain.port.incoming.command.SuspendMemberCommand;
 import com.alertmns.shared.UserId;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,6 +28,13 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <p>D'où le choix d'un test d'intégration plutôt qu'unitaire : seul un aller-retour HTTP complet,
  * avec une session réellement ouverte, peut constater le défaut. Un test du filtre isolé aurait
  * passé sans rien prouver de son câblage dans la chaîne.</p>
+ *
+ * <p><b>La leçon de la seconde passe.</b> La première version de ces tests ne suspendait que le
+ * <em>compte</em>, et passait — mais le défaut restait entier en production, car l'administration
+ * suspend l'<em>adhésion</em>, ce qui est une autre opération dans un autre contexte. Le test
+ * suivait le code au lieu de suivre le geste réel de l'utilisateur. D'où le cas ajouté ici : les
+ * deux chemins de suspension doivent fermer la session, et c'est celui de l'interface qui compte le
+ * plus.</p>
  */
 @DisplayName("Révocation des sessions ouvertes")
 class SessionRevocationIntegrationTest extends AbstractAuthIntegrationTest {
@@ -37,6 +47,12 @@ class SessionRevocationIntegrationTest extends AbstractAuthIntegrationTest {
 
     @Autowired
     private AnonymizeUserService anonymizeUserService;
+
+    @Autowired
+    private SuspendMemberService suspendMemberService;
+
+    @Autowired
+    private UserMembershipProvider membershipProvider;
 
     @Test
     @DisplayName("An open session stays valid while the account is active")
@@ -58,6 +74,25 @@ class SessionRevocationIntegrationTest extends AbstractAuthIntegrationTest {
         assertThat(getMe(cookies.session()).getStatusCode()).isEqualTo(HttpStatus.OK);
 
         suspendUserService.suspend(new SuspendUserCommand(userId.value().toString()));
+
+        ResponseEntity<String> afterSuspension = getMe(cookies.session());
+        assertThat(afterSuspension.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+    }
+
+    @Test
+    @DisplayName("Suspending a membership closes the session already opened")
+    void shouldCloseOpenSessionWhenMembershipIsSuspended() {
+        UserId userId = userFactory.registerActive(EMAIL, PASSWORD);
+        AuthCookies cookies = loginAndAcquireCookies(EMAIL, PASSWORD);
+        assertThat(getMe(cookies.session()).getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        // Le geste que pratique réellement l'administration : c'est l'adhésion qui est suspendue,
+        // pas le compte, les deux statuts étant orthogonaux (ADR-0019).
+        UserMembershipProvider.Membership membership = membershipProvider.findByUserId(userId).orElseThrow();
+        suspendMemberService.suspend(new SuspendMemberCommand(
+                membership.organisationId().toString(),
+                membership.memberId().toString()
+        ));
 
         ResponseEntity<String> afterSuspension = getMe(cookies.session());
         assertThat(afterSuspension.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
