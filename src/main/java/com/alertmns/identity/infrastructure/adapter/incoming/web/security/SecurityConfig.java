@@ -1,5 +1,6 @@
 package com.alertmns.identity.infrastructure.adapter.incoming.web.security;
 
+import com.alertmns.identity.domain.port.outgoing.UserMembershipProvider;
 import com.alertmns.identity.domain.port.outgoing.UserRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,11 +25,18 @@ public class SecurityConfig {
      * s'exécuterait donc deux fois par requête.
      */
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, UserRepository userRepository) throws Exception {
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http,
+            UserRepository userRepository,
+            UserMembershipProvider membershipProvider
+    ) throws Exception {
         return http
-                // Avant l'autorisation : une session dont le compte n'est plus actif ne doit pas
-                // franchir cette étape, même si ses autorités, figées au login, l'y autoriseraient.
-                .addFilterBefore(new SessionRevocationFilter(userRepository), AuthorizationFilter.class)
+                // Avant l'autorisation : une session dont le compte ou l'adhésion ne sont plus
+                // actifs ne doit pas franchir cette étape, même si ses autorités, figées au login,
+                // l'y autoriseraient.
+                .addFilterBefore(
+                        new SessionRevocationFilter(userRepository, membershipProvider),
+                        AuthorizationFilter.class)
                 .csrf(csrf -> {
                     CsrfTokenRequestAttributeHandler handler = new CsrfTokenRequestAttributeHandler();
                     handler.setCsrfRequestAttributeName(null);

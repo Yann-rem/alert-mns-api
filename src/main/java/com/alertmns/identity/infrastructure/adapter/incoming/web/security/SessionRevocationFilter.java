@@ -1,6 +1,7 @@
 package com.alertmns.identity.infrastructure.adapter.incoming.web.security;
 
 import com.alertmns.identity.domain.model.UserStatus;
+import com.alertmns.identity.domain.port.outgoing.UserMembershipProvider;
 import com.alertmns.identity.domain.port.outgoing.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -29,9 +30,22 @@ import java.util.Objects;
  * requête ; le bénéfice est qu'aucun état n'est maintenu en mémoire, donc rien à reconstruire au
  * redémarrage. À l'échelle d'une école, l'arbitrage penche nettement de ce côté.</p>
  *
- * <p><b>Portée.</b> Couvre la suspension, l'anonymisation et la disparition du compte. Ne couvre
- * pas le changement de rôle, qui reste effectif à la reconnexion : les autorités proviennent du BC
- * Organisation et les recharger imposerait une seconde lecture à chaque requête.</p>
+ * <p><b>Deux statuts, pas un.</b> L'accès dépend de deux valeurs portées par deux contextes
+ * différents et volontairement orthogonales (ADR-0019) : le statut du <em>compte</em>
+ * ({@code UserStatus}, BC Identity) et celui de l'<em>adhésion</em> ({@code MemberStatus}, BC
+ * Organisation). L'administration suspend l'adhésion ; le compte, lui, n'est pas touché. Vérifier
+ * le seul statut de compte laisserait donc passer la suspension telle que l'interface la pratique.
+ * Ce filtre est l'endroit où les deux se rejoignent, parce que l'accès à l'application suppose les
+ * deux à la fois.</p>
+ *
+ * <p>Le statut d'adhésion arrive en {@code String} : le port le publie ainsi pour qu'Identity n'ait
+ * pas à importer un type d'Organisation. La comparaison littérale est le prix de cette
+ * indépendance.</p>
+ *
+ * <p><b>Portée.</b> Couvre la suspension d'adhésion, la suspension de compte, l'anonymisation, la
+ * perte d'adhésion et la disparition du compte. Ne couvre pas le changement de rôle, qui reste
+ * effectif à la reconnexion : rafraîchir les autorités demanderait de reconstruire le contexte de
+ * sécurité à chaque requête.</p>
  *
  * <p><b>Effet de bord voulu.</b> L'invalidation de la session émet un événement de destruction, que
  * {@code WebSocketRevocationListener} écoute déjà : le canal temps réel se ferme donc du même
@@ -39,10 +53,15 @@ import java.util.Objects;
  */
 public final class SessionRevocationFilter extends OncePerRequestFilter {
 
-    private final UserRepository userRepository;
+    /** Valeur de {@code MemberStatus.ACTIVE}, reçue en chaîne au travers du port. */
+    private static final String MEMBERSHIP_ACTIVE = "ACTIVE";
 
-    public SessionRevocationFilter(UserRepository userRepository) {
+    private final UserRepository userRepository;
+    private final UserMembershipProvider membershipProvider;
+
+    public SessionRevocationFilter(UserRepository userRepository, UserMembershipProvider membershipProvider) {
         this.userRepository = Objects.requireNonNull(userRepository, "userRepository must not be null");
+        this.membershipProvider = Objects.requireNonNull(membershipProvider, "membershipProvider must not be null");
     }
 
     @Override
@@ -78,11 +97,20 @@ public final class SessionRevocationFilter extends OncePerRequestFilter {
         return authentication.getPrincipal() instanceof DomainUserDetails details ? details : null;
     }
 
-    /** Un compte absent est traité comme révoqué, au même titre qu'un compte suspendu. */
+    /**
+     * Un compte ou une adhésion absents sont traités comme révoqués, au même titre que suspendus.
+     *
+     * <p>L'adhésion n'est interrogée que si le compte est utilisable : inutile de payer une seconde
+     * lecture quand la première a déjà tranché.</p>
+     */
     private boolean isStillActive(DomainUserDetails details) {
-        return userRepository.findById(details.userId())
+        boolean accountUsable = userRepository.findById(details.userId())
                 .filter(user -> user.status() == UserStatus.ACTIVE)
                 .filter(user -> !user.isAnonymized())
+                .isPresent();
+
+        return accountUsable && membershipProvider.findByUserId(details.userId())
+                .filter(membership -> MEMBERSHIP_ACTIVE.equals(membership.status()))
                 .isPresent();
     }
 
